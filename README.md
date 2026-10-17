@@ -31,21 +31,11 @@ Keep the files and directories as shown below — don't rename or move them.
 | `README.md` | The challenge description and submission requirements |
 | `technical_report.md` | The deeper write-up: architecture, evaluation, limitations |
 | `LICENSE` | Apache-2.0 |
-| `Makefile` | `make run` must spin up your project |
 | `src/` | Your code |
-| `docs/` | Diagrams, notes, longer write-ups |
 
-## Run it
+## Environment
 
-Judges run `make run` from the root of the project, on a clean checkout:
-
-```bash
-make run
-```
-
-`make run` is expected to run the project using Docker, since that
-is how the judges will run it.
-- If you used other local open-weight models, include instructions for running the project in your technical report.
+- Include instructions for running the project in your technical report.
 - Use the following environment variables:
 ```
 LLM_NAME — name and version of the model
@@ -57,8 +47,7 @@ LLM_API_KEY — your API key
 
 The submission must:
 1. follow the template repo and include all prerequisite files and definitions
-2. run in a Docker container, launched with `make run` from the root of the project
-3. run end-to-end when judges try to run it
+2. run end-to-end when judges try to run it
 
 ### Git repo (URL)
 - Create your repo from this template (**Use this template**).
@@ -85,7 +74,6 @@ The submission must:
 
 1. Click **Use this template** to create your own repository.
 2. Fill in `technical_report.md` and add your demo video link.
-3. Make `make run` work from the root of the project, on a clean checkout.
 
 ## License
 

@@ -14,8 +14,7 @@ The problem, your approach, and the headline result in one paragraph.
 
 ## 2. Architecture
 
-Components, data flow, and where each one runs. Put diagrams in `docs/` and
-reference them here.
+Components, data flow, and where each one runs.
 
 ## 3. Use of Apertus
 
@@ -49,7 +48,7 @@ Where it breaks, what you did not test, and known failure modes.
 ## 7. Reproducibility
 
 What a judge needs to get your numbers back: hardware, runtime, seeds, and the
-exact commit. `make run` should do the rest.
+exact commit.
 
 ## 8. Next steps
 
