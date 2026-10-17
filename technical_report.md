@@ -1,4 +1,4 @@
-# Technical report — `project name`
+# Technical report — `project name`, `team name`
 
 A deeper write-up than the README: what you built, how it works, and what the
 numbers say.
