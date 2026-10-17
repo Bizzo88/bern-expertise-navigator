@@ -16,7 +16,7 @@ The submission must comply with the [HackApertus T&C](https://hackapertus.ch/ter
 
 ## 🎯 The Challenge
 
-`Fill in the title of the challenge you picked and link the Notion page (ULR)`
+`Fill in the title of the challenge you picked and link the Notion challenge page (URL)`
 
 ## 🔧 Resources & Tools
 
