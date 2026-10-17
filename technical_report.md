@@ -4,7 +4,7 @@ A deeper write-up than the README: what you built, how it works, and what the
 numbers say.
 
 - **Challenge:** `challenge name`
-- **Event:** Online
+- **Event:** On-site Liebefeld
 - **Team:** `team name` — `member`, `member`, `member`
 - **Demo:** `link to video`
 
@@ -50,9 +50,6 @@ Where it breaks, what you did not test, and known failure modes.
 What a judge needs to get your numbers back: hardware, runtime, seeds, and the
 exact commit.
 
-## 8. Next steps
-
-What you would build with another month.
 
 ## License
 
