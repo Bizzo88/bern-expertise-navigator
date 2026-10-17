@@ -44,20 +44,11 @@ non-redistributable, and keep it out of the repository (see `.gitignore`).
 If data comes from human subjects or contains personal information, describe
 how consent was obtained.
 
-## 5. Evaluation
-
-How you measured success: task, metric, baseline.
-
-| Setup    | Metric | Result |
-|----------|--------|--------|
-| Baseline |        |        |
-| Ours     |        |        |
-
-## 6. Limitations
+## 5. Limitations
 
 Where it breaks, what you did not test, and known failure modes.
 
-## 7. Reproducibility
+## 6. Reproducibility
 
 What a judge needs to get your numbers back: hardware, runtime, seeds, and the
 exact commit.
