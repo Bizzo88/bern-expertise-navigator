@@ -21,7 +21,7 @@ The submission must comply with the [HackApertus T&C](https://hackapertus.ch/ter
 ## 🔧 Resources & Tools
 
 Check our resources & tools page for detailed information:
-[https://hackapertus.notion.site/resources-tools](https://hackapertus.notion.site/liebefeld-resources-tools)
+[https://hackapertus.notion.site/liebefeld-resources-tools](https://hackapertus.notion.site/liebefeld-resources-tools)
 
 | Models           | URL                                      |
 |------------------|------------------------------------------|
