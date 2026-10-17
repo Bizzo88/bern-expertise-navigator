@@ -76,12 +76,13 @@ The submission must:
 
 Each challenge has its own criteria, listed in its challenge description.
 
-The main jury scores every submission on five dimensions (relevant for Top 6 teams):
+The main jury scores every submission on 6 dimensions (relevant for Top 6 teams):
 1. **Purposeful use of AI**
 2. **Technical rigour**
 3. **Value, cost & scalability**
 4. **Sovereign deployability**
 5. **Implementation feasibility**
+6. **Pitch & presentation**
 
 Each dimension is scored from 0 to 5.
 
