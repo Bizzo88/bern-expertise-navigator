@@ -14,7 +14,19 @@ The problem, your approach, and the headline result in one paragraph.
 
 ## 2. Architecture
 
-Components, data flow, and where each one runs.
+Components, data flow, and where each one runs. Put diagrams in `docs/` and
+reference them here.
+
+### Target architecture (mandatory)
+
+State which of the three architectures your project is deployable in, and how
+it meets that constraint:
+
+- **a) On-premise** — on the organisation's own infrastructure, under its own administration.
+- **b) Air-gapped** — with no external network connection at runtime.
+- **c) Sovereign Swiss cloud** — on a cloud platform operated in Switzerland, under Swiss jurisdiction, with Swiss data residency.
+
+List any external dependencies, and separate build time from runtime.
 
 ## 3. Use of Apertus
 
