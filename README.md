@@ -1,21 +1,27 @@
-# Hack Apertus — `challenge name`
+# Hack Apertus Liebefeld — `challenge name` `team name`
 
 Template repository for [Hack Apertus](https://hackapertus.ch/) submissions.
 Every project keeps the same layout, so organizers and judges find the same
 things in the same place.
 
+There are 3 challenges to pick from:
+1. Bern Economic Development Agency: Research & Expertise Navigator
+2. OpenParlData: Topic classification for Swiss parliaments with Apertus
+3. University of Bern: Deciphering Archives with Apertus
+
 `One paragraph describing the challenge.`
 
+Submissions must use the v1.5 Apertus model family.
 The submission must comply with the [HackApertus T&C](https://hackapertus.ch/terms-and-conditions).
 
 ## 🎯 The Challenge
 
-`Describe the challenge: the problem, what teams should build, and any constraints.`
+`Fill in the title of the challenge you picked and link the Notion page (ULR)`
 
 ## 🔧 Resources & Tools
 
 Check our resources & tools page for detailed information:
-https://hackapertus.notion.site/resources-tools
+[https://hackapertus.notion.site/resources-tools](https://hackapertus.notion.site/liebefeld-resources-tools)
 
 | Models           | URL                                      |
 |------------------|------------------------------------------|
@@ -68,12 +74,20 @@ The submission must:
 
 ## ⚖️ Judging Criteria
 
-`List the judging criteria and scoring scale.`
+Each challenge has its own criteria, listed in its challenge description.
+
+The main jury scores every submission on five dimensions (relevant for Top 6 teams):
+1. **Purposeful use of AI**
+2. **Technical rigour**
+3. **Value, cost & scalability**
+4. **Sovereign deployability**
+5. **Implementation feasibility**
+
+Each dimension is scored from 0 to 5.
 
 ## Getting started
 
 1. Click **Use this template** to create your own repository.
-2. Fill in `technical_report.md` and add your demo video link.
 
 ## License
 
