@@ -149,6 +149,16 @@ docker compose exec -T db pg_dump -U postgres -d bern -Fc > bern_$(date +%F).dum
 docker compose exec -T db pg_restore -U postgres -d bern --clean --if-exists < bern_YYYY-MM-DD.dump
 ```
 
+**After every restore, realign the AGE catalog** (once, as `postgres`):
+
+```bash
+docker compose exec -T db psql -U postgres -d bern -v ON_ERROR_STOP=1 < post-restore-age.sql
+```
+
+AGE stores the graph schema OID as a plain `oid` (`ag_graph.graphid`, `ag_label.graph`). A restore recreates the schema
+`expertise_graph` with a new OID, so `cypher()` fails with `graph with oid NNNNN does not exist` until the catalog is
+realigned. Tables, vectors and FTS are unaffected. Running the script again is a no-op.
+
 The dump includes both the `nav` schema and the AGE graph (the `expertise_graph` schema and `ag_catalog.ag_graph`/`ag_label`). To restore into an empty DB, first run `CREATE EXTENSION age; CREATE EXTENSION vector;`, which initdb already does.
 
 ## Local test (Docker Desktop)
