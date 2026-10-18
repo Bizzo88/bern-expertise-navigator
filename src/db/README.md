@@ -127,6 +127,7 @@ Planner note: with few rows and a weakly selective filter, Postgres may prefer a
   ```bash
   docker compose exec -T db psql -U postgres -d bern -v ON_ERROR_STOP=1 < migrations/0002_index_order_and_match_ref.sql
   docker compose exec -T db psql -U postgres -d bern -v ON_ERROR_STOP=1 < migrations/0003_case_search_filters.sql
+  docker compose exec -T db psql -U postgres -d bern -v ON_ERROR_STOP=1 < migrations/0005_case_company_sources.sql
   ```
 
 The app (`navigator/pgstore.py`) checks `nav.schema_migrations` at connect time and refuses to start
@@ -137,8 +138,9 @@ with a `schema_outdated` error if a migration it needs is missing.
 | `0002_index_order_and_match_ref` | `nav.entity.load_order` (input order, for identical tie-breaks with the file backend); `nav.case_match.entity_ref` (match id survives a reindex that drops the entity) |
 | `0002_remove_technical_review` | (team, main) end of the technical-review step: open review statuses become `new`, status CHECK narrowed to `new/contacted/call_scheduled/closed`, review columns **dropped**. Already part of the fresh `initdb/` schema (registered by `05-migrations.sql`); not required by the app |
 | `0003_case_search_filters` | `nav."case".canton/area/niche` (search-first request filters, `config/medtech_areas.yaml` ids) + index `(area, niche)`; on databases that still have the review columns they become nullable and unused (nothing dropped) |
+| `0005_case_company_sources` | request from a company link / shared documents and broad search (main `32a3c4c`..`ae7ba6e`): `nav."case".city/understood/company_url/need/website/documents`, `nav.case_match.archetype`; `request_text` defaults to `''`. Additive only (`0004` is reserved by the papers branch) |
 
-Order on an existing database: `0002_index_order_and_match_ref`, then `0003_case_search_filters` (required by the app).
+Order on an existing database: `0002_index_order_and_match_ref`, then `0003_case_search_filters`, then `0005_case_company_sources` (all required by the app).
 `0002_remove_technical_review` is independent and destructive (drops the review columns): take a backup first
 (see below) if that data matters.
 
