@@ -28,3 +28,7 @@ build/
 
 # Team-internal planning document (not part of the submission)
 Hack_Apertus_Challenge_Analysis_*.pdf
+
+# Server access keys: never commit (private SSH key and its passphrase)
+deploy_ed25519*
+*.passphrase.txt

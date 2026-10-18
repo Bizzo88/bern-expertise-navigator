@@ -131,6 +131,14 @@ def fair_top(ids: list[str], ents: dict[str, Entity], k: int) -> list[str]:
             continue
         is_person = e.entity_type == "person"
         unit = (unit_key(e.unit or e.name) if not is_person else unit_key(e.unit or e.source), is_person)
+        if is_person and per_unit[unit] >= settings.max_per_unit:
+            # the lab is full: a more senior person (e.g. the group head) replaces its most junior pick
+            same = [x for x in out if ents[x].entity_type == "person" and unit_key(ents[x].unit or ents[x].source) == unit[0]]
+            weakest = min(same, key=lambda x: seniority(ents[x]), default=None)
+            if weakest and seniority(e) > seniority(ents[weakest]):
+                out[out.index(weakest)] = eid
+                overflow.append(weakest)
+                continue
         if per_unit[unit] < settings.max_per_unit:
             per_unit[unit] += 1
             out.append(eid)

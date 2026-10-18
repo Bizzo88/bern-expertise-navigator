@@ -2,22 +2,27 @@
 
 **Hack Apertus 2026 · Bern Economic Development Agency challenge**
 
-A tool for the canton's business-development team to **bring companies to Bern**.
+One search across the public websites of UniBE, ARTORG and Diabetes Center Berne, plus a workspace that helps the
+canton **bring companies to Bern**. Every result is structured and linked to the page and the verbatim sentence that
+supports it.
 
-A company writes in ("we build a needle-free CGM patch and need a clinical study partner…"). The officer handling it
-is not a medtech expert. The navigator:
+The app has three clearly separated areas:
 
-1. **Understands.** It explains the request in plain language, with every technical word explained (EN/DE/FR).
-2. **Matches.** It finds the right researchers, labs, projects and facilities in Bern from the public websites of
-   UniBE, ARTORG and Diabetes Center Berne. **Every result is linked to the page and the verbatim sentence that
-   supports it.**
-3. **Gets a technical review.** A technical colleague confirms or rejects each proposed partner, with comments.
-4. **Invites.** It drafts an invitation email (EN/DE/FR) with only the approved partners and verified "why Bern"
-   facts, or a calendar invite for a call.
+| Area | Who | What |
+|---|---|---|
+| **Public navigator** (`#/`) | anyone | The challenge's deliverable: natural-language and keyword search with structured, source-backed results (person, role, affiliation, expertise, projects, infrastructure/services, why it matches, source link), a labs & facilities directory, and "How it works" with the measured success criteria |
+| **Staff workspace** (`#/staff`, dark header) | the canton's business-development team, who enter their name | Company request (search field + filters) → plain-language explanation → choose Bern partners → **pitch & invite** |
+| **Executive brief** (`#/b/<private link>`) | the company's CEO | A short, interactive brief whose only goal is a visit to Bern; saved as PDF with one click |
 
-**Explore Bern** shows the ecosystem without a specific request: research strengths with live counts, facilities
-companies can use, a lab directory with the head of each lab, and proof points quoted from the institutions' own
-pages.
+**The two outputs of a request** (step 3, once partners are chosen):
+
+1. **For the officer:** a plain explanation of what was prepared and why: what she is sending, why each partner fits
+   (with the jargon explained), what the CEO can check, and what we deliberately do not say.
+2. **For the CEO:** the executive brief. A plain hook, "who you would meet" (each with a plain explanation, a verbatim
+   quote and **Technical details** on demand, including publications with DOI), "Bern in numbers", a proposed
+   half-day visit and "Plan your visit". **No overselling:** every statement is a verbatim quote from a public
+   institutional page or a publication listed there, numbered and linked. The brief never claims anyone has agreed
+   to meet and says nothing about money.
 
 Built on **Apertus v1.5**, the Swiss open LLM. Fully self-hosted, so no data leaves Switzerland. Without an Apertus
 endpoint everything still works, using a reviewed glossary and deterministic rules, and the UI says so.
@@ -45,14 +50,16 @@ make test                       # unit tests: no GPU, no network, no model downl
 
 ## Using it
 
-| Who | Where | What |
-|---|---|---|
-| Business development | **Requests** | Pipeline board → **New request** (paste the company's message; three fictional examples included) → guided 4-step request page |
-| Technical reviewer | **Review** | Queue of requests in review. Per partner: *Suitable / Not suitable*, a comment and the full technical evidence. Then **Approve** or **Request changes** |
-| Anyone | **Explore Bern** | Search in any language, research strengths, facilities, labs, proof points. From a request, *Find more in Explore* lets you add partners to it |
+1. Open **Staff workspace** → choose *Business development*, enter your name → **New request**: type what the
+   company is looking for (or paste their email), optionally set the company's country (Switzerland → canton) and a
+   medtech area → niche (e.g. *Diabetes → Glucose sensing*), or click a fictional example → **Find partners in Bern**
+   → tick the partners to propose.
+2. In **Pitch & invite**, add the company name and contact (asked only now) → **Prepare the pitch** → read *For you*,
+   open the **executive brief**, *Save as PDF*, then **Prepare the email** (it links the brief) or download a
+   calendar invite → **Mark as sent**.
 
-Set your name, email and role with the button at the top right. This is stored only in the browser. For a
-single-person demo, *Open as reviewer* on a request switches roles. The prototype has no login.
+Names are self-declared and stored only in the browser (prototype, no passwords); every action is recorded in the
+request's activity log with that name.
 
 Emails are never sent by the server: **Open in email app** uses `mailto:` and the officer sends from their own mail
 client. **Calendar invite** downloads a standard `.ics` file.
@@ -65,7 +72,7 @@ public websites ─► 1 crawl ─► 2 classify ─► 3 extract ────�
                     (explicit)   Apertus       or rules baseline;        e5 vectors  fairness cap, cited "why",
                                                verbatim snippet or drop  (per snippet) honest abstention
                                                                                  │
-             company request ─► plain language (glossary / Apertus) ─► matches ─► review ─► invitation
+             company request ─► plain language (glossary / Apertus) ─► matches ─► pitch & invitation
 ```
 
 | Stage | Module | Where Apertus is used, and why |
@@ -76,6 +83,7 @@ public websites ─► 1 crawl ─► 2 classify ─► 3 extract ────�
 | 4 Index | `index.py` | none (local multilingual embeddings + BM25) |
 | 5 Search | `search.py` | Query analysis (synonyms, lay terms, DE/EN/FR, person names) and match explanations written only from the cited evidence |
 | Requests | `plain.py`, `cases.py` | Plain-language summary of a company request plus explanations of terms the glossary lacks (labelled *AI explanation – check*). Emails are a deterministic template: no generated claims |
+| Pitch | `brief.py` | none in the claims: the brief and the officer's explanation are assembled only from the chosen partners, verbatim snippets, verified proof points and DOIs found on the institutions' pages |
 | Showcase | `showcase.py` | none: live counts from the index, and proof points re-verified against the saved pages at startup |
 
 ## Storage backends
@@ -118,15 +126,16 @@ against the saved page, and anything unverifiable is dropped automatically. The 
 | `GET /search?q=&k=&source=&type=` | Search; every result has `sources[{url, snippet, field}]` |
 | `GET /entity/{id}` | Full entity with all evidence and linked people/labs |
 | `GET /showcase` | Landing data: themes (live), verified proof points, labs, facilities |
-| `POST /cases` · `GET /cases` · `GET /cases/{id}` | Company requests |
-| `POST /cases/{id}/selection` · `/review-request` · `/review` · `/draft` · `/outcome` | Workflow steps |
+| `POST /cases` · `GET /cases` · `GET /cases/{id}` | Company requests (staff actions carry `actor` + `role`) |
+| `POST /cases/{id}/selection` · `/details` · `/brief` · `/draft` · `/outcome` | Workflow steps |
+| `GET /briefs/{token}` | The executive brief behind a private link (read-only) |
 | `GET /cases/{id}/invite.ics` | Calendar invite |
 | `GET /glossary?lang=` · `GET /health` · `GET /stats` | Support |
 
 ## Repository layout
 
 ```
-config/        sources.yaml · unibe_subdomains.txt · glossary.yaml · plain_glossary.yaml · showcase.yaml · example_requests.yaml
+config/        sources.yaml · unibe_subdomains.txt · glossary.yaml · plain_glossary.yaml · showcase.yaml · medtech_areas.yaml · example_requests.yaml
 app/navigator/ config · schema · llm · crawl · classify · extract · rules_extract · index · search · plain · cases · showcase · api · cli
 app/navigator/static/  index.html · app.css · app.js   (no build step, no CDN: works air-gapped)
 eval/          golden_set.yaml · run_eval.py

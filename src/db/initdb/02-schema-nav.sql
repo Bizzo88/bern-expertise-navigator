@@ -126,7 +126,7 @@ CREATE TABLE nav."case" (
   created_at       timestamptz NOT NULL DEFAULT now(),
   updated_at       timestamptz NOT NULL DEFAULT now(),
   status           text NOT NULL DEFAULT 'new' CHECK (status IN
-                     ('new','in_review','changes_requested','approved','contacted','call_scheduled','closed')),
+                     ('new','contacted','call_scheduled','closed')),
   company          text NOT NULL DEFAULT '',
   contact_name     text NOT NULL DEFAULT '',
   contact_email    text NOT NULL DEFAULT '',
@@ -134,9 +134,6 @@ CREATE TABLE nav."case" (
   request_text     text NOT NULL,
   analysis         jsonb,                    -- RequestAnalysis
   no_match_message text,
-  reviewer         text NOT NULL DEFAULT '',
-  review_note      text NOT NULL DEFAULT '', -- officer -> reviewer
-  review_comment   text NOT NULL DEFAULT '', -- reviewer -> officer
   outreach         jsonb
 );
 CREATE INDEX case_status_idx ON nav."case"(status, updated_at DESC);
@@ -158,8 +155,6 @@ CREATE TABLE nav.case_match (
   confidence   real NOT NULL DEFAULT 0 CHECK (confidence BETWEEN 0 AND 1),
   via          text,
   selected     boolean NOT NULL DEFAULT false,
-  review       text CHECK (review IN ('ok','no')),
-  review_note  text NOT NULL DEFAULT '',
   UNIQUE (case_id, rank)
 );
 CREATE INDEX case_match_entity_idx ON nav.case_match(entity_id);

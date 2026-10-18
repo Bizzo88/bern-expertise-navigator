@@ -225,24 +225,44 @@ def test_cases_roundtrip_and_api(env, monkeypatch):
     monkeypatch.setattr(llm, "available", lambda *a, **k: False)
     monkeypatch.setattr(cases.showcase, "build", lambda: {"highlights": []})
     client = TestClient(api.app)
-    req = {"company": "Example Sensors GmbH (fictional)", "contact_name": "Anna", "contact_email": "anna@example.com",
-           "request_text": "We need a partner for continuous glucose monitoring and closed-loop insulin delivery."}
+    off = {"actor": "Maria"}
+    req = {"request_text": "We need a partner for continuous glucose monitoring and closed-loop insulin delivery.",
+           "country": "Switzerland", "canton": "BE", "area": "diabetes", "niche": "glucose", **off}
     c = client.post("/cases", json=req).json()
     assert c["matches"] and c["matches"][0]["id"] in {e.id for e in ents}
+    assert (c["company"], c["canton"], c["area"], c["niche"]) == ("", "BE", "diabetes", "glucose")
     cid = c["id"]
     assert client.get(f"/cases/{cid}").json() == c
+    stored = _sql('SELECT company, country, canton, area, niche FROM nav."case" WHERE id = %s', cid)[0]
+    assert stored == ("", "Switzerland", "BE", "diabetes", "glucose")
+    listed = client.get("/cases").json()[0]
+    assert (listed["canton"], listed["area"], listed["niche"]) == ("BE", "diabetes", "glucose")
     sel = [c["matches"][0]["id"]]
-    r = client.post(f"/cases/{cid}/selection", json={"selected": sel}).json()
+    r = client.post(f"/cases/{cid}/selection", json={"selected": sel, **off}).json()
     assert [m["id"] for m in r["matches"] if m["selected"]] == sel
-    r = client.post(f"/cases/{cid}/review-request", json={"reviewer": "Dr. R", "note": "ok?"}).json()
-    assert r["status"] == "in_review"
-    stored = _sql('SELECT status, reviewer FROM nav."case" WHERE id = %s', cid)[0]
-    assert stored == ("in_review", "Dr. R")
-    assert [e["kind"] for e in client.get(f"/cases/{cid}").json()["events"]] == ["created", "analysed", "review_requested"]
+    r = client.post(f"/cases/{cid}/details", json={"company": "Example Sensors GmbH (fictional)",
+                                                    "contact_name": "Anna", "contact_email": "anna@example.com", **off}).json()
+    assert r["company"] == "Example Sensors GmbH (fictional)" and r["status"] == "new"
+    assert _sql('SELECT company, contact_email FROM nav."case" WHERE id = %s', cid)[0] == \
+        ("Example Sensors GmbH (fictional)", "anna@example.com")
+    assert [e["kind"] for e in client.get(f"/cases/{cid}").json()["events"]] == ["created", "analysed", "details"]
+    # the review step is gone on this backend too
+    assert client.post(f"/cases/{cid}/review-request", json={"reviewer": "x", **off}).status_code in (404, 405)
     # a reindex that drops the matched entity keeps the match id (entity_ref snapshot)
     index.build([e for e in ents if e.id != sel[0]])
     again = client.get(f"/cases/{cid}").json()
     assert again["matches"][0]["id"] == sel[0] and again["matches"][0]["selected"]
     assert client.get("/cases").json()[0]["id"] == cid
+    # executive brief (outreach jsonb) + its public link, then the short email that points to it
+    from navigator import brief
+    brief._publications.cache_clear()
+    b = client.post(f"/cases/{cid}/brief", json={"lang": "en", **off}).json()
+    assert b["token"] and client.get(f"/briefs/{b['token']}").json()["company"] == "Example Sensors GmbH (fictional)"
+    assert _sql("""SELECT outreach->'brief'->>'token' FROM nav."case" WHERE id = %s""", cid)[0][0] == b["token"]
+    assert client.get("/cases").json()[0]["has_brief"]
+    d = client.post(f"/cases/{cid}/draft", json={"lang": "en", **off}).json()
+    assert d["to"] == "anna@example.com" and d["matches"] == sel
+    done = client.post(f"/cases/{cid}/outcome", json={"kind": "email", "subject": d["subject"], "body": d["body"], **off}).json()
+    assert done["status"] == "contacted" and _sql('SELECT status FROM nav."case" WHERE id = %s', cid)[0][0] == "contacted"
     assert client.delete(f"/cases/{cid}").status_code in (200, 204)
     assert _sql('SELECT count(*) FROM nav.case_match WHERE case_id = %s', cid)[0][0] == 0

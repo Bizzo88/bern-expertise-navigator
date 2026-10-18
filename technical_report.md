@@ -16,12 +16,15 @@ must then find out who in Bern's research landscape could help. We built a navig
 1. explain the request in plain language, with every technical word explained;
 2. match it to researchers, labs, projects and facilities in Bern, each backed by a verbatim sentence on a public
    page;
-3. route the proposed partners to a technical colleague for review;
-4. draft the invitation (email in EN/DE/FR or a calendar invite) with only the approved partners and verified
+3. draft the invitation (email in EN/DE/FR or a calendar invite) with only the chosen partners and verified
    "why Bern" facts.
 
-An **Explore Bern** view presents the ecosystem (research strengths, facilities, labs, proof points) for proactive
-promotion.
+Step 3 produces **two outputs**: a plain explanation for the officer of what she is sending and why, and an
+interactive **executive brief** for the company's CEO (shareable private link, one-click PDF). The brief's single goal
+is a visit to Bern. It avoids overselling: every statement is a verbatim quote from a public institutional page or a
+publication (DOI) listed there, numbered and linked; nothing about money; no claim that anyone has agreed to meet.
+The app separates its users clearly: a **public navigator** (the challenge's search deliverable), a **staff
+workspace** for the business-development team, and the **brief** the CEO receives.
 
 Headline numbers on our golden set (30 queries, ARTORG + DCB, **without** an LLM): **recall@10 96%**,
 **traceability 100%**, **correct abstention 100%**, lay-term/expert-term consistency 71%, median latency 0.11 s on
@@ -32,7 +35,7 @@ CPU. Apertus numbers: `TBD` (see §5).
 ```
 public websites ─► crawl ─► classify ─► extract (Apertus | rules) ─► verify ─► index ─► search / explain
                                                                          │
-company request ─► plain language (glossary | Apertus) ─► matches ─► technical review ─► invitation (mailto / .ics)
+company request ─► plain language (glossary | Apertus) ─► matches ─► pitch & invitation (brief, mailto / .ics)
 ```
 
 | Component | Module (`src/app/navigator/`) | What it does |
@@ -45,7 +48,8 @@ company request ─► plain language (glossary | Apertus) ─► matches ─►
 | Link | `extract.link_site_structure`, `derive_units` | Site hierarchy as evidence (pages under `/research/aihn/` belong to that lab). Labs that exist only as headings on team pages become lab entities, cited by that heading. |
 | Index | `index.py` | BM25 plus `multilingual-e5-base` vectors for each entity profile and each evidence snippet. NumPy store locally, Qdrant in Docker. |
 | Search | `search.py` | Glossary and Apertus query analysis; RRF of BM25(query), BM25(expansions) and vectors; matching labs/projects surface their people, with the head of the lab first; fairness cap; cited explanations; abstention. |
-| Requests | `plain.py`, `cases.py` | Plain-language analysis, matching, review state machine (SQLite), email template, `.ics`. |
+| Requests | `plain.py`, `cases.py` | Plain-language analysis, matching (niche filters, senior contacts first), request status (SQLite), email template, `.ics`. |
+| Pitch | `brief.py` | Output 1 (officer explanation) and Output 2 (executive brief): chosen partners only; quotes chosen from the partner's or linked project's verbatim sentences that name a topic from the request; publications matched by author surname from 143 DOIs on the institutions' pages; numbered sources. |
 | Showcase | `showcase.py` | Research themes with live counts, verified proof points, lab and facility directories. |
 | UI | `static/` | Vanilla HTML/CSS/JS, no CDN or build step, EN/DE/FR, light/dark, responsive. |
 
@@ -81,7 +85,7 @@ Deployable as **a) on-premise**, **b) air-gapped** (after the crawl) and **c) so
 | Query analysis | Lay ↔ technical ↔ DE/FR terms; detecting person names | Only adds search terms; an unknown person leads to abstention |
 | Match explanation | Readable "why" | Numbered evidence only; rejected if it cites other evidence; deterministic fallback |
 
-Not AI: the invitation email (template with approved partners and verified quotes only), the showcase, ranking.
+Not AI: the invitation email (template with the chosen partners and verified quotes only), the showcase, ranking.
 Temperature 0. The client degrades from `json_schema` to `json_object` to prompt-only JSON, and detects an
 unreachable endpoint in about 3 s, so the UI keeps working in rules mode.
 
@@ -115,7 +119,7 @@ unreachable endpoint in about 3 s, so the UI keeps working in rules mode.
 ```bash
 cd src && cp .env.example .env       # set LLM_BASE_URL / LLM_API_KEY (or: make up-gpu)
 make up && make demo                 # uses saved pages; crawl first with: make crawl SOURCE=artorg (and dcb)
-make test                            # 25 tests, no network / GPU / model download
+make test                            # tests, no network / GPU / model download
 ```
 
 Without Docker: `make setup-local && make demo LOCAL=1 && make serve LOCAL=1`. Reported numbers: CPU only (WSL2,

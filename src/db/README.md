@@ -8,7 +8,7 @@ SQLite, Qdrant/NumPy and the BM25 pickle.
 ## Architecture
 
 - Immagine `bern-pg:18-age1.8.0-vec0.8.6`: `apache/age:release_PG18_1.8.0` (PG 18.6, AGE 1.8.0) + `postgresql-18-pgvector=0.8.6-1.pgdg13+1`.
-  The `initdb/` scripts are copied into the image and run **only on first start** (empty volume). Later schema changes are made with migrations recorded in `nav.schema_migrations`.
+  The `initdb/` scripts are copied into the image and run **only on first start** (empty volume). Later schema changes are made with migrations recorded in `nav.schema_migrations`. Migration files live in `migrations/` (e.g. `0002_remove_technical_review.sql`, which drops the former technical-review columns and statuses); apply them as `postgres` on databases created before the change.
 - A single `db` service. The port is published only on `127.0.0.1:${PG_HOST_PORT:-5432}`. It uses the `pgdata` volume (mounted at `/var/lib/postgresql`, PG18 layout) and the `bern` network, which the app containers join.
 - AGE is in `shared_preload_libraries`: no `LOAD 'age'` needed. The `bern_app` role has `search_path = nav, ag_catalog, public`.
 - Roles:
@@ -126,6 +126,7 @@ Planner note: with few rows and a weakly selective filter, Postgres may prefer a
 
   ```bash
   docker compose exec -T db psql -U postgres -d bern -v ON_ERROR_STOP=1 < migrations/0002_index_order_and_match_ref.sql
+  docker compose exec -T db psql -U postgres -d bern -v ON_ERROR_STOP=1 < migrations/0003_case_search_filters.sql
   ```
 
 The app (`navigator/pgstore.py`) checks `nav.schema_migrations` at connect time and refuses to start
@@ -134,6 +135,12 @@ with a `schema_outdated` error if a migration it needs is missing.
 | Version | What |
 |---|---|
 | `0002_index_order_and_match_ref` | `nav.entity.load_order` (input order, for identical tie-breaks with the file backend); `nav.case_match.entity_ref` (match id survives a reindex that drops the entity) |
+| `0002_remove_technical_review` | (team, main) end of the technical-review step: open review statuses become `new`, status CHECK narrowed to `new/contacted/call_scheduled/closed`, review columns **dropped**. Already part of the fresh `initdb/` schema (registered by `05-migrations.sql`); not required by the app |
+| `0003_case_search_filters` | `nav."case".canton/area/niche` (search-first request filters, `config/medtech_areas.yaml` ids) + index `(area, niche)`; on databases that still have the review columns they become nullable and unused (nothing dropped) |
+
+Order on an existing database: `0002_index_order_and_match_ref`, then `0003_case_search_filters` (required by the app).
+`0002_remove_technical_review` is independent and destructive (drops the review columns): take a backup first
+(see below) if that data matters.
 
 ## Backup and restore
 
