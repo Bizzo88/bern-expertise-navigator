@@ -1,0 +1,36 @@
+# Deterministic synonym / lay-term glossary (fast, auditable, editable by domain experts).
+# Apertus adds further expansions at query time; this file is the reviewed baseline.
+# Keys and values are lower-case; matching is substring-based on the query.
+
+glucose sensors:
+  - continuous glucose monitoring
+  - cgm
+  - biosensing
+  - metabolic monitoring
+  - wearable sensing
+  - glukosesensor
+  - kontinuierliche glukosemessung
+diabetes technology:
+  - artificial pancreas
+  - closed-loop insulin delivery
+  - insulin pump
+  - automated insulin delivery
+medical imaging:
+  - mri
+  - ct
+  - image analysis
+  - bildgebung
+heart:
+  - cardiovascular
+  - cardiology
+  - kardiologie
+  - cardiac
+hearing:
+  - cochlear implant
+  - audiology
+  - hörimplantat
+ai in medicine:
+  - machine learning
+  - deep learning
+  - medical image analysis
+  - künstliche intelligenz

@@ -1,0 +1,100 @@
+# ---------------------------------------------------------------------------
+# Landing-page showcase: research strengths, proof points, ways to engage.
+#
+# Rule (same as search): no source, no claim. Every `quote` must appear VERBATIM on the saved
+# page at `url` (data/pages/*.jsonl). The API checks this at startup and silently drops any item
+# that fails, so editing this file can never put an unverified statement on the page.
+# Titles/labels are UI text (EN/DE/FR); facts live only in the verbatim quotes.
+# ---------------------------------------------------------------------------
+
+themes:
+  - id: diabetes
+    query: diabetes technology glucose monitoring insulin delivery
+    title: {en: Diabetes technology, de: Diabetestechnologie, fr: Technologies du diabète}
+    blurb: {en: "Sensors, algorithms and devices for people living with diabetes.",
+            de: "Sensoren, Algorithmen und Geräte für Menschen mit Diabetes.",
+            fr: "Capteurs, algorithmes et dispositifs pour les personnes diabétiques."}
+  - id: ai-imaging
+    query: artificial intelligence medical image analysis
+    title: {en: AI & medical imaging, de: KI & medizinische Bildgebung, fr: IA & imagerie médicale}
+    blurb: {en: "Machine learning that reads scans, guides surgery and supports diagnosis.",
+            de: "Maschinelles Lernen für Bildanalyse, Chirurgie und Diagnose.",
+            fr: "Apprentissage automatique pour l'imagerie, la chirurgie et le diagnostic."}
+  - id: robotics
+    query: surgical robotics micro robots instruments
+    title: {en: Surgical & micro-robotics, de: Chirurgie- & Mikrorobotik, fr: Robotique chirurgicale & micro-robotique}
+    blurb: {en: "Robotic instruments for the operating room, down to robots steered by sound.",
+            de: "Robotische Instrumente für den Operationssaal bis hin zu schallgesteuerten Mikrorobotern.",
+            fr: "Instruments robotiques pour le bloc opératoire, jusqu'aux micro-robots acoustiques."}
+  - id: organ-chip
+    query: organs-on-chip microfluidic lung models
+    title: {en: Organs-on-chip, de: Organs-on-Chip, fr: Organes sur puce}
+    blurb: {en: "Microfluidic tissue models for drug testing and disease research.",
+            de: "Mikrofluidische Gewebemodelle für Wirkstofftests und Krankheitsforschung.",
+            fr: "Modèles tissulaires microfluidiques pour tester des médicaments."}
+  - id: biomech
+    query: biomechanics bone implants orthopaedics
+    title: {en: Biomechanics & implants, de: Biomechanik & Implantate, fr: Biomécanique & implants}
+    blurb: {en: "Bone, spine and implant mechanics, from simulation to testing.",
+            de: "Mechanik von Knochen, Wirbelsäule und Implantaten, von Simulation bis Test.",
+            fr: "Mécanique des os, du rachis et des implants, de la simulation aux essais."}
+  - id: neuro
+    query: hearing cochlear implant neurorehabilitation
+    title: {en: "Hearing, neuro & rehabilitation", de: "Hören, Neuro & Rehabilitation", fr: "Audition, neuro & réadaptation"}
+    blurb: {en: "Cochlear implants, neurosurgery tools and technology for healthy ageing.",
+            de: "Cochlea-Implantate, Neurochirurgie und Technologie für gesundes Altern.",
+            fr: "Implants cochléaires, neurochirurgie et technologies pour bien vieillir."}
+  - id: cardio
+    query: cardiovascular heart valves blood flow
+    title: {en: Cardiovascular engineering, de: Kardiovaskuläre Technik, fr: Ingénierie cardiovasculaire}
+    blurb: {en: "Heart valves, blood flow and the microcirculation, simulated and measured.",
+            de: "Herzklappen, Blutfluss und Mikrozirkulation, simuliert und gemessen.",
+            fr: "Valves cardiaques, flux sanguin et microcirculation, simulés et mesurés."}
+
+highlights:
+  - figure: "200+"
+    label: {en: Medtech jobs created by ARTORG spin-offs, de: Medtech-Arbeitsplätze durch ARTORG-Spin-offs, fr: Emplois medtech créés par des spin-offs de l'ARTORG}
+    quote: "Through these spin-off companies, ARTORG researchers have also created 200+ workplaces in the Medtech sector."
+    url: https://www.artorg.unibe.ch/about_us/index_eng.html
+  - figure: "CHF 6M+"
+    label: {en: research funding raised by DCB professorships, de: eingeworbene Forschungsmittel der DCB-Professuren, fr: fonds de recherche levés par les chaires du DCB}
+    quote: "in recent years, the professorships have jointly raised more than CHF 6 million from competitive funding programmes, foundations and industry-supported research collaborations."
+    url: https://www.dcberne.com/en/four-dcb-professorships-advance-research-in-diabetes-technology/
+  - figure: "100+"
+    label: {en: start-ups and innovators working with DCB, de: Start-ups und Innovatoren arbeiten mit dem DCB, fr: start-up et innovateurs travaillent avec le DCB}
+    quote: "we currently work with more than 100 start-ups and innovators."
+    url: https://www.dcberne.com/en/innovation/
+  - figure: "61"
+    label: {en: researchers across the DCB professorships, de: Forschende in den DCB-Professuren, fr: chercheurs dans les chaires du DCB}
+    quote: "Today, a total of 61 researchers work across the DCB professorships"
+    url: https://www.dcberne.com/en/four-dcb-professorships-advance-research-in-diabetes-technology/
+
+engage:
+  - audience: company
+    title: {en: License a technology, de: Technologie lizenzieren, fr: Acquérir une licence}
+    quote: "Unitectra is the technology transfer company of the University of Bern and the University of Zurich as well as their associated university hospitals."
+    url: https://www.artorg.unibe.ch/services/technology_transfer/unitectra/index_eng.html
+  - audience: company
+    title: {en: Get support towards market entry, de: Unterstützung beim Markteintritt, fr: Accompagnement vers le marché}
+    quote: "DCB supports (patient) entrepreneurs, researchers and bigger corporates on their way towards market entry."
+    url: https://www.dcberne.com/en/offering/
+  - audience: company
+    title: {en: Use research services, de: Forschungsdienstleistungen nutzen, fr: Utiliser les services de recherche}
+    quote: "The ARTORG Center offers a range of services to the research community of the Bern Biomedical Engineering Network."
+    url: https://www.artorg.unibe.ch/services/index_eng.html
+  - audience: researcher
+    title: {en: Work next to the clinic, de: Forschen nah an der Klinik, fr: Chercher au plus près de la clinique}
+    quote: "organizational links to various deparments of Inselspital, Bern University Hospital, were established that still fuel our innovations today."
+    url: https://www.artorg.unibe.ch/about_us/index_eng.html
+  - audience: researcher
+    title: {en: Spin off your research, de: Forschung ausgründen, fr: Créer une spin-off}
+    quote: "A number of University of Bern spin-offs have acquired rights to technology intellectual property, including patents, know-how, models and clinical data."
+    url: https://www.artorg.unibe.ch/about_us/index_eng.html
+  - audience: public
+    title: {en: Connect science and start-ups, de: Wissenschaft und Start-ups vernetzen, fr: Relier science et start-up}
+    quote: "As we are a translational research institute, good scientific contacts are just as important to us as having a good network in the start-up scene"
+    url: https://www.dcberne.com/en/partners-network/
+  - audience: public
+    title: {en: Industry & SME mentorship, de: Mentoring mit Industrie & KMU, fr: Mentorat avec l'industrie et les PME}
+    quote: "the regional industry community including small and medium enterprises (SMEs)"
+    url: https://www.artorg.unibe.ch/services/technology_transfer/index_eng.html

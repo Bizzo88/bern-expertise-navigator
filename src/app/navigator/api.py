@@ -1,0 +1,304 @@
+"""FastAPI: /search, /entity, /stats, /health and the web UI."""
+from __future__ import annotations
+
+import json
+import threading
+import time
+from collections import Counter
+from contextlib import asynccontextmanager
+from functools import lru_cache
+from pathlib import Path
+
+from typing import Literal
+
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from . import cases, crawl, index, llm, plain, search as search_mod, showcase
+from .config import DATA_DIR, load_sources, settings
+from .schema import EntityDetail, RelatedRef, SearchResponse
+
+STATIC = Path(__file__).parent / "static"
+
+
+def _warm_up():
+    """Load the embedding model and the index before the first user query (cold start ~15 s on CPU)."""
+    try:
+        index.load_entities()
+        index.embed(["warm up"], query=True)
+        showcase.build()
+    except Exception as e:  # noqa: BLE001 - warm-up must never crash the server
+        print(f"[api] warm-up skipped: {e}")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    threading.Thread(target=_warm_up, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Research & Expertise Navigator", version="0.3.0", lifespan=lifespan)
+app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+
+@app.get("/", include_in_schema=False)
+def ui():
+    return FileResponse(STATIC / "index.html")
+
+
+@app.get("/health")
+def health():
+    return {"ok": True, "entities": len(index.load_entities()), "model": settings.llm_model,
+            "llm_available": llm.available()}
+
+
+@app.get("/search", response_model=SearchResponse)
+def do_search(q: str = Query(..., min_length=2, max_length=300), k: int = Query(10, ge=1, le=50),
+              source: list[str] | None = Query(None), type: list[str] | None = Query(None)):
+    t0 = time.time()
+    r = search_mod.search(q, k=k, sources=source, types=type)
+    r.took_ms = int((time.time() - t0) * 1000)
+    r.llm_used = llm.available() and (settings.use_llm_expansion or settings.use_llm_explain)
+    return r
+
+
+@app.get("/entity/{eid}", response_model=EntityDetail)
+def entity(eid: str):
+    ents = index.load_entities()
+    e = ents.get(eid)
+    if not e:
+        raise HTTPException(404, "unknown entity")
+    nb = [ents[i] for i in search_mod.graph().get(eid, []) if i in ents]
+    nb.sort(key=lambda x: (x.entity_type != "person", -search_mod.seniority(x), x.name))
+    return EntityDetail(entity=e, related=[RelatedRef(id=x.id, name=x.name, entity_type=x.entity_type, role=x.role)
+                                           for x in nb[:40]])
+
+
+@app.get("/showcase")
+def get_showcase():
+    """Landing page data: research strengths (live from the index), verified proof points, labs, facilities."""
+    return showcase.build()
+
+
+@lru_cache(maxsize=1)
+def _pages_per_source(_mt: tuple) -> Counter:
+    return Counter(p.source for p in crawl.load_pages())
+
+
+def _json(name: str):
+    p = DATA_DIR / name
+    return json.loads(p.read_text()) if p.exists() else None
+
+
+@app.get("/stats")
+def stats():
+    ents = index.load_entities().values()
+    page_files = tuple(sorted((f.name, f.stat().st_mtime) for f in (DATA_DIR / "pages").glob("*.jsonl"))) \
+        if (DATA_DIR / "pages").exists() else ()
+    rej = DATA_DIR / "rejected.jsonl"
+    return {
+        "sources": [{"name": s.name, "label": s.label} for s in load_sources()],
+        "pages_per_source": _pages_per_source(page_files),
+        "entities_per_source": Counter(e.source for e in ents),
+        "entities_per_type": Counter(e.entity_type for e in ents),
+        "evidence_snippets": sum(len(e.evidence) for e in ents),
+        "claims_rejected": sum(1 for l in rej.open() if l.strip()) if rej.exists() else 0,
+        "model": settings.llm_model,
+        "llm_available": llm.available(),
+        "extractors": Counter(e.extractor for e in ents),
+        "eval": _json("eval_report.json"),
+    }
+
+
+# ---------------- plain language ------------------------------------------------
+@app.get("/glossary")
+def get_glossary(lang: str = "en"):
+    """Reviewed plain-language glossary (for jargon tooltips in the UI)."""
+    return [{"term": t["term"], "forms": t["forms"], "plain": t.get(lang) or t["en"]} for t in plain.glossary()]
+
+
+@app.get("/examples")
+def examples():
+    """Fictional example requests for the demo form."""
+    import yaml
+    from .config import CONFIG_DIR
+    p = CONFIG_DIR / "example_requests.yaml"
+    return yaml.safe_load(p.read_text()).get("examples", []) if p.exists() else []
+
+
+# ---------------- company requests (cases) ----------------------------------------
+def _case_or_404(cid: str) -> cases.Case:
+    c = cases.get(cid)
+    if not c:
+        raise HTTPException(404, "unknown request")
+    return c
+
+
+@app.get("/cases")
+def list_cases():
+    return [{"id": c.id, "company": c.company, "status": c.status, "country": c.country,
+             "updated_at": c.updated_at, "created_at": c.created_at, "summary": c.analysis.summary[:220],
+             "selected": sum(m.selected for m in c.matches), "reviewer": c.reviewer} for c in cases.list_cases()]
+
+
+@app.post("/cases", response_model=cases.Case)
+def create_case(req: cases.NewCase):
+    return cases.create(req)
+
+
+@app.get("/cases/{cid}", response_model=cases.Case)
+def get_case(cid: str):
+    return _case_or_404(cid)
+
+
+@app.delete("/cases/{cid}")
+def delete_case(cid: str):
+    _case_or_404(cid)
+    cases.delete(cid)
+    return {"ok": True}
+
+
+class Selection(BaseModel):
+    selected: list[str]
+    actor: str = "Officer"
+
+
+@app.post("/cases/{cid}/selection", response_model=cases.Case)
+def select_matches(cid: str, body: Selection):
+    c = _case_or_404(cid)
+    for m in c.matches:
+        m.selected = m.id in body.selected
+    return cases.save(c)
+
+
+class AddMatch(BaseModel):
+    entity_id: str
+    actor: str = "Officer"
+
+
+@app.post("/cases/{cid}/matches", response_model=cases.Case)
+def add_match(cid: str, body: AddMatch):
+    """Add a result found in Explore to the request."""
+    c = _case_or_404(cid)
+    e = index.load_entities().get(body.entity_id)
+    if not e:
+        raise HTTPException(404, "unknown entity")
+    if not any(m.id == e.id for m in c.matches):
+        c.matches.insert(0, cases.Match(id=e.id, name=e.name, entity_type=e.entity_type, role=e.role, unit=e.unit,
+                                        institution=e.source_label, why="Added by hand from Explore",
+                                        plain=e.description[0] if e.description else None, url=e.source_urls[0],
+                                        contact=e.email, selected=True))
+        cases.log(c, body.actor, "added", f"Added {e.name}")
+    return cases.save(c)
+
+
+class Rematch(BaseModel):
+    query: str = Field(..., min_length=2, max_length=300)
+    actor: str = "Officer"
+
+
+@app.post("/cases/{cid}/rematch", response_model=cases.Case)
+def rematch(cid: str, body: Rematch):
+    return cases.rematch(_case_or_404(cid), body.query, body.actor)
+
+
+class ReviewRequest(BaseModel):
+    reviewer: str = Field(..., min_length=1, max_length=120)
+    note: str = Field("", max_length=2000)
+    actor: str = "Officer"
+
+
+@app.post("/cases/{cid}/review-request", response_model=cases.Case)
+def request_review(cid: str, body: ReviewRequest):
+    c = _case_or_404(cid)
+    if not any(m.selected for m in c.matches):
+        raise HTTPException(400, "Select at least one partner before asking for a review")
+    c.status, c.reviewer, c.review_note = "in_review", body.reviewer.strip(), body.note.strip()
+    for m in c.matches:
+        m.review, m.review_note = None, ""
+    cases.log(c, body.actor, "review_requested", f"Sent to {c.reviewer} for technical review" +
+              (f": “{c.review_note}”" if c.review_note else ""))
+    return cases.save(c)
+
+
+class MatchVerdict(BaseModel):
+    id: str
+    verdict: Literal["ok", "no"]
+    note: str = ""
+
+
+class Review(BaseModel):
+    decision: Literal["approved", "changes_requested"]
+    comment: str = Field("", max_length=4000)
+    verdicts: list[MatchVerdict] = []
+    actor: str = "Reviewer"
+
+
+@app.post("/cases/{cid}/review", response_model=cases.Case)
+def submit_review(cid: str, body: Review):
+    c = _case_or_404(cid)
+    v = {x.id: x for x in body.verdicts}
+    for m in c.matches:
+        if m.id in v:
+            m.review, m.review_note = v[m.id].verdict, v[m.id].note.strip()
+    if body.decision == "approved" and not any(m.selected and m.review == "ok" for m in c.matches):
+        raise HTTPException(400, "Approve at least one partner, or request changes")
+    c.status, c.review_comment = body.decision, body.comment.strip()
+    ok = sum(m.selected and m.review == "ok" for m in c.matches)
+    cases.log(c, body.actor, body.decision,
+              (f"Approved {ok} partner(s)" if body.decision == "approved" else "Asked for changes") +
+              (f": “{c.review_comment}”" if c.review_comment else ""))
+    return cases.save(c)
+
+
+class DraftReq(BaseModel):
+    lang: Literal["en", "de", "fr"] = "en"
+    slots: list[str] = []
+    sender: str = ""
+    team: str = ""
+
+
+@app.post("/cases/{cid}/draft")
+def draft(cid: str, body: DraftReq):
+    c = _case_or_404(cid)
+    if c.status not in ("approved", "contacted", "call_scheduled", "closed"):
+        raise HTTPException(400, "The technical review must approve the partners first")
+    return cases.draft_email(c, body.lang, body.slots, body.sender, body.team)
+
+
+class Outcome(BaseModel):
+    kind: Literal["email", "call", "closed"]
+    detail: str = ""
+    subject: str = ""
+    body: str = ""
+    actor: str = "Officer"
+
+
+@app.post("/cases/{cid}/outcome", response_model=cases.Case)
+def outcome(cid: str, body: Outcome):
+    c = _case_or_404(cid)
+    if body.kind == "email":
+        c.status = "contacted"
+        c.outreach = {"subject": body.subject, "body": body.body, "sent_at": cases._now()}
+        cases.log(c, body.actor, "emailed", f"Invitation email to {c.contact_email or c.company}")
+    elif body.kind == "call":
+        c.status = "call_scheduled"
+        c.outreach = {**c.outreach, "call": body.detail}
+        cases.log(c, body.actor, "call_scheduled", f"Call planned: {body.detail}")
+    else:
+        c.status = "closed"
+        cases.log(c, body.actor, "closed", body.detail)
+    return cases.save(c)
+
+
+@app.get("/cases/{cid}/invite.ics")
+def invite(cid: str, start: str, minutes: int = Query(30, ge=10, le=240), organizer: str = "", organizer_email: str = ""):
+    c = _case_or_404(cid)
+    try:
+        body = cases.ics(c, start, minutes, organizer, organizer_email)
+    except ValueError:
+        raise HTTPException(400, "start must be an ISO date-time, e.g. 2026-10-22T14:00") from None
+    return Response(body, media_type="text/calendar",
+                    headers={"Content-Disposition": f'attachment; filename="bern-call-{c.id}.ics"'})

@@ -1,0 +1,391 @@
+"""Stage 5 — hybrid search, fair ranking, cited explanations, honest abstention."""
+from __future__ import annotations
+
+import re
+from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
+
+import numpy as np
+from pydantic import BaseModel
+
+from . import index, llm
+from .config import load_glossary, settings
+from .extract import name_key, unit_key
+from .schema import Affiliation, Entity, SearchResponse, SearchResult, SourceRef
+
+RRF_K = 60
+NO_SOURCE_MSG = ("No verifiable public source found for this query in the indexed websites. "
+                 "Try broader or alternative terms, or check another institution.")
+# e5 cosine similarities live in a narrow band; map it to 0..1 for display
+CONF_LO, CONF_HI = 0.75, 0.90
+# A result must clear this vector score OR share a word with the (expanded) query
+RESULT_FLOOR_MARGIN = 0.03
+
+
+# ---------------- query understanding ---------------------------------------
+class _QueryAnalysis(BaseModel):
+    terms: list[str]
+    person_names: list[str] = []
+
+
+def glossary_terms(q: str) -> list[str]:
+    ql = q.lower()
+    out = []
+    for k, vs in load_glossary().items():
+        if k in ql or any(re.search(rf"\b{re.escape(v)}\b", ql) for v in vs):
+            out += [k, *vs]
+    return out
+
+
+@lru_cache(maxsize=1024)
+def llm_analyze(q: str) -> _QueryAnalysis:
+    try:
+        r = llm.chat_json([
+            {"role": "system", "content": "You help search university research websites. JSON only."},
+            {"role": "user", "content": (
+                "For the search query below return:\n"
+                "- terms: up to 8 short alternative search terms (technical synonyms, abbreviations, lay terms) "
+                "in English, German and French. No explanations.\n"
+                "- person_names: names of specific people mentioned in the query (empty if none).\n"
+                f"QUERY: {q}")},
+        ], _QueryAnalysis, max_tokens=250, temperature=0.0)
+        terms = [t.strip().lower() for t in r.terms if 1 < len(t.strip()) < 60][:8]  # type: ignore[attr-defined]
+        return _QueryAnalysis(terms=terms, person_names=[n for n in r.person_names if n.strip()])  # type: ignore[attr-defined]
+    except llm.LLMError:
+        return _QueryAnalysis(terms=[])
+
+
+_TITLE_NAME = re.compile(r"\b(?i:prof|dr|pd)\.?\s+((?:[A-ZÄÖÜ][\w'’-]+\s*){1,3})")
+
+
+def regex_person_names(q: str) -> list[str]:
+    """No-LLM fallback: 'Prof. Jane Doe' / 'Dr. Doe'."""
+    return [m.group(1).strip() for m in _TITLE_NAME.finditer(q)]
+
+
+def analyze(q: str) -> tuple[list[str], list[str]]:
+    terms = glossary_terms(q)
+    names = regex_person_names(q)
+    if settings.use_llm_expansion and llm.available():
+        a = llm_analyze(q)
+        terms += a.terms
+        # Only names literally in the query with >= 2 words ("Parkinson disease" is not a person query)
+        names += [n for n in a.person_names if len(n.split()) >= 2 and n.lower() in q.lower()]
+    seen, out = {q.lower()}, []
+    for t in terms:
+        if t not in seen:
+            seen.add(t)
+            out.append(t)
+    return out, list(dict.fromkeys(names))
+
+
+def expand(q: str) -> list[str]:
+    return analyze(q)[0]
+
+
+def match_person(name: str, ents: dict[str, Entity]) -> list[str]:
+    toks = set(name_key(name).split())
+    if not toks:
+        return []
+    return [eid for eid, e in ents.items() if toks <= set(name_key(e.name).split())]
+
+
+# ---------------- retrieval -----------------------------------------------
+def bm25_rank(text: str, top: int = 100) -> tuple[list[str], float]:
+    b = index.load_bm25()
+    toks = index.tokenize(text)
+    if not b or not toks:
+        return [], 0.0
+    scores = b["bm25"].get_scores(toks)
+    order = np.argsort(-scores)[:top]
+    return [b["ids"][i] for i in order if scores[i] > 0], float(scores[order[0]]) if len(order) else 0.0
+
+
+def vector_rank(q: str, extra: list[str], top: int = 200,
+                sources: list[str] | None = None) -> tuple[list[str], dict[str, float]]:
+    """Ranking over query + expansions; also returns each entity's best cosine to the ORIGINAL query."""
+    texts = [q, *extra[:4]]
+    vecs = index.embed(texts, query=True)
+    best: dict[str, float] = {}
+    orig: dict[str, float] = {}
+    for j, (text, vec) in enumerate(zip(texts, vecs)):
+        for eid, score in index.vector_search(vec, top, sources):
+            best[eid] = max(best.get(eid, 0.0), score * (1.0 if j == 0 else 0.97))
+            if j == 0:
+                orig[eid] = max(orig.get(eid, 0.0), score)
+    return sorted(best, key=lambda k: -best[k]), orig
+
+
+def rrf(*rankings: list[str]) -> dict[str, float]:
+    s: dict[str, float] = {}
+    for r in rankings:
+        for i, eid in enumerate(r):
+            s[eid] = s.get(eid, 0.0) + 1.0 / (RRF_K + i + 1)
+    return s
+
+
+def fair_top(ids: list[str], ents: dict[str, Entity], k: int) -> list[str]:
+    """Diversity cap: at most N people and N units/projects per unit, so small groups stay visible."""
+    per_unit: Counter[tuple[str, bool]] = Counter()
+    out, overflow = [], []
+    for eid in ids:
+        e = ents.get(eid)
+        if not e:
+            continue
+        is_person = e.entity_type == "person"
+        unit = (unit_key(e.unit or e.name) if not is_person else unit_key(e.unit or e.source), is_person)
+        if per_unit[unit] < settings.max_per_unit:
+            per_unit[unit] += 1
+            out.append(eid)
+        else:
+            overflow.append(eid)
+        if len(out) == k:
+            break
+    return (out + overflow)[:k]
+
+
+# ---------------- lightweight knowledge graph -----------------------------
+@lru_cache(maxsize=2)
+def _graph(_key: float) -> dict[str, list[str]]:
+    """person <-> unit, person <-> project, project <-> unit links (by name, within one source)."""
+    ents = index.load_entities()
+    by_name: dict[tuple[str, str], list[str]] = defaultdict(list)
+    for e in ents.values():
+        if e.entity_type != "person":
+            by_name[(e.source, unit_key(e.name))].append(e.id)
+    g: dict[str, list[str]] = defaultdict(list)
+    for e in ents.values():
+        for target in (e.unit, e.institute, *e.projects):
+            for tid in by_name.get((e.source, unit_key(target or "")), []):
+                if tid != e.id:
+                    g[e.id].append(tid)
+                    g[tid].append(e.id)
+    return {k: list(dict.fromkeys(v)) for k, v in g.items()}
+
+
+def graph() -> dict[str, list[str]]:
+    return _graph(index._mtime(index.ENTITIES_PATH))
+
+
+def related(e: Entity, ents: dict[str, Entity], limit: int = 8) -> list[str]:
+    nb = [ents[i] for i in graph().get(e.id, []) if i in ents]
+    # people first (by seniority), then units / projects
+    nb.sort(key=lambda x: (x.entity_type != "person", -seniority(x)))
+    return [x.name for x in nb[:limit]]
+
+
+_SENIOR = re.compile(r"prof|head|leader|lead\b|director|chair|principal|\bpi\b|chief|ceo", re.I)
+_JUNIOR = re.compile(r"student|intern|master|bachelor|apprentice|assistant\b|technician", re.I)
+
+
+_LEAD = re.compile(r"\bprof|group head|head of|group leader|director|principal investigator|\bpi\b", re.I)
+
+
+def seniority(e: Entity) -> float:
+    text = f"{e.role or ''} {e.name}"
+    if _LEAD.search(text):
+        return 1.2  # professor / group head: the person to contact first
+    if _SENIOR.search(text):
+        return 1.0
+    if _JUNIOR.search(text):
+        return 0.6
+    return 0.8
+
+
+def propagate(fused: dict[str, float], ents: dict[str, Entity], depth: int = 20) -> dict[str, str]:
+    """A matching unit/project surfaces its people: 'who do I contact about this?'.
+
+    Returns {person_id: id of the unit/project it was found through}. The person's score is the
+    parent's score damped by seniority, so group heads come before students.
+    """
+    via: dict[str, str] = {}
+    g = graph()
+    for pid in sorted(fused, key=lambda x: -fused[x])[:depth]:
+        parent = ents.get(pid)
+        if not parent or parent.entity_type == "person":
+            continue
+        for cid in g.get(pid, []):
+            c = ents.get(cid)
+            if not c or c.entity_type != "person":
+                continue
+            # group head lands right after the group itself; members further down
+            s = seniority(c)
+            score = fused[pid] * (0.98 if s >= 1.2 else 0.93 if s >= 1.0 else 0.85 * s)
+            if score > fused.get(cid, 0.0):
+                fused[cid] = score
+                via[cid] = pid
+    return via
+
+
+# ---------------- explanation (cited, never free-form) ---------------------
+class _Why(BaseModel):
+    explanation: str
+    evidence_ids: list[int]
+
+
+def matched_evidence(e: Entity, terms: list[str]):
+    toks = {t for term in terms for t in index.tokenize(term) if len(t) > 2}
+    scored = [(sum(t in ev.snippet.lower() for t in toks), i, ev) for i, ev in enumerate(e.evidence)
+              if ev.field != "email"]
+    hits = [x for x in sorted(scored, key=lambda x: -x[0]) if x[0] > 0]
+    if hits:
+        return hits
+    # No lexical overlap (semantic match): show the entity's topical evidence, not just its name
+    topical = [x for x in scored if x[2].field in ("expertise", "projects", "infrastructure", "role")]
+    return topical[:3] or scored[:2]
+
+
+def coverage(q: str, docs: list[Entity]) -> float:
+    """Share of the query's content words (5-char prefix, so plurals match) found in the best document."""
+    qt = [t for t in index.tokenize(q) if len(t) > 2]
+    if not qt or not docs:
+        return 0.0
+    best = 0.0
+    for d in docs:
+        txt = d.search_text().lower()
+        best = max(best, sum(bool(re.search(r"\b" + re.escape(t[:5]), txt)) for t in qt) / len(qt))
+    return best
+
+
+def lexical_hit(e: Entity, terms: list[str]) -> bool:
+    toks = {t for term in terms for t in index.tokenize(term) if len(t) > 2}
+    text = e.search_text().lower()
+    return any(re.search(rf"\b{re.escape(t)}", text) for t in toks)
+
+
+@lru_cache(maxsize=4096)
+def _llm_why(q: str, name: str, etype: str, numbered: str, valid: tuple[int, ...]) -> str | None:
+    try:
+        r = llm.chat_json([
+            {"role": "system", "content": "Explain search matches using ONLY the given evidence. JSON only."},
+            {"role": "user", "content": (
+                f"Query: {q}\nCandidate: {name} ({etype})\nEvidence:\n{numbered}\n\n"
+                "In max 30 words, say why this candidate matches the query. Cite the evidence ids you used. "
+                "Do not add facts that are not in the evidence. "
+                "If the evidence does not support a match, say 'Weak match'.")},
+        ], _Why, max_tokens=150)
+    except llm.LLMError:
+        return None
+    if not r.evidence_ids or not set(r.evidence_ids) <= set(valid):  # type: ignore[attr-defined]
+        return None
+    return r.explanation  # type: ignore[attr-defined]
+
+
+def explain_via(q: str, person: Entity, parent: Entity, terms: list[str]) -> tuple[str, list[SourceRef]]:
+    """Person found through a matching unit/project: cite the link AND why the unit/project matches."""
+    why_parent, refs = explain(q, parent, terms)
+    link = [ev for ev in person.evidence if ev.field in ("unit", "institute", "projects", "role", "name")
+            and (parent.name in ev.value or ev.field in ("role", "name"))][:2]
+    link_refs = [SourceRef(url=ev.url, snippet=ev.snippet, field=ev.field, retrieved_at=person.retrieved_at) for ev in link]
+    rel = {"unit": "Works in", "project": "On the team of"}.get(parent.entity_type, "Contact for")
+    return f"{rel} {parent.name}, which {why_parent[0].lower()}{why_parent[1:]}", link_refs + refs[:3]
+
+
+_FIELD_NAME = {"name": "name", "description": "description", "expertise": "stated expertise", "projects": "projects",
+               "role": "role", "unit": "affiliation", "institute": "affiliation", "infrastructure": "services"}
+
+
+def _join(xs: list[str]) -> str:
+    return xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1]
+
+
+def fallback_why(q: str, terms: list[str], hits) -> str:
+    """Deterministic, honest explanation: which query words occur where (no LLM)."""
+    lexical = [x for x in hits if x[0] > 0]
+    if not lexical:
+        return "Is close in meaning to your query (no exact word match); see the quoted source."
+    text = " ".join(ev.snippet.lower() for _, _, ev in lexical)
+    phrases = [t for t in [q, *terms] if len(t) > 2 and re.search(rf"\b{re.escape(t.lower())}", text)]
+    if not phrases:
+        phrases = list(dict.fromkeys(t for t in index.tokenize(" ".join([q, *terms]))
+                                     if len(t) > 2 and re.search(rf"\b{re.escape(t)}", text)))
+    fields = list(dict.fromkeys(_FIELD_NAME.get(ev.field, ev.field) for _, _, ev in lexical))
+    return f"Mentions {_join([f'“{p}”' for p in phrases[:3]])} in its {_join(fields[:3])}."
+
+
+def explain(q: str, e: Entity, terms: list[str]) -> tuple[str, list[SourceRef]]:
+    hits = matched_evidence(e, [q, *terms])[:4]
+    refs = [SourceRef(url=ev.url, snippet=ev.snippet, field=ev.field, retrieved_at=e.retrieved_at)
+            for _, _, ev in hits]
+    fallback = fallback_why(q, terms, hits)
+    if not settings.use_llm_explain or not hits or not llm.available():
+        return fallback, refs
+    numbered = "\n".join(f"[{i}] ({ev.field}) {ev.snippet}" for _, i, ev in hits)
+    why = _llm_why(q, e.name, e.entity_type, numbered, tuple(i for _, i, _ in hits))
+    return (why or fallback), refs
+
+
+# ---------------- public API ----------------------------------------------
+_pool = ThreadPoolExecutor(max_workers=8)
+
+
+def _abstain(q: str, terms: list[str], msg: str = NO_SOURCE_MSG) -> SearchResponse:
+    return SearchResponse(query=q, expanded_terms=terms, abstained=True, message=msg, results=[])
+
+
+def search(q: str, k: int = 10, sources: list[str] | None = None, types: list[str] | None = None) -> SearchResponse:
+    q = q.strip()
+    ents = index.load_entities()
+    if not ents:
+        return _abstain(q, [], "The index is empty: run the pipeline (crawl -> extract -> index) first.")
+    terms, names = analyze(q)
+
+    # Honest about people: a named person who is not on any indexed page -> no answer
+    pinned: list[str] = []
+    for n in names:
+        found = match_person(n, ents)
+        if not found:
+            return _abstain(q, terms, f"No person named “{n}” appears on the indexed public pages. " + NO_SOURCE_MSG)
+        pinned += found
+
+    bm_q, bm_top = bm25_rank(q)
+    bm_x, _ = bm25_rank(" ".join(terms)) if terms else ([], 0.0)
+    vec_ids, vec_orig = vector_rank(q, terms, sources=sources)
+    vec_top = max(vec_orig.values(), default=0.0)
+
+    # Honest abstention: weak semantic match AND the query's words are mostly absent from the best
+    # candidates AND no expansion term occurs verbatim. Calibrated on eval/golden_set.yaml.
+    cands = [ents[i] for i in (sorted(vec_orig, key=lambda x: -vec_orig[x])[:5] + bm_q[:5]) if i in ents]
+    if not pinned and vec_top < settings.min_vector_score \
+            and coverage(q, cands) <= settings.min_coverage \
+            and max([coverage(t, cands) for t in terms] or [0.0]) < 1.0:
+        return _abstain(q, terms)
+
+    fused = rrf(bm_q, bm_x, vec_ids)
+    via = propagate(fused, ents)
+    for i, eid in enumerate(pinned):
+        fused[eid] = fused.get(eid, 0.0) + 1.0 - i * 1e-3
+        via.pop(eid, None)
+    floor = settings.min_vector_score - RESULT_FLOOR_MARGIN
+    all_terms = [q, *terms]
+    ranked = [eid for eid in sorted(fused, key=lambda x: -fused[x])
+              if eid in ents
+              and (not sources or ents[eid].source in sources)
+              and (not types or ents[eid].entity_type in types)
+              and (eid in pinned or eid in via or vec_orig.get(eid, 0.0) >= floor or lexical_hit(ents[eid], all_terms))]
+    top = fair_top(ranked, ents, k)
+
+    def _explain(eid: str):
+        if eid in via and via[eid] in ents:
+            return explain_via(q, ents[eid], ents[via[eid]], terms)
+        return explain(q, ents[eid], terms)
+
+    explained = list(_pool.map(_explain, top))
+    results = []
+    for eid, (why, refs) in zip(top, explained):
+        e = ents[eid]
+        if not refs:  # traceability guard: never return an unsourced result
+            continue
+        sim = max(vec_orig.get(eid, 0.0), vec_orig.get(via.get(eid, ""), 0.0)) or CONF_LO
+        conf = float(np.clip((sim - CONF_LO) / (CONF_HI - CONF_LO), 0, 1))
+        results.append(SearchResult(
+            id=e.id, person_or_unit=e.name, entity_type=e.entity_type, role=e.role,
+            affiliation=Affiliation(unit=e.unit, institute=e.institute, institution=e.source_label),
+            institution=e.source_label, expertise=e.expertise, projects=e.projects,
+            infrastructure_services=e.infrastructure, description=(e.description or [None])[0],
+            contact=e.email, why_match=why, related=related(e, ents),
+            via=ents[via[eid]].name if eid in via else None, sources=refs, score=round(fused[eid], 4), confidence=round(conf, 2)))
+    if not results:
+        return _abstain(q, terms)
+    return SearchResponse(query=q, expanded_terms=terms, abstained=False, results=results)

@@ -1,0 +1,111 @@
+# Golden set, built from the REAL public pages (crawl of 2026-10-18). Each expected name was checked
+# on the cited page. Names are matched case-, accent- and title-insensitively; a match on the unit
+# (e.g. "Medical Image Analysis") also counts when the unit is the expected entity.
+#
+# Kinds: (a) site-terminology queries, (b) lay-term / other-language twins (twin_of -> must find the
+# same experts), (c) out-of-domain and non-existent-person queries that must abstain.
+# TODO(team): add UniBE queries once the subdomain inventory is crawled.
+
+queries:
+  # ---------------- ARTORG (artorg.unibe.ch/research/<group>/index_eng.html) ----------------
+  - id: a01
+    query: brain tumour segmentation in MRI
+    expected: ["Mauricio Reyes"]                       # /research/mia/
+  - id: a02
+    query: AI that reads brain scans of cancer patients
+    expected: ["Mauricio Reyes"]
+    twin_of: a01
+  - id: a03
+    query: micro- and nanorobotics
+    expected: ["Daniel Ahmed"]                          # /research/arsl/
+  - id: a04
+    query: tiny robots steered by sound waves
+    expected: ["Daniel Ahmed"]
+    twin_of: a03
+  - id: a05
+    query: lung-on-chip microfluidic models
+    expected: ["Olivier T. Guenat"]                     # /research/ooc/
+  - id: a06
+    query: AI for nutrition and diabetes management
+    expected: ["Stavroula Mougiakakou"]                 # /research/aihn/
+  - id: a07
+    query: robotic instruments for neurosurgery
+    expected: ["Manuela Eugster"]                       # /research/nrg/
+  - id: a08
+    query: bone strength and osteoporosis biomechanics
+    expected: ["Philippe Zysset"]                       # /research/msb/
+  - id: a09
+    query: cochlear implant surgery
+    expected: ["Hearing Research Laboratory"]           # /research/hrl/
+  - id: a10
+    query: hearing aids and ear operations              # lay twin of a09
+    expected: ["Hearing Research Laboratory"]
+    twin_of: a09
+  - id: a11
+    query: urinary tract obstruction
+    expected: ["Francesco Clavica"]                     # /research/uge/
+  - id: a12
+    query: telerehabilitation for elderly people
+    expected: ["Tobias Nef"]                            # /research/ger/
+  - id: a13
+    query: computer vision for eye surgery
+    expected: ["Raphael Sznitman"]                      # /research/aimi/
+  - id: a14
+    query: blood flow in heart valves and aorta
+    expected: ["Cardiovascular Engineering"]            # /research/cve/
+  - id: a15
+    query: corneal biomechanics and refractive surgery
+    expected: ["Philippe Büchler"]                      # /research/cbe/
+  - id: a16
+    query: detecting tumours during surgery with optical imaging
+    expected: ["Brice-Olivier Demory"]                  # /research/msl/
+  - id: a17
+    query: 3D printing facility
+    expected: ["3D Printing"]                           # /services/3d_printing/
+
+  # ---------------- Diabetes Center Berne (dcberne.com/en/team/ + project pages) ----------------
+  - id: d01
+    query: continuous glucose monitoring
+    expected: ["Lilian Witthauer"]                      # Sensing & Monitoring Lab; CGM publications
+  - id: d02
+    query: glucose sensors                              # lay-term twin of d01 (the challenge example)
+    expected: ["Lilian Witthauer"]
+    twin_of: d01
+  - id: d03
+    query: kontinuierliche Glukosemessung               # German twin of d01
+    expected: ["Lilian Witthauer"]
+    twin_of: d01
+  - id: d04
+    query: automated insulin delivery
+    expected: ["José García-Tirado"]                    # PrecisionLab; AID-JUNCT sponsor
+  - id: d05
+    query: artificial pancreas
+    expected: ["José García-Tirado"]
+    twin_of: d04
+  - id: d06
+    query: gut microbiome in obesity and diabetes
+    expected: ["Maria Luisa Balmer"]                    # TrimLab; endowed lectureship news
+  - id: d07
+    query: intestinal bacteria and weight gain
+    expected: ["Maria Luisa Balmer"]
+    twin_of: d06
+  - id: d08
+    query: machine learning in medicine
+    expected: ["Lisa Koch"]                             # Machine Learning in Medicine Lab
+  - id: d09
+    query: insulin activity measurement
+    expected: ["Maren Schinz"]                          # Insulin activity project
+
+  # ---------------- Must abstain ----------------
+  - id: x01
+    query: deep-sea volcano geochemistry in Iceland
+    expect_abstain: true
+  - id: x02
+    query: Prof. Max Mustermann cryptocurrency trading  # non-existent person
+    expect_abstain: true
+  - id: x03
+    query: best pizza delivery in Bern
+    expect_abstain: true
+  - id: x04
+    query: Formula 1 race car aerodynamics
+    expect_abstain: true

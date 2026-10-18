@@ -25,3 +25,6 @@ build/
 .DS_Store
 .idea/
 .vscode/
+
+# Team-internal planning document (not part of the submission)
+Hack_Apertus_Challenge_Analysis_*.pdf

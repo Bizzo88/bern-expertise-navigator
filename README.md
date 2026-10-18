@@ -1,4 +1,4 @@
-# Hack Apertus Liebefeld — `challenge name`, `team name`
+# Hack Apertus Liebefeld — Research & Expertise Navigator, `team name`
 
 Template repository for [Hack Apertus](https://hackapertus.ch/) submissions.
 Every project keeps the same layout, so organizers and judges find the same
@@ -9,14 +9,19 @@ There are 3 challenges to pick from:
 2. OpenParlData: Topic classification for Swiss parliaments with Apertus
 3. University of Bern: Deciphering Archives with Apertus
 
-`One paragraph describing the challenge.`
+One search box over the public websites of the University of Bern, the ARTORG Center and Diabetes Center
+Berne. It understands natural-language and lay-term questions ("glucose sensors" also finds "continuous glucose
+monitoring") and returns people, units, expertise, projects and infrastructure. Every result is structured,
+explained and linked to the public page and verbatim snippet that support it, and the system says so when no
+source supports an answer. Built on Apertus v1.5, fully self-hostable. **Code and run instructions:
+[`src/README.md`](src/README.md); write-up: [technical_report.md](technical_report.md).**
 
 Submissions must use the v1.5 Apertus model family.
 The submission must comply with the [HackApertus T&C](https://hackapertus.ch/terms-and-conditions).
 
 ## 🎯 The Challenge
 
-`Fill in the title of the challenge you picked and link the Notion challenge page (URL)`
+Bern Economic Development Agency: **Research & Expertise Navigator** — `link to the Notion challenge page`
 
 ## 🔧 Resources & Tools
 

@@ -1,0 +1,5 @@
+# Paste the supplied unibe.ch subdomain inventory here, one host per line.
+# Lines starting with # are ignored. Examples:
+www.unibe.ch
+www.dbmr.unibe.ch
+www.ispm.unibe.ch

@@ -1,0 +1,138 @@
+# Plain-language glossary for non-specialists (economic development, public sector).
+# Shown as explanations next to technical words in company requests and search results.
+# Reviewed baseline; Apertus may add explanations for terms not listed here (marked as AI-generated).
+# Keys: the term as it appears (case-insensitive). `aka`: other spellings that map to the same entry.
+
+terms:
+  - term: continuous glucose monitoring
+    aka: [cgm, cgm system, glucose sensor, glucose sensors, kontinuierliche glukosemessung]
+    en: A small sensor worn on the skin that measures blood sugar around the clock and sends it to a phone.
+    de: Ein kleiner Sensor auf der Haut, der den Blutzucker rund um die Uhr misst und ans Handy sendet.
+  - term: automated insulin delivery
+    aka: [aid, aid system, closed-loop, closed loop, closed-loop system, artificial pancreas, künstliche bauchspeicheldrüse]
+    en: An insulin pump that decides by itself how much insulin to give, using the readings of a glucose sensor.
+    de: Eine Insulinpumpe, die anhand der Werte eines Glukosesensors selbst entscheidet, wie viel Insulin sie abgibt.
+  - term: insulin pump
+    en: A small wearable device that delivers insulin through a thin tube under the skin instead of injections.
+    de: Ein kleines tragbares Gerät, das Insulin über einen dünnen Schlauch unter die Haut abgibt, statt Spritzen.
+  - term: type 1 diabetes
+    aka: [t1d]
+    en: A lifelong condition in which the body makes no insulin; patients need insulin every day.
+    de: Eine lebenslange Krankheit, bei der der Körper kein Insulin bildet; Betroffene brauchen täglich Insulin.
+  - term: hypoglycaemia
+    aka: [hypoglycemia, low blood sugar, unterzuckerung]
+    en: Blood sugar that is too low; it can cause dizziness or fainting and is dangerous, e.g. while driving.
+    de: Zu niedriger Blutzucker; kann Schwindel oder Bewusstlosigkeit auslösen, z. B. gefährlich beim Autofahren.
+  - term: biosensing
+    aka: [biosensor, biosensors]
+    en: Measuring something in the body (like sugar, hormones or lactate) with a sensor.
+    de: Messen von Werten im Körper (z. B. Zucker, Hormone, Laktat) mit einem Sensor.
+  - term: wearable
+    aka: [wearables, wearable sensing, wearable device]
+    en: An electronic device worn on the body, such as a smartwatch or a patch.
+    de: Ein elektronisches Gerät, das man am Körper trägt, z. B. eine Smartwatch oder ein Pflaster.
+  - term: non-invasive
+    aka: [noninvasive, minimally invasive, needle-free]
+    en: Works without cutting or pricking the skin (non-invasive) or with only a very small intervention (minimally invasive).
+    de: Funktioniert ohne Stechen oder Schneiden (nicht-invasiv) oder nur mit einem sehr kleinen Eingriff (minimal-invasiv).
+  - term: organs-on-chip
+    aka: [organ-on-chip, organ-on-a-chip, lung-on-chip, organs-on-a-chip]
+    en: Tiny lab devices with living human cells that imitate an organ, used to test drugs without animals.
+    de: Winzige Laborchips mit lebenden menschlichen Zellen, die ein Organ nachahmen – zum Testen von Medikamenten ohne Tierversuche.
+  - term: microfluidics
+    aka: [microfluidic]
+    en: Technology that moves very small amounts of liquid through channels thinner than a hair, e.g. on a chip.
+    de: Technik, die winzige Flüssigkeitsmengen durch haarfeine Kanäle bewegt, z. B. auf einem Chip.
+  - term: in vitro
+    en: Done in the lab (in a dish or on a chip), not in a living body.
+    de: Im Labor durchgeführt (in einer Schale oder auf einem Chip), nicht im lebenden Körper.
+  - term: in vivo
+    en: Done in a living body (animal or human).
+    de: Im lebenden Körper durchgeführt (Tier oder Mensch).
+  - term: medical image analysis
+    aka: [image analysis, image segmentation, segmentation]
+    en: Software that finds and measures things in medical scans, for example the outline of a tumour.
+    de: Software, die in medizinischen Bildern Dinge findet und vermisst, z. B. die Umrisse eines Tumors.
+  - term: mri
+    aka: [magnetic resonance imaging, magnetic resonance]
+    en: A hospital scanner that uses magnets to take detailed pictures of the inside of the body, without X-rays.
+    de: Ein Spitalgerät, das mit Magneten detaillierte Bilder vom Körperinneren macht, ohne Röntgenstrahlen.
+  - term: ct
+    aka: [computed tomography, ct scan]
+    en: A hospital X-ray scanner that builds 3D pictures of the body.
+    de: Ein Röntgen-Scanner im Spital, der 3D-Bilder des Körpers erstellt.
+  - term: oct
+    aka: [optical coherence tomography]
+    en: An eye scan that uses light to take very detailed cross-section pictures of the retina.
+    de: Eine Augenuntersuchung, die mit Licht sehr genaue Schnittbilder der Netzhaut erstellt.
+  - term: deep learning
+    aka: [machine learning, ai, artificial intelligence, künstliche intelligenz]
+    en: Computer programs that learn patterns from many examples, e.g. to recognise disease in images.
+    de: Computerprogramme, die aus vielen Beispielen Muster lernen, z. B. um Krankheiten auf Bildern zu erkennen.
+  - term: cochlear implant
+    aka: [cochlear implants, hearing implant, hörimplantat]
+    en: An electronic device placed in the inner ear that lets deaf people hear again.
+    de: Ein elektronisches Gerät im Innenohr, mit dem gehörlose Menschen wieder hören können.
+  - term: neurosurgery
+    en: Surgery on the brain, spine or nerves.
+    de: Operationen am Gehirn, an der Wirbelsäule oder an Nerven.
+  - term: surgical robotics
+    aka: [surgical robot, robotic surgery, micro-robots, microrobots, nanorobotics, microrobotics]
+    en: Robots or robot-guided tools that help surgeons operate more precisely; micro-robots are tiny ones moved inside the body.
+    de: Roboter oder robotergeführte Instrumente, die Chirurgen beim präzisen Operieren helfen; Mikroroboter sind winzig und bewegen sich im Körper.
+  - term: biomechanics
+    aka: [biomechanical]
+    en: How forces act on the body – for example how strong a bone is or how an implant carries load.
+    de: Wie Kräfte auf den Körper wirken – z. B. wie stark ein Knochen ist oder wie ein Implantat belastet wird.
+  - term: implant
+    aka: [implants, orthopaedic implants, orthopedic implants, dental implants]
+    en: A medical device placed inside the body, such as an artificial hip or a screw in a bone.
+    de: Ein Medizinprodukt, das in den Körper eingesetzt wird, z. B. eine künstliche Hüfte oder eine Knochenschraube.
+  - term: haemodynamics
+    aka: [hemodynamics, blood flow, computational haemodynamics]
+    en: How blood flows through the heart and blood vessels.
+    de: Wie das Blut durch Herz und Gefässe fliesst.
+  - term: heart valve
+    aka: [heart valves, aortic valve, mitral valve]
+    en: The "doors" inside the heart that make blood flow in one direction; they can be repaired or replaced.
+    de: Die «Türen» im Herzen, die das Blut in eine Richtung fliessen lassen; sie können repariert oder ersetzt werden.
+  - term: telerehabilitation
+    aka: [telemedicine, digital health, ehealth, mhealth]
+    en: Therapy or care delivered remotely, at home, with apps, sensors or video.
+    de: Therapie oder Betreuung aus der Ferne zu Hause, mit Apps, Sensoren oder Video.
+  - term: clinical study
+    aka: [clinical trial, clinical validation, pilot study, clinical studies, klinische studie]
+    en: A test of a new treatment or device with patients, under strict rules, to prove it is safe and works.
+    de: Ein Test einer neuen Behandlung oder eines Geräts mit Patienten nach strengen Regeln, um Sicherheit und Wirkung zu belegen.
+  - term: regulatory affairs
+    aka: [regulatory, regulatory approval, mdr, ivdr, ce marking, ce mark, fda, fda approval, iso 13485]
+    en: The paperwork and tests needed before a medical product may be sold (e.g. CE mark in Europe, FDA in the USA).
+    de: Die Nachweise und Tests, die nötig sind, bevor ein Medizinprodukt verkauft werden darf (z. B. CE-Kennzeichnung in Europa, FDA in den USA).
+  - term: technology transfer
+    aka: [tech transfer, licensing, licence, license, ip, intellectual property, patent, patents]
+    en: Turning university research into products – for example by licensing a patent to a company.
+    de: Forschung aus der Uni in Produkte überführen – z. B. indem ein Patent an eine Firma lizenziert wird.
+  - term: spin-off
+    aka: [spin-offs, spinoff, start-up, startup]
+    en: A young company founded to bring a research result to market.
+    de: Eine junge Firma, die gegründet wird, um ein Forschungsergebnis auf den Markt zu bringen.
+  - term: translational research
+    aka: [translational]
+    en: Research that moves a lab discovery towards real use with patients.
+    de: Forschung, die eine Labor-Entdeckung in die Anwendung bei Patienten bringt.
+  - term: prototype
+    aka: [prototyping, rapid prototyping, 3d printing, additive manufacturing]
+    en: An early working version of a product; 3D printing is a fast way to build one.
+    de: Eine frühe funktionierende Version eines Produkts; 3D-Druck ist ein schneller Weg dazu.
+  - term: medtech
+    aka: [medical technology, medical device, medical devices, medizintechnik]
+    en: Devices and software used for diagnosis or treatment, from bandages to scanners and apps.
+    de: Geräte und Software für Diagnose oder Behandlung – vom Pflaster bis zum Scanner und zur App.
+  - term: microbiome
+    aka: [gut microbiome, gut bacteria, microbiota]
+    en: The billions of bacteria living in our gut, which influence weight, metabolism and health.
+    de: Die Milliarden Bakterien in unserem Darm, die Gewicht, Stoffwechsel und Gesundheit beeinflussen.
+  - term: metabolism
+    aka: [metabolic, metabolites]
+    en: How the body turns food into energy and building blocks.
+    de: Wie der Körper Nahrung in Energie und Bausteine umwandelt.

@@ -1,0 +1,74 @@
+# ---------------------------------------------------------------------------
+# Data sources — the ONLY file you edit to add a new institution.
+#
+# Add a new site in 3 steps:
+#   1. Copy one block below and change name/label/domains/seeds.
+#   2. (Optional) add url patterns for person/unit/project/infrastructure pages.
+#   3. Run:  make pipeline SOURCE=<name>
+# ---------------------------------------------------------------------------
+
+defaults:
+  max_pages: 400            # per source, keeps the hackathon crawl bounded
+  max_depth: 3
+  delay_seconds: 0.5        # politeness
+  user_agent: "HackApertus-ExpertiseNavigator/0.1 (+public research; contact: team)"
+  languages: [de, en, fr]
+  # Paths crawled first (fair coverage of people/groups before news pages)
+  priority_keywords: [team, people, staff, mitarbeitende, personen, research, forschung,
+                      group, gruppe, projects, projekte, lab, facilities, infrastructure, services]
+  skip_keywords: [news, events, agenda, login, intranet, "/wp-json", "/feed", "xmlrpc", "/category/",
+                  ".pdf", ".jpg", ".jpeg", ".png", ".svg", ".zip", ".docx", ".pptx", "mailto:", "tel:",
+                  "?", "/images/", "/pictures/"]
+
+sources:
+  - name: artorg
+    label: ARTORG Center for Biomedical Engineering Research
+    domains: [artorg.unibe.ch]
+    seeds: ["https://www.artorg.unibe.ch/research/index_eng.html",
+            "https://www.artorg.unibe.ch/services/index_eng.html"]
+    max_pages: 600
+    max_depth: 4
+    # UniBE CMS serves every page in DE and EN; crawl the English variant only
+    extra_skip_keywords: [index_ger.html, index_fra.html, /publications/, /education/, /studies/]
+    page_types:
+      person: ["/group_members/"]
+      infrastructure: ["/services/"]
+      unit: ["/research/"]
+      project: ["/projects/", "/projekte/"]
+
+  - name: dcb
+    label: Diabetes Center Berne
+    domains: [dcberne.com]
+    seeds: ["https://www.dcberne.com/en/team/", "https://www.dcberne.com/en/projects/",
+            "https://www.dcberne.com/en/focus-areas/", "https://www.dcberne.com/en/offering/",
+            "https://www.dcberne.com/en/"]
+    max_pages: 300
+    # Same content exists under /de/; keep the English site
+    extra_skip_keywords: ["dcberne.com/de/", /wp-content/, /newsletters/, /media/, /career/, /legal-notice/,
+                          /data-protection-statement/]
+    page_types:
+      person: ["/en/team/"]
+      project: ["/projects/", "-study/"]
+      infrastructure: ["/offering/"]
+      unit: ["/focus-area", "/innovation/"]
+
+  - name: unibe
+    label: University of Bern
+    # Seeds are generated from the supplied subdomain inventory (one host per line)
+    seeds_file: config/unibe_subdomains.txt
+    domains_from_seeds: true
+    max_pages: 1500
+    max_depth: 3
+    extra_skip_keywords: [index_ger.html, index_fra.html, /studium/, /studies/, /publications/, /publikationen/]
+    page_types:
+      person: ["/ueber_uns/personen/", "/about_us/people/", "/personen/", "/people/", "/group_members/", "/team/"]
+      unit: ["/ueber_uns/", "/about_us/", "/forschung/", "/research/"]
+      project: ["/forschungsprojekte/", "/research_projects/", "/projekte/"]
+      infrastructure: ["/dienstleistungen/", "/services/", "/infrastruktur/", "/facilities/"]
+
+  # Example of adding a 4th site (used in the live demo):
+  # - name: insel
+  #   label: Inselspital Research
+  #   domains: [www.insel.ch]
+  #   seeds: ["https://www.insel.ch/de/forschung"]
+  #   max_pages: 200
