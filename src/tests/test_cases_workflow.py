@@ -85,3 +85,33 @@ def test_roles_are_enforced(client):
     assert client.post("/cases", json={**REQ, "actor": ""}).status_code == 422  # anonymous staff actions refused
     events = client.get(f"/cases/{cid}").json()["events"]
     assert [(e["actor"], e["role"]) for e in events if e["kind"] == "approved"] == [("Dr. R", "reviewer")]
+
+
+def test_search_first_request_with_filters(client, monkeypatch):
+    """A request can start as a short search + filters; the niche sharpens the search; details come later."""
+    seen = {}
+    real = cases.find_matches
+
+    def spy(analysis, k=12):
+        seen["q"] = analysis.search_query
+        return real(analysis, k)
+    monkeypatch.setattr(cases, "find_matches", spy)
+    c = client.post("/cases", json={"request_text": "partner for a sensor study", "country": "Switzerland",
+                                    "canton": "Zürich", "area": "diabetes", "niche": "glucose", **OFF}).json()
+    assert c["company"] == "" and c["canton"] == "Zürich" and c["niche"] == "glucose"
+    assert seen["q"].startswith("continuous glucose monitoring")          # niche terms lead the search
+    de = client.post("/cases", json={"request_text": "sensor study", "country": "Germany", "canton": "Zürich", **OFF}).json()
+    assert de["canton"] == ""                                              # cantons only for Swiss companies
+    areas = client.get("/medtech-areas").json()
+    assert any(a["id"] == "diabetes" and any(n["id"] == "glucose" for n in a["niches"]) for a in areas)
+
+
+def test_company_details_needed_before_pitch(client):
+    cid = client.post("/cases", json={"request_text": "partner for a sensor study", **OFF}).json()["id"]
+    client.post(f"/cases/{cid}/selection", json={"selected": ["e0"], **OFF})
+    client.post(f"/cases/{cid}/review-request", json={"reviewer": "Dr. R", **OFF})
+    client.post(f"/cases/{cid}/review", json={"decision": "approved", "verdicts": [{"id": "e0", "verdict": "ok"}], **REV})
+    assert client.post(f"/cases/{cid}/brief", json={"lang": "en", **OFF}).status_code == 400   # no company yet
+    assert client.post(f"/cases/{cid}/details", json={"company": "X AG", **REV}).status_code == 403
+    d = client.post(f"/cases/{cid}/details", json={"company": "X AG", "contact_email": "ceo@x.ch", **OFF}).json()
+    assert d["company"] == "X AG" and d["contact_email"] == "ceo@x.ch"

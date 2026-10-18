@@ -1,0 +1,86 @@
+# Medtech areas and their niches, used as filters when a business developer opens a company request.
+# `query` adds precise search terms for that niche (combined with what the company wrote).
+# Add or rename areas here; no code changes needed.
+
+areas:
+  - id: diabetes
+    label: {en: Diabetes & metabolism, de: Diabetes & Stoffwechsel, fr: Diabète & métabolisme}
+    niches:
+      - id: glucose
+        label: {en: Glucose sensing (CGM), de: Glukosemessung (CGM), fr: Mesure du glucose (CGM)}
+        query: continuous glucose monitoring glucose sensor biosensing
+      - id: insulin
+        label: {en: Insulin delivery & artificial pancreas, de: Insulinabgabe & künstliche Bauchspeicheldrüse, fr: Administration d'insuline & pancréas artificiel}
+        query: automated insulin delivery artificial pancreas closed loop insulin
+      - id: nutrition
+        label: {en: Nutrition & microbiome, de: Ernährung & Mikrobiom, fr: Nutrition & microbiome}
+        query: nutrition gut microbiome obesity metabolism
+      - id: digital
+        label: {en: Digital diabetes care, de: Digitale Diabetesversorgung, fr: Suivi numérique du diabète}
+        query: digital diabetes management app self-management
+  - id: imaging
+    label: {en: AI & medical imaging, de: KI & medizinische Bildgebung, fr: IA & imagerie médicale}
+    niches:
+      - id: tumour
+        label: {en: Tumour & brain imaging, de: Tumor- & Hirnbildgebung, fr: Imagerie tumorale & cérébrale}
+        query: brain tumour segmentation MRI image analysis
+      - id: eye
+        label: {en: Eye & retina imaging, de: Augen- & Netzhautbildgebung, fr: Imagerie de l'œil & de la rétine}
+        query: OCT retina ophthalmology eye imaging
+      - id: navigation
+        label: {en: Image-guided surgery, de: Bildgeführte Chirurgie, fr: Chirurgie guidée par l'image}
+        query: image-guided surgery navigation surgical instrument tracking
+  - id: robotics
+    label: {en: Surgical & micro-robotics, de: Chirurgie- & Mikrorobotik, fr: Robotique chirurgicale & micro-robotique}
+    niches:
+      - id: neuro
+        label: {en: Robotics for neurosurgery, de: Robotik für die Neurochirurgie, fr: Robotique pour la neurochirurgie}
+        query: neurosurgery robotic instruments micromechatronics
+      - id: micro
+        label: {en: Micro-robots, de: Mikroroboter, fr: Micro-robots}
+        query: micro robots nanorobotics acoustic manipulation
+  - id: organchip
+    label: {en: Organs-on-chip & lab models, de: Organs-on-Chip & Labormodelle, fr: Organes sur puce & modèles de laboratoire}
+    niches:
+      - id: lung
+        label: {en: Lung models, de: Lungenmodelle, fr: Modèles pulmonaires}
+        query: lung-on-chip lung models breathing alveoli
+      - id: microfluidics
+        label: {en: Microfluidics & drug testing, de: Mikrofluidik & Wirkstofftests, fr: Microfluidique & tests de médicaments}
+        query: microfluidic organs-on-chip drug testing
+  - id: ortho
+    label: {en: Biomechanics & implants, de: Biomechanik & Implantate, fr: Biomécanique & implants}
+    niches:
+      - id: bone
+        label: {en: Bone & osteoporosis, de: Knochen & Osteoporose, fr: Os & ostéoporose}
+        query: bone strength osteoporosis biomechanics
+      - id: implants
+        label: {en: Orthopaedic & dental implants, de: Orthopädische & Zahnimplantate, fr: Implants orthopédiques & dentaires}
+        query: implant stability orthopaedic dental implants hip
+      - id: prototyping
+        label: {en: 3D printing & prototyping, de: 3D-Druck & Prototypen, fr: Impression 3D & prototypage}
+        query: 3D printing rapid prototyping mechanical production
+  - id: neuro
+    label: {en: "Hearing, neuro & rehabilitation", de: "Hören, Neuro & Rehabilitation", fr: "Audition, neuro & réadaptation"}
+    niches:
+      - id: hearing
+        label: {en: Hearing & cochlear implants, de: Hören & Cochlea-Implantate, fr: Audition & implants cochléaires}
+        query: cochlear implant hearing inner ear
+      - id: rehab
+        label: {en: Rehabilitation & healthy ageing, de: Rehabilitation & gesundes Altern, fr: Réadaptation & bien vieillir}
+        query: telerehabilitation gerontechnology neurorehabilitation older adults
+  - id: cardio
+    label: {en: Cardiovascular, de: Herz-Kreislauf, fr: Cardiovasculaire}
+    niches:
+      - id: valves
+        label: {en: Heart valves, de: Herzklappen, fr: Valves cardiaques}
+        query: heart valve aortic mitral valve repair
+      - id: flow
+        label: {en: Blood flow & circulation, de: Blutfluss & Kreislauf, fr: Flux sanguin & circulation}
+        query: blood flow haemodynamics microcirculation
+  - id: urology
+    label: {en: Urology, de: Urologie, fr: Urologie}
+    niches:
+      - id: urinary
+        label: {en: Urinary tract devices, de: Harnwegs-Medizinprodukte, fr: Dispositifs des voies urinaires}
+        query: urinary tract obstruction urogenital engineering

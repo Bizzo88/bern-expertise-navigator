@@ -100,6 +100,11 @@
       "nw.company": "Company", "nw.country": "Country", "nw.contact": "Contact person", "nw.email": "Contact email",
       "nw.text": "What is the company asking for?", "nw.textHint": "any language", "nw.submit": "Understand & find partners",
       "nw.examples": "Fictional examples", "nw.working": "Reading the request and searching Bern's research landscape…",
+      "nw.q": "What is the company looking for?", "nw.qPh": "e.g. a clinical partner for a needle-free glucose sensor — or paste the company's email",
+      "nw.company2": "Company (optional)", "nw.countryAny": "Company's country", "nw.canton": "Canton", "nw.cantonAny": "All cantons",
+      "nw.area": "Medtech area", "nw.niche": "Niche", "nw.any": "Any", "nw.find": "Find partners in Bern", "nw.try": "Try",
+      "rq.untitled": "New request",
+      "d.title": "Company details", "d.lead": "Needed for the pitch and the email to the company.", "d.save": "Save details", "d.edit": "Edit",
       "cs.back": "All requests", "cs.backQ": "Review queue", "cs.received": "Received", "cs.contact": "Company contact", "cs.activity": "Activity",
       "cs.delete": "Delete request", "cs.confirmDelete": "Delete this request permanently?",
       "step.1": "Understand", "step.2": "Choose partners", "step.3": "Technical review", "step.4": "Pitch & invite",
@@ -177,6 +182,11 @@
       "nw.company": "Firma", "nw.country": "Land", "nw.contact": "Kontaktperson", "nw.email": "E-Mail der Kontaktperson",
       "nw.text": "Was sucht die Firma?", "nw.textHint": "jede Sprache", "nw.submit": "Verstehen & Partner finden",
       "nw.examples": "Fiktive Beispiele", "nw.working": "Die Anfrage wird gelesen und die Berner Forschungslandschaft durchsucht…",
+      "nw.q": "Was sucht die Firma?", "nw.qPh": "z. B. klinischer Partner für einen nadelfreien Glukosesensor — oder E-Mail der Firma einfügen",
+      "nw.company2": "Firma (optional)", "nw.countryAny": "Land der Firma", "nw.canton": "Kanton", "nw.cantonAny": "Alle Kantone",
+      "nw.area": "Medtech-Bereich", "nw.niche": "Nische", "nw.any": "Alle", "nw.find": "Partner in Bern finden", "nw.try": "Beispiele",
+      "rq.untitled": "Neue Anfrage",
+      "d.title": "Angaben zur Firma", "d.lead": "Nötig für den Pitch und die E-Mail an die Firma.", "d.save": "Angaben speichern", "d.edit": "Bearbeiten",
       "cs.back": "Alle Anfragen", "cs.backQ": "Prüfungen", "cs.received": "Eingegangen", "cs.contact": "Kontakt der Firma", "cs.activity": "Verlauf",
       "cs.delete": "Anfrage löschen", "cs.confirmDelete": "Diese Anfrage endgültig löschen?",
       "step.1": "Verstehen", "step.2": "Partner wählen", "step.3": "Technische Prüfung", "step.4": "Pitch & Einladung",
@@ -254,6 +264,11 @@
       "nw.company": "Entreprise", "nw.country": "Pays", "nw.contact": "Personne de contact", "nw.email": "E-mail de contact",
       "nw.text": "Que cherche l'entreprise ?", "nw.textHint": "toute langue", "nw.submit": "Comprendre et trouver des partenaires",
       "nw.examples": "Exemples fictifs", "nw.working": "Lecture de la demande et recherche dans le paysage bernois de la recherche…",
+      "nw.q": "Que cherche l'entreprise ?", "nw.qPh": "p. ex. un partenaire clinique pour un capteur de glucose sans aiguille — ou collez l'e-mail de l'entreprise",
+      "nw.company2": "Entreprise (facultatif)", "nw.countryAny": "Pays de l'entreprise", "nw.canton": "Canton", "nw.cantonAny": "Tous les cantons",
+      "nw.area": "Domaine medtech", "nw.niche": "Niche", "nw.any": "Tous", "nw.find": "Trouver des partenaires à Berne", "nw.try": "Essayer",
+      "rq.untitled": "Nouvelle demande",
+      "d.title": "Coordonnées de l'entreprise", "d.lead": "Nécessaires pour le pitch et l'e-mail à l'entreprise.", "d.save": "Enregistrer", "d.edit": "Modifier",
       "cs.back": "Toutes les demandes", "cs.backQ": "Validations", "cs.received": "Reçue", "cs.contact": "Contact de l'entreprise", "cs.activity": "Historique",
       "cs.delete": "Supprimer la demande", "cs.confirmDelete": "Supprimer définitivement cette demande ?",
       "step.1": "Comprendre", "step.2": "Choisir les partenaires", "step.3": "Validation technique", "step.4": "Pitch & invitation",
@@ -295,6 +310,14 @@
     try { return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : lang + "-CH", withTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }).format(new Date(iso)); }
     catch { return iso; }
   };
+
+  /* ======================= reference lists ======================= */
+  const COUNTRIES = ["Switzerland", "Germany", "France", "Italy", "Austria", "Liechtenstein", "United Kingdom", "Netherlands",
+    "Belgium", "Denmark", "Sweden", "Ireland", "Spain", "Israel", "United States", "Canada", "Japan", "South Korea", "China", "Singapore", "India"];
+  const CANTONS = ["Aargau", "Appenzell Ausserrhoden", "Appenzell Innerrhoden", "Basel-Landschaft", "Basel-Stadt", "Bern", "Fribourg", "Geneva",
+    "Glarus", "Graubünden", "Jura", "Lucerne", "Neuchâtel", "Nidwalden", "Obwalden", "Schaffhausen", "Schwyz", "Solothurn", "St. Gallen",
+    "Thurgau", "Ticino", "Uri", "Valais", "Vaud", "Zug", "Zurich"];
+  const isSwiss = (c) => /^(switzerland|schweiz|suisse|svizzera|ch)$/i.test((c || "").trim());
 
   /* ======================= staff identity ======================= */
   let staff = store.get("nav-staff", null);
@@ -367,6 +390,14 @@
   async function stats() { if (!S.stats) { try { S.stats = await api("/stats"); } catch { S.stats = { sources: [], entities_per_source: {}, pages_per_source: {} }; } } return S.stats; }
   async function showcase() { if (!S.showcase) { try { S.showcase = await api("/showcase"); } catch { S.showcase = { themes: [], highlights: [], labs: [], facilities: [], engage: [] }; } } return S.showcase; }
   async function refreshCases() { try { S.cases = await api("/cases"); } catch { S.cases = []; } }
+  async function areas() { if (!S.areas) { try { S.areas = await api("/medtech-areas"); } catch { S.areas = []; } } return S.areas; }
+  const areaLabel = (a, n) => {
+    const A = (S.areas || []).find((x) => x.id === a); if (!A) return "";
+    const N = A.niches.find((x) => x.id === n);
+    return N ? `${L(A.label)} › ${L(N.label)}` : L(A.label);
+  };
+  const companyOf = (c) => c.company || t("rq.untitled");
+  const placeOf = (c) => [c.canton, c.country].filter(Boolean).join(", ");
 
   /* ======================= chrome per area ======================= */
   const langSel = () => `<select id="lang" class="lang" aria-label="Language">${["en", "de", "fr"].map((l) => `<option value="${l}" ${l === LANG ? "selected" : ""}>${l.toUpperCase()}</option>`).join("")}</select>`;
@@ -396,7 +427,7 @@
       bar.innerHTML = `<div class="topbar-in">${brand(t("brand.staffSub"), staff ? roleHome() : "#/staff")}<span class="staff-tag">${esc(t("staff.tag"))}</span>
         ${nav ? `<nav class="tabs" aria-label="Workspace">${nav}</nav>` : ""}
         <div class="topbar-right">${langSel()}${themeBtn()}
-          ${staff ? `<div class="who"><span class="av ${esc(staff.role)}">${esc(initialsOf(staff.name))}</span>
+          ${staff ? `<div class="whoami"><span class="av ${esc(staff.role)}">${esc(initialsOf(staff.name))}</span>
             <span class="txt"><b>${esc(staff.name)}</b><small>${esc(t("role." + staff.role))}</small></span>
             <button type="button" id="switchUser">${esc(t("who.switch"))}</button></div>` : ""}
           <a class="staff-link" href="#/">${ICON.ext}<span>${esc(t("nav.public"))}</span></a></div></div>`;
@@ -671,11 +702,13 @@
   }
 
   /* ======================= STAFF/officer: requests board ======================= */
-  function viewRequests() {
+  async function viewRequests() {
+    await areas();
     const by = (sts) => S.cases.filter((c) => sts.includes(c.status));
     const cols = [["col.todo", ["new", "changes_requested"]], ["col.review", ["in_review"]], ["col.ready", ["approved"]], ["col.done", ["contacted", "call_scheduled", "closed"]]];
-    const card = (c) => `<a class="case-card" href="#/staff/case/${esc(c.id)}"><h3>${esc(c.company)}</h3><p>${esc(c.summary)}</p>
-      <div class="case-meta">${pill(c.status)}${c.selected ? `<span>${c.selected} ${esc(t("partners"))}</span>` : ""}${c.reviewer && c.status === "in_review" ? `<span>→ ${esc(c.reviewer)}</span>` : ""}
+    const card = (c) => `<a class="case-card" href="#/staff/case/${esc(c.id)}"><h3>${esc(companyOf(c))}</h3><p>${esc(c.summary)}</p>
+      <div class="case-meta">${pill(c.status)}${c.niche || c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}${placeOf(c) ? `<span>${esc(placeOf(c))}</span>` : ""}
+      ${c.selected ? `<span>${c.selected} ${esc(t("partners"))}</span>` : ""}${c.reviewer && c.status === "in_review" ? `<span>→ ${esc(c.reviewer)}</span>` : ""}
       <span>${esc(fmtDate(c.updated_at, false))}</span></div></a>`;
     const kpi = (v, l) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(t(l))}</div></div>`;
     view().innerHTML = `<div class="page-h"><div><h1>${esc(t("rq.title"))}</h1><p>${esc(t("rq.lead"))}</p></div>
@@ -689,28 +722,57 @@
           <p style="margin-top:14px"><a class="btn-primary btn-brand" href="#/staff/new">${ICON.plus}${esc(t("nav.new"))}</a></p></div>`}`;
   }
 
-  /* ======================= STAFF/officer: new request ======================= */
+  /* ======================= STAFF/officer: new request (search first) ======================= */
   async function viewNew() {
     if (!S.examples) { try { S.examples = await api("/examples"); } catch { S.examples = []; } }
+    const ar = await areas();
+    const f = { area: "", niche: "" };
     view().innerHTML = `<a class="back" href="#/staff/requests">${ICON.back}${esc(t("cs.back"))}</a>
-      <div class="page-h"><div><h1>${esc(t("nw.title"))}</h1><p>${esc(t("nw.lead"))}</p></div></div>
-      <div class="new-grid"><form class="panel" id="newForm"><div class="grid-form">
-          <label class="field">${esc(t("nw.company"))}<input name="company" required maxlength="200"></label>
-          <label class="field">${esc(t("nw.country"))}<input name="country" maxlength="100"></label>
-          <label class="field">${esc(t("nw.contact"))}<input name="contact_name" maxlength="200"></label>
-          <label class="field">${esc(t("nw.email"))}<input name="contact_email" type="email" maxlength="200"></label>
-          <label class="field full">${esc(t("nw.text"))} <small>${esc(t("nw.textHint"))}</small><textarea name="request_text" required minlength="10" maxlength="12000" rows="9"></textarea></label></div>
-        <div class="sel-bar"><span></span><button class="btn-primary btn-brand" type="submit">${ICON.sparkle}${esc(t("nw.submit"))}</button></div></form>
-        <aside class="panel"><div class="panel-h"><h2>${esc(t("nw.examples"))}</h2></div><div class="examples-list">${S.examples.map((x, i) => `<button type="button" class="ex-btn" data-ex="${i}">
-          <b>${esc(L(x.label) || x.company)}</b><span>${esc(x.company)} · ${esc(x.country)}</span></button>`).join("")}</div></aside></div>`;
+      <form class="nr" id="newForm">
+        <h1>${esc(t("nw.q"))}</h1>
+        <div class="nr-box">${ICON.search}<textarea name="request_text" id="nrText" rows="1" required minlength="3" maxlength="12000" placeholder="${esc(t("nw.qPh"))}"></textarea>
+          <button class="btn-primary btn-brand" type="submit">${esc(t("nw.find"))}</button></div>
+        ${S.examples.length ? `<div class="chips nr-try"><span class="muted">${esc(t("nw.try"))}:</span>${S.examples.map((x, i) => `<button type="button" class="chip" data-ex="${i}">${esc(L(x.label) || x.company)}</button>`).join("")}</div>` : ""}
+        <div class="nr-filters">
+          <label class="nr-f"><span>${esc(t("nw.company2"))}</span><input name="company" maxlength="200" autocomplete="off"></label>
+          <label class="nr-f"><span>${esc(t("nw.countryAny"))}</span><input name="country" list="countryList" maxlength="100" autocomplete="off">
+            <datalist id="countryList">${COUNTRIES.map((c) => `<option value="${esc(c)}">`).join("")}</datalist></label>
+          <label class="nr-f" id="cantonBox" hidden><span>${esc(t("nw.canton"))}</span><select class="input" name="canton"><option value="">${esc(t("nw.cantonAny"))}</option>
+            ${CANTONS.map((c) => `<option>${esc(c)}</option>`).join("")}</select></label>
+        </div>
+        <div class="nr-area"><div class="nr-lbl">${esc(t("nw.area"))}</div>
+          <div class="chips" id="areaChips"><button type="button" class="chip on" data-area="">${esc(t("nw.any"))}</button>
+            ${ar.map((a) => `<button type="button" class="chip" data-area="${esc(a.id)}">${esc(L(a.label))}</button>`).join("")}</div>
+          <div id="nicheBox" hidden><div class="nr-lbl">${esc(t("nw.niche"))}</div><div class="chips" id="nicheChips"></div></div></div>
+      </form>`;
+    const form = $("#newForm"), txt = $("#nrText");
+    const grow = () => { txt.style.height = "auto"; txt.style.height = Math.min(txt.scrollHeight, 260) + "px"; };
+    txt.addEventListener("input", grow); txt.focus();
+    const syncCanton = () => { const sw = isSwiss(form.country.value); $("#cantonBox").hidden = !sw; if (!sw) form.canton.value = ""; };
+    form.country.addEventListener("input", syncCanton);
+    const drawNiches = () => {
+      $$("#areaChips .chip").forEach((c) => c.classList.toggle("on", c.dataset.area === f.area));
+      const A = ar.find((a) => a.id === f.area);
+      $("#nicheBox").hidden = !A;
+      $("#nicheChips").innerHTML = A ? `<button type="button" class="chip ${!f.niche ? "on" : ""}" data-niche="">${esc(t("nw.any"))}</button>` +
+        A.niches.map((n) => `<button type="button" class="chip ${f.niche === n.id ? "on" : ""}" data-niche="${esc(n.id)}">${esc(L(n.label))}</button>`).join("") : "";
+      $$("#nicheChips .chip").forEach((c) => c.addEventListener("click", () => { f.niche = c.dataset.niche; drawNiches(); }));
+    };
+    $$("#areaChips .chip").forEach((c) => c.addEventListener("click", () => { f.area = c.dataset.area; f.niche = ""; drawNiches(); }));
     $$("[data-ex]").forEach((b) => b.addEventListener("click", () => {
-      const x = S.examples[+b.dataset.ex], f = $("#newForm");
-      for (const k of ["company", "country", "contact_name", "contact_email", "request_text"]) f[k].value = x[k] || "";
+      const x = S.examples[+b.dataset.ex];
+      txt.value = x.request_text || ""; grow();
+      form.company.value = x.company || ""; form.country.value = x.country || ""; syncCanton(); form.canton.value = x.canton || "";
+      f.area = x.area || ""; f.niche = x.niche || ""; f.example = x; drawNiches();
     }));
-    $("#newForm").addEventListener("submit", async (ev) => {
+    form.addEventListener("submit", async (ev) => {
       ev.preventDefault();
-      const f = ev.target, body = asStaff({ ...Object.fromEntries(new FormData(f)), lang: LANG });
-      f.innerHTML = spinner(t("nw.working"));
+      const body = asStaff({ request_text: txt.value.trim(), company: form.company.value.trim(), country: form.country.value.trim(),
+        canton: form.canton.value, area: f.area, niche: f.niche, lang: LANG,
+        contact_name: f.example?.company === form.company.value ? f.example.contact_name || "" : "",
+        contact_email: f.example?.company === form.company.value ? f.example.contact_email || "" : "" });
+      if (body.request_text.length < 3) { txt.focus(); return; }
+      form.innerHTML = spinner(t("nw.working"));
       try { const c = await api("/cases", { method: "POST", body }); go(`#/staff/case/${c.id}`); }
       catch (e) { toast(`${t("err")}: ${e.message}`); viewNew(); }
     });
@@ -721,7 +783,7 @@
   const stepOf = (st) => ({ new: 2, changes_requested: 2, in_review: 3, approved: 4 }[st] || 5);
   async function viewCase(id) {
     view().innerHTML = spinner();
-    await loadGlossary();
+    await Promise.all([loadGlossary(), areas()]);
     try { CASE = await api(`/cases/${encodeURIComponent(id)}`); }
     catch { view().innerHTML = `<div class="panel empty"><h3>${esc(t("err"))}</h3><p><a href="${roleHome()}">${esc(t("cs.back"))}</a></p></div>`; return; }
     staff.role === "reviewer" ? renderReviewerCase() : renderOfficerCase();
@@ -731,10 +793,10 @@
   function sidePanels(c) {
     return `<aside class="side">
       <div class="panel contact-box"><div class="panel-h"><h2>${esc(t("cs.contact"))}</h2></div>
-        <dl><dt>${esc(t("nw.company"))}</dt><dd>${esc(c.company)}</dd>
+        <dl><dt>${esc(t("nw.company"))}</dt><dd>${esc(c.company || "—")}</dd>
           ${c.contact_name ? `<dt>${esc(t("nw.contact"))}</dt><dd>${esc(c.contact_name)}</dd>` : ""}
           ${c.contact_email ? `<dt>Email</dt><dd>${staff.role === "officer" ? `<a href="mailto:${esc(c.contact_email)}">${esc(c.contact_email)}</a>` : esc(c.contact_email)}</dd>` : ""}
-          ${c.country ? `<dt>${esc(t("nw.country"))}</dt><dd>${esc(c.country)}</dd>` : ""}</dl></div>
+          ${placeOf(c) ? `<dt>${esc(t("nw.country"))}</dt><dd>${esc(placeOf(c))}</dd>` : ""}</dl></div>
       <div class="panel"><div class="panel-h"><h2>${esc(t("cs.activity"))}</h2></div>
         <ol class="timeline">${[...c.events].reverse().map((e) => `<li><b>${esc(e.actor)}</b>${e.role ? ` <span class="muted">(${esc(t("role." + e.role))})</span>` : ""} · ${esc(e.text)}<time>${esc(fmtDate(e.at))}</time></li>`).join("")}</ol></div>
       ${staff.role === "officer" ? `<button class="link-btn" id="delCase" type="button">${ICON.trash}${esc(t("cs.delete"))}</button>` : ""}
@@ -764,7 +826,7 @@
   function renderOfficerCase() {
     const c = CASE, step = stepOf(c.status), cls = (n) => (n < step ? "done" : n === step ? "now" : "");
     view().innerHTML = `<a class="back" href="#/staff/requests">${ICON.back}${esc(t("cs.back"))}</a>
-      <div class="case-h"><div><h1>${esc(c.company)}</h1><div class="sub">${c.country ? `<span>${esc(c.country)}</span>` : ""}<span>${esc(t("cs.received"))} ${esc(fmtDate(c.created_at))}</span></div></div>${pill(c.status)}</div>
+      <div class="case-h"><div><h1>${esc(companyOf(c))}</h1><div class="sub">${placeOf(c) ? `<span>${esc(placeOf(c))}</span>` : ""}${c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}<span>${esc(t("cs.received"))} ${esc(fmtDate(c.created_at))}</span></div></div>${pill(c.status)}</div>
       <ol class="stepper">${[1, 2, 3, 4].map((n) => `<li class="${cls(n)}"><span class="dotn">${n < step ? "✓" : n}</span>${esc(t("step." + n))}</li>`).join("")}</ol>
       <div class="case-grid"><div>${panelUnderstand(c.analysis)}${officerPartners(c, step)}${officerReview(c, step)}${officerPitch(c, step)}</div>${sidePanels(c)}</div>`;
     bindOfficerCase();
@@ -846,12 +908,20 @@
     if (step < 4) return `<section class="panel locked"><div class="panel-h"><h2><span class="num">4</span>${esc(t("i.title"))}</h2><span class="muted">${ICON.lock}</span></div>
       <p class="muted" style="margin:0">${esc(t("i.locked"))}</p></section>`;
     const done = ["contacted", "call_scheduled", "closed"].includes(c.status), b = c.outreach?.brief;
+    const details = `<form class="details ${c.company ? "" : "need"}" id="detailsForm" ${c.company ? "hidden" : ""}>
+        <div class="sub-h" style="margin-top:0">${esc(t("d.title"))}<span class="muted" style="font-weight:400">${esc(t("d.lead"))}</span></div>
+        <div class="grid-form"><label class="field">${esc(t("nw.company"))}<input name="company" required maxlength="200" value="${esc(c.company)}"></label>
+          <label class="field">${esc(t("nw.contact"))}<input name="contact_name" maxlength="200" value="${esc(c.contact_name)}"></label>
+          <label class="field full">${esc(t("nw.email"))}<input name="contact_email" type="email" maxlength="200" value="${esc(c.contact_email)}"></label></div>
+        <div class="actions" style="margin-top:10px"><button class="btn-primary" type="submit">${ICON.check}${esc(t("d.save"))}</button></div></form>
+      ${c.company ? `<div class="details-line">${ICON.briefcase.replace("<svg", '<svg class="i"')}<b>${esc(c.company)}</b>${c.contact_name ? ` · ${esc(c.contact_name)}` : ""}${c.contact_email ? ` · ${esc(c.contact_email)}` : ""}
+        <button class="link-btn" type="button" id="editDetails">${esc(t("d.edit"))}</button></div>` : ""}`;
     return `<section class="panel ${done ? "done" : "active"}"><div class="panel-h"><h2><span class="num">${done ? "✓" : 4}</span>${esc(t("i.title"))}</h2></div>
-      <p class="muted" style="margin:-4px 0 12px">${esc(t("i.lead"))}</p>
+      <p class="muted" style="margin:-4px 0 12px">${esc(t("i.lead"))}</p>${details}
       ${c.outreach?.sent_at ? `<div class="callout ok" style="margin-bottom:12px">${ICON.check}<span>${esc(t("i.doneEmail", { d: fmtDate(c.outreach.sent_at) }))}</span></div>` : ""}
       ${c.outreach?.call ? `<div class="callout ok" style="margin-bottom:12px">${ICON.cal}<span>${esc(t("i.doneCall", { d: c.outreach.call }))}</span></div>` : ""}
       <div class="actions"><label class="field" style="min-width:180px">${esc(t("i.lang"))}<select class="input" id="pitchLang">${["en", "de", "fr"].map((l) => `<option value="${l}" ${l === (b?.lang || LANG) ? "selected" : ""}>${l.toUpperCase()}</option>`).join("")}</select></label>
-        <button class="btn-primary btn-brand" id="prepBrief" type="button" style="align-self:flex-end">${ICON.sparkle}${esc(t(b ? "i.regen" : "i.prep"))}</button></div>
+        <button class="btn-primary btn-brand" id="prepBrief" type="button" style="align-self:flex-end" ${c.company ? "" : "disabled"}>${ICON.sparkle}${esc(t(b ? "i.regen" : "i.prep"))}</button></div>
       <div id="pitchBox">${pitchOutputs(c)}</div>
       ${b ? `<div class="sub-h">${ICON.mail}${esc(t("i.mail"))}</div>
         <div class="grid-form"><div class="field full">${esc(t("i.slots"))}<div class="slots">${nextSlots().map((s) => `<input type="datetime-local" class="slot" value="${s}" aria-label="${esc(t("i.slots"))}">`).join("")}</div></div>
@@ -887,6 +957,12 @@
     $("#reviewReq")?.addEventListener("submit", async (ev) => {
       ev.preventDefault(); const f = ev.target;
       try { CASE = await api(`/cases/${c.id}/review-request`, { method: "POST", body: asStaff({ reviewer: f.reviewer.value.trim(), note: f.note.value }) }); toast(t("st.in_review")); rerender(); }
+      catch (e) { toast(e.message); }
+    });
+    $("#editDetails")?.addEventListener("click", () => { $("#detailsForm").hidden = false; $("#detailsForm").company.focus(); });
+    $("#detailsForm")?.addEventListener("submit", async (ev) => {
+      ev.preventDefault(); const f = ev.target;
+      try { CASE = await api(`/cases/${c.id}/details`, { method: "POST", body: asStaff({ company: f.company.value.trim(), contact_name: f.contact_name.value.trim(), contact_email: f.contact_email.value.trim() }) }); rerender(); }
       catch (e) { toast(e.message); }
     });
     $("#prepBrief")?.addEventListener("click", async (ev) => {
@@ -928,7 +1004,7 @@
   function renderReviewerCase() {
     const c = CASE, sel = c.matches.filter((m) => m.selected), who = requester(c), open = c.status === "in_review";
     view().innerHTML = `<a class="back" href="#/staff/review">${ICON.back}${esc(t("cs.backQ"))}</a>
-      <div class="case-h"><div><h1>${esc(c.company)}</h1><div class="sub">${c.country ? `<span>${esc(c.country)}</span>` : ""}<span>${esc(t("rv.assigned", { who: c.reviewer || "—" }))}</span></div></div>${pill(c.status)}</div>
+      <div class="case-h"><div><h1>${esc(companyOf(c))}</h1><div class="sub">${placeOf(c) ? `<span>${esc(placeOf(c))}</span>` : ""}${c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}<span>${esc(t("rv.assigned", { who: c.reviewer || "—" }))}</span></div></div>${pill(c.status)}</div>
       <div class="role-banner reviewer">${ICON.shield}<div><b>${esc(t("rv.banner", { who }))}</b>${c.review_note ? `<br>${esc(t("rv.note"))}: “${esc(c.review_note)}”` : ""}</div></div>
       <div class="case-grid"><div>
         <section class="panel"><div class="panel-h"><h2>${esc(t("rv.request"))}</h2></div><div class="orig-text" style="margin:0">${jargon(c.request_text)}</div></section>
@@ -977,12 +1053,13 @@
   }
 
   /* ======================= STAFF/reviewer: queue ======================= */
-  function viewQueue() {
+  async function viewQueue() {
+    await areas();
     const mine = (c) => c.reviewer && c.reviewer.trim().toLowerCase() === staff.name.trim().toLowerCase();
     const open = S.cases.filter((c) => c.status === "in_review");
     const decided = S.cases.filter((c) => ["approved", "changes_requested", "contacted", "call_scheduled"].includes(c.status) && c.reviewer).slice(0, 6);
-    const card = (c) => `<a class="case-card" href="#/staff/case/${esc(c.id)}"><h3>${esc(c.company)}</h3><p>${esc(c.summary)}</p>
-      <div class="case-meta">${pill(c.status)}<span>${c.selected} ${esc(t("partners"))}</span><span>→ ${esc(c.reviewer)}</span><span>${esc(fmtDate(c.updated_at, false))}</span></div></a>`;
+    const card = (c) => `<a class="case-card" href="#/staff/case/${esc(c.id)}"><h3>${esc(companyOf(c))}</h3><p>${esc(c.summary)}</p>
+      <div class="case-meta">${pill(c.status)}${c.niche || c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}<span>${c.selected} ${esc(t("partners"))}</span><span>→ ${esc(c.reviewer)}</span><span>${esc(fmtDate(c.updated_at, false))}</span></div></a>`;
     const section = (title, xs) => xs.length ? `<div class="section-h"><h2>${esc(title)}</h2><span class="muted">${xs.length}</span></div><div class="dir">${xs.map(card).join("")}</div>` : "";
     view().innerHTML = `<div class="page-h"><div><h1>${esc(t("q.title"))}</h1><p>${esc(t("q.lead"))}</p></div></div>
       ${open.length ? section(t("q.mine"), open.filter(mine)) + section(t("q.others"), open.filter((c) => !mine(c)))

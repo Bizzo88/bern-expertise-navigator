@@ -15,8 +15,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+import yaml
+
 from . import index, plain, search, showcase
-from .config import DATA_DIR
+from .config import CONFIG_DIR, DATA_DIR
 
 DB = DATA_DIR / "cases.db"
 _lock = threading.Lock()
@@ -56,10 +58,13 @@ class Case(BaseModel):
     created_at: str
     updated_at: str
     status: Status = "new"
-    company: str
+    company: str = ""                # may be filled in later (needed before pitching)
     contact_name: str = ""
     contact_email: str = ""
     country: str = ""
+    canton: str = ""                 # when the company is in Switzerland
+    area: str = ""                   # medtech area id   (config/medtech_areas.yaml)
+    niche: str = ""                  # niche id within the area
     request_text: str
     analysis: plain.RequestAnalysis
     matches: list[Match] = []
@@ -72,11 +77,15 @@ class Case(BaseModel):
 
 
 class NewCase(BaseModel):
-    company: str = Field(..., min_length=1, max_length=200)
+    """Search-first: what the company is looking for + optional filters. Contact details come later."""
+    request_text: str = Field(..., min_length=3, max_length=12000)
+    company: str = Field("", max_length=200)
     contact_name: str = Field("", max_length=200)
     contact_email: str = Field("", max_length=200)
     country: str = Field("", max_length=100)
-    request_text: str = Field(..., min_length=10, max_length=12000)
+    canton: str = Field("", max_length=60)
+    area: str = Field("", max_length=40)
+    niche: str = Field("", max_length=40)
     lang: str = "en"
     actor: str = Field(..., min_length=1, max_length=120)
     role: Role
@@ -125,6 +134,21 @@ def log(case: Case, actor: str, kind: str, text: str = "", role: str = "") -> No
 _ORDER = {"person": 0, "unit": 1, "infrastructure": 2, "project": 3}
 
 
+def medtech_areas() -> list[dict]:
+    p = CONFIG_DIR / "medtech_areas.yaml"
+    return (yaml.safe_load(p.read_text()) or {}).get("areas", []) if p.exists() else []
+
+
+def niche_query(area: str, niche: str) -> str:
+    """Search terms for the chosen medtech niche (or, with only an area, one key term per niche)."""
+    for a in medtech_areas():
+        if a["id"] == area:
+            if niche:
+                return next((n["query"] for n in a.get("niches", []) if n["id"] == niche), "")
+            return " ".join(n["query"].split()[0] for n in a.get("niches", []))
+    return ""
+
+
 def find_matches(analysis: plain.RequestAnalysis, k: int = 12) -> tuple[list[Match], str | None]:
     """People, labs and facilities first (someone to contact), projects after (context)."""
     ents = index.load_entities()
@@ -139,19 +163,31 @@ def find_matches(analysis: plain.RequestAnalysis, k: int = 12) -> tuple[list[Mat
             institution=x.institution, why=x.why_match, url=(x.sources[0].url if x.sources else ""),
             plain=(e.description[0] if e and e.description else None), contact=x.contact,
             confidence=x.confidence, via=x.via))
-    out.sort(key=lambda m: _ORDER.get(m.entity_type, 9))  # stable: keeps relevance order within a type
+    # People first (someone to contact), and among people the leads first: a company should meet the
+    # professor or group head, not an intern. Stable sort keeps relevance order within each band.
+    def rank(m: Match) -> tuple:
+        e = ents.get(m.id)
+        sen = search.seniority(e) if e and m.entity_type == "person" else 1.0
+        band = 0 if sen >= 1.2 else 1 if sen >= 0.8 else 2
+        return (_ORDER.get(m.entity_type, 9), band if m.entity_type == "person" else 0)
+    out.sort(key=rank)
     return out[:k], None
 
 
 def create(req: NewCase) -> Case:
     analysis = plain.analyze_request(req.request_text, req.lang)
+    # the chosen medtech niche sharpens the search; the company's own words stay in the query
+    extra = niche_query(req.area, req.niche)
+    if extra:
+        analysis.search_query = f"{extra} {analysis.search_query}".strip()
     matches, msg = find_matches(analysis)
     now = _now()
+    swiss = req.country.strip().lower() in ("switzerland", "schweiz", "suisse", "svizzera", "ch")
     case = Case(id=uuid.uuid4().hex[:10], created_at=now, updated_at=now, company=req.company.strip(),
                 contact_name=req.contact_name.strip(), contact_email=req.contact_email.strip(),
-                country=req.country.strip(), request_text=req.request_text.strip(), analysis=analysis,
-                matches=matches, no_match_message=msg)
-    log(case, req.actor, "created", f"Request from {case.company} received", "officer")
+                country=req.country.strip(), canton=req.canton.strip() if swiss else "", area=req.area, niche=req.niche,
+                request_text=req.request_text.strip(), analysis=analysis, matches=matches, no_match_message=msg)
+    log(case, req.actor, "created", f"Request received{' from ' + case.company if case.company else ''}", "officer")
     log(case, "Navigator", "analysed",
         f"Plain-language summary by {'Apertus' if analysis.generated_by == 'apertus' else 'glossary rules'}; "
         f"{len(matches)} possible partners found in Bern")

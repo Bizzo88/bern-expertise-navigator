@@ -2,6 +2,8 @@
 examples:
   - label: {en: "Diabetes sensor start-up", de: "Diabetes-Sensor-Start-up", fr: "Start-up capteurs diabète"}
     company: "GlucoPatch GmbH (fictional example)"
+    area: diabetes
+    niche: glucose
     contact_name: "Anna Beispiel"
     contact_email: "anna.beispiel@example.com"
     country: "Germany"
@@ -12,6 +14,8 @@ examples:
       considering opening a small R&D office in Switzerland next year.
   - label: {en: "AI imaging scale-up", de: "KI-Bildgebungsfirma", fr: "Scale-up imagerie IA"}
     company: "NeuroVision AI Ltd (fictional example)"
+    area: imaging
+    niche: tumour
     contact_name: "Sam Example"
     contact_email: "sam@example.org"
     country: "United Kingdom"
@@ -20,12 +24,15 @@ examples:
       We want to collaborate with a research group on image segmentation and longitudinal analysis, and we are
       interested in surgical navigation. We are evaluating Switzerland for our European R&D hub and would like to
       meet potential academic partners.
-  - label: {en: "Implant manufacturer (FR)", de: "Implantat-Hersteller (FR)", fr: "Fabricant d'implants"}
+  - label: {en: "Implant maker from Vaud (FR)", de: "Implantat-Hersteller aus der Waadt (FR)", fr: "Fabricant d'implants vaudois"}
     company: "OsteoForm SA (exemple fictif)"
+    area: ortho
+    niche: implants
     contact_name: "Claire Exemple"
     contact_email: "claire@example.fr"
-    country: "France"
+    country: "Switzerland"
+    canton: "Vaud"
     request_text: >-
       Nous fabriquons des implants orthopédiques en titane imprimés en 3D. Nous cherchons un partenaire de
       recherche en biomécanique pour tester la stabilité de nos implants dans l'os ostéoporotique, ainsi qu'un
-      accès à du prototypage rapide. Nous envisageons de nous implanter en Suisse.
+      accès à du prototypage rapide. Nous envisageons d'ouvrir un site dans le canton de Berne.

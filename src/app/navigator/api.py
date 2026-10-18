@@ -149,9 +149,17 @@ def _case_or_404(cid: str) -> cases.Case:
     return c
 
 
+@app.get("/medtech-areas")
+def get_medtech_areas():
+    """Medtech areas and niches offered as filters on a new request (config/medtech_areas.yaml)."""
+    return [{"id": a["id"], "label": a["label"], "niches": [{"id": n["id"], "label": n["label"]} for n in a.get("niches", [])]}
+            for a in cases.medtech_areas()]
+
+
 @app.get("/cases")
 def list_cases():
-    return [{"id": c.id, "company": c.company, "status": c.status, "country": c.country,
+    return [{"id": c.id, "company": c.company, "status": c.status, "country": c.country, "canton": c.canton,
+             "area": c.area, "niche": c.niche,
              "updated_at": c.updated_at, "created_at": c.created_at, "summary": c.analysis.summary[:220],
              "selected": sum(m.selected for m in c.matches), "reviewer": c.reviewer} for c in cases.list_cases()]
 
@@ -172,6 +180,22 @@ def delete_case(cid: str):
     _case_or_404(cid)
     cases.delete(cid)
     return {"ok": True}
+
+
+class Details(StaffAction):
+    company: str = Field(..., min_length=1, max_length=200)
+    contact_name: str = Field("", max_length=200)
+    contact_email: str = Field("", max_length=200)
+
+
+@app.post("/cases/{cid}/details", response_model=cases.Case)
+def set_details(cid: str, body: Details):
+    """Company and contact person — asked only when the officer is ready to pitch."""
+    _require(body, "officer")
+    c = _case_or_404(cid)
+    c.company, c.contact_name, c.contact_email = body.company.strip(), body.contact_name.strip(), body.contact_email.strip()
+    cases.log(c, body.actor, "details", f"Company details: {c.company}", body.role)
+    return cases.save(c)
 
 
 class Selection(StaffAction):
@@ -303,6 +327,8 @@ def prepare_brief(cid: str, body: BriefReq):
     c = _case_or_404(cid)
     if c.status not in ("approved", "contacted", "call_scheduled", "closed"):
         raise HTTPException(400, "The technical review must approve the partners first")
+    if not c.company:
+        raise HTTPException(400, "Add the company name before preparing the pitch")
     out = brief.build(c, body.lang, {"name": body.actor, "email": body.email, "team": body.team})
     token = (c.outreach.get("brief") or {}).get("token") or secrets.token_urlsafe(12)
     c.outreach = {**c.outreach, "brief": {"token": token, "lang": body.lang, "at": cases._now(), "data": out["brief"],

@@ -50,8 +50,10 @@ make test                       # unit tests: no GPU, no network, no model downl
 
 ## Using it
 
-1. Open **Staff workspace** → choose *Business development*, enter your name → **New request** → pick a fictional
-   example → tick partners → send to a reviewer by name.
+1. Open **Staff workspace** → choose *Business development*, enter your name → **New request**: type what the
+   company is looking for (or paste their email), optionally set the company's country (Switzerland → canton) and a
+   medtech area → niche (e.g. *Diabetes → Glucose sensing*), or click a fictional example → **Find partners in Bern**
+   → tick partners → send to a reviewer by name. Company name and contact are asked only at the pitch step.
 2. **Switch user** → *Technical reviewer* with that name → the request is in the **Review queue** → mark partners → **Approve**.
 3. **Switch user** back (one click under "Recently used") → open the request → **Prepare the pitch** → read
    *For you*, open the **executive brief**, *Save as PDF*, then **Prepare the email** (it links the brief) or download
@@ -123,7 +125,7 @@ against the saved page, and anything unverifiable is dropped automatically. The 
 ## Repository layout
 
 ```
-config/        sources.yaml · unibe_subdomains.txt · glossary.yaml · plain_glossary.yaml · showcase.yaml · example_requests.yaml
+config/        sources.yaml · unibe_subdomains.txt · glossary.yaml · plain_glossary.yaml · showcase.yaml · medtech_areas.yaml · example_requests.yaml
 app/navigator/ config · schema · llm · crawl · classify · extract · rules_extract · index · search · plain · cases · showcase · api · cli
 app/navigator/static/  index.html · app.css · app.js   (no build step, no CDN: works air-gapped)
 eval/          golden_set.yaml · run_eval.py

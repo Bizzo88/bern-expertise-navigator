@@ -467,12 +467,12 @@ details.orig summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); 
 .topbar.staff .staff-link:hover { background: #1d2638; color: #fff; }
 .staff-tag { font-size: 10.5px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px;
   background: var(--brand); color: #fff; white-space: nowrap; }
-.who { display: flex; align-items: center; gap: 9px; padding: 4px 6px 4px 4px; border-radius: 11px; background: #1d2638; border: 1px solid #2b3650; }
-.who .av { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; font-weight: 750; flex: none; }
-.who .av.officer { background: #c8102e; color: #fff; } .who .av.reviewer { background: #6d28d9; color: #fff; }
-.who .txt { display: flex; flex-direction: column; line-height: 1.1; } .who b { font-size: 13px; color: #fff; } .who small { font-size: 11px; color: #9aa7bd; }
-.who button { border: 0; background: transparent; color: #c9d3e3; font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
-.who button:hover { background: #2b3650; color: #fff; }
+.whoami { display: flex; align-items: center; gap: 9px; padding: 4px 6px 4px 4px; border-radius: 11px; background: #1d2638; border: 1px solid #2b3650; }
+.whoami .av { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; font-weight: 750; flex: none; }
+.whoami .av.officer { background: #c8102e; color: #fff; } .whoami .av.reviewer { background: #6d28d9; color: #fff; }
+.whoami .txt { display: flex; flex-direction: column; line-height: 1.1; } .whoami b { font-size: 13px; color: #fff; } .whoami small { font-size: 11px; color: #9aa7bd; }
+.whoami button { border: 0; background: transparent; color: #c9d3e3; font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.whoami button:hover { background: #2b3650; color: #fff; }
 .role-banner { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; margin-bottom: 16px; font-size: 14px; }
 .role-banner.officer { background: color-mix(in srgb, var(--brand) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--border)); }
 .role-banner.reviewer { background: var(--st-review-bg); border: 1px solid color-mix(in srgb, var(--st-review) 30%, var(--border)); }
@@ -515,7 +515,7 @@ details.orig summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); 
 .seg-tabs button { border: 0; background: transparent; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
 .seg-tabs button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }   
 
-@media (max-width: 1100px) { .who .txt { display: none; }  }
+@media (max-width: 1100px) { .whoami .txt { display: none; }  }
 @media (max-width: 860px) { .role-cards { grid-template-columns: 1fr; } .staff-tag { display: none; } }
 @media (max-width: 600px) {
   .rfields { grid-template-columns: 1fr; gap: 2px; } .rfields dd { margin-bottom: 6px; }
@@ -607,3 +607,28 @@ sup.ref a { font-size: 11px; font-weight: 700; color: var(--ok); text-decoration
 }
 
 .plain-topic { margin: -2px 0 0; font-size: 14.5px; color: var(--ink-2); line-height: 1.5; }
+
+/* =================== new request: search first =================== */
+.nr { max-width: 900px; margin: 6px auto 0; }
+.nr h1 { font-size: clamp(24px, 3.4vw, 34px); margin: 0 0 14px; letter-spacing: -.02em; text-align: center; }
+.nr-box { display: flex; align-items: flex-start; gap: 10px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px;
+  padding: 10px 10px 10px 16px; box-shadow: var(--shadow); }
+.nr-box:focus-within { border-color: var(--focus); box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 15%, transparent), var(--shadow); }
+.nr-box > svg { width: 20px; height: 20px; margin-top: 11px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; flex: none; }
+.nr-box textarea { flex: 1; border: 0 !important; box-shadow: none !important; background: transparent; resize: none; min-height: 44px; font-size: 17px; padding: 9px 2px; line-height: 1.45; }
+.nr-box .btn-primary { padding: 11px 16px; margin-top: 1px; }
+.nr-try { justify-content: center; margin-top: 12px; }
+.nr-filters { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+.nr-f { display: grid; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.nr-f input, .nr-f select { font-size: 14.5px; }
+.nr-area { margin-top: 16px; }
+.nr-lbl { font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 8px 0 6px; }
+.nr-area .chips { justify-content: flex-start; margin: 0; max-width: none; }
+.chip.on { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
+#nicheBox { margin-top: 6px; padding: 10px 12px; background: var(--surface-2); border-radius: 12px; }
+#nicheBox .chip.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+.details { margin: 0 0 14px; padding: 12px 14px; border: 1px dashed var(--border-strong); border-radius: 12px; }
+.details.need { border-color: color-mix(in srgb, var(--brand) 50%, var(--border)); background: color-mix(in srgb, var(--brand) 4%, var(--surface)); }
+.details .sub-h { flex-wrap: wrap; }
+.details-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 14px; font-size: 14px; color: var(--ink-2); }
+@media (max-width: 760px) { .nr-filters { grid-template-columns: 1fr; } .nr-box { flex-wrap: wrap; } .nr-box .btn-primary { width: 100%; } }
