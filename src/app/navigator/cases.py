@@ -1,4 +1,4 @@
-"""Company requests ("cases"): understand -> match -> technical review -> invite to Bern.
+"""Company requests ("cases"): understand -> choose partners -> pitch & invite to Bern.
 
 Stored locally in SQLite (data/cases.db): one JSON document per case plus its activity log.
 Nothing is sent anywhere by the server: emails open in the officer's own mail client (mailto)
@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 import yaml
 
@@ -23,8 +23,9 @@ from .config import CONFIG_DIR, DATA_DIR
 DB = DATA_DIR / "cases.db"
 _lock = threading.Lock()
 
-Status = Literal["new", "in_review", "changes_requested", "approved", "contacted", "call_scheduled", "closed"]
-Role = Literal["officer", "reviewer"]
+Status = Literal["new", "contacted", "call_scheduled", "closed"]
+# statuses from the former technical-review step, mapped when old requests are read
+_LEGACY_STATUS = {"in_review": "new", "changes_requested": "new", "approved": "new"}
 
 
 class Match(BaseModel):
@@ -41,14 +42,11 @@ class Match(BaseModel):
     confidence: float = 0.0
     via: str | None = None
     selected: bool = False
-    review: Literal["ok", "no"] | None = None
-    review_note: str = ""
 
 
 class Event(BaseModel):
     at: str
     actor: str
-    role: str = ""
     kind: str
     text: str = ""
 
@@ -69,11 +67,15 @@ class Case(BaseModel):
     analysis: plain.RequestAnalysis
     matches: list[Match] = []
     no_match_message: str | None = None
-    reviewer: str = ""
-    review_note: str = ""          # officer -> reviewer
-    review_comment: str = ""       # reviewer -> officer
     outreach: dict = Field(default_factory=dict)
     events: list[Event] = []
+
+    @model_validator(mode="before")
+    @classmethod
+    def _legacy(cls, data):
+        if isinstance(data, dict) and data.get("status") in _LEGACY_STATUS:
+            data = {**data, "status": _LEGACY_STATUS[data["status"]]}
+        return data
 
 
 class NewCase(BaseModel):
@@ -88,7 +90,6 @@ class NewCase(BaseModel):
     niche: str = Field("", max_length=40)
     lang: str = "en"
     actor: str = Field(..., min_length=1, max_length=120)
-    role: Role
 
 
 def _now() -> str:
@@ -126,8 +127,8 @@ def delete(cid: str) -> None:
         c.execute("DELETE FROM cases WHERE id = ?", (cid,))
 
 
-def log(case: Case, actor: str, kind: str, text: str = "", role: str = "") -> None:
-    case.events.append(Event(at=_now(), actor=actor or "—", role=role, kind=kind, text=text))
+def log(case: Case, actor: str, kind: str, text: str = "") -> None:
+    case.events.append(Event(at=_now(), actor=actor or "—", kind=kind, text=text))
 
 
 # ---------------- matching ---------------------------------------------------
@@ -187,20 +188,20 @@ def create(req: NewCase) -> Case:
                 contact_name=req.contact_name.strip(), contact_email=req.contact_email.strip(),
                 country=req.country.strip(), canton=req.canton.strip() if swiss else "", area=req.area, niche=req.niche,
                 request_text=req.request_text.strip(), analysis=analysis, matches=matches, no_match_message=msg)
-    log(case, req.actor, "created", f"Request received{' from ' + case.company if case.company else ''}", "officer")
+    log(case, req.actor, "created", f"Request received{' from ' + case.company if case.company else ''}")
     log(case, "Navigator", "analysed",
         f"Plain-language summary by {'Apertus' if analysis.generated_by == 'apertus' else 'glossary rules'}; "
         f"{len(matches)} possible partners found in Bern")
     return save(case)
 
 
-def rematch(case: Case, query: str, actor: str, role: str = "officer") -> Case:
+def rematch(case: Case, query: str, actor: str) -> Case:
     keep = {m.id: m for m in case.matches if m.selected}
     case.analysis.search_query = query
     found, msg = find_matches(case.analysis)
     case.matches = list(keep.values()) + [m for m in found if m.id not in keep]
     case.no_match_message = msg if not case.matches else None
-    log(case, actor, "rematched", f"Searched again for: {query}", role)
+    log(case, actor, "rematched", f"Searched again for: {query}")
     return save(case)
 
 
@@ -249,11 +250,11 @@ _T = {
 
 
 def draft_email(case: Case, lang: str, slots: list[str], sender: str, team: str, link: str = "") -> dict:
-    """Deterministic template: only approved matches and verified proof points, each with its link.
+    """Deterministic template: only the selected partners and verified proof points, each with its link.
     With a published executive brief the email stays short and points to it."""
     t = _T.get(lang, _T["en"])
     if link:
-        approved = [m for m in case.matches if m.selected and m.review == "ok"]
+        approved = [m for m in case.matches if m.selected]
         lines = [t["hello"].format(name=case.contact_name or case.company), "", t["intro"].format(need=""), ""]
         lines += [f"• {m.name}{' – ' + m.unit if m.unit else ''} ({m.institution})" for m in approved]
         lines += ["", t["brief"], link, "", t["call"] if slots else t["nocall"]]
@@ -261,7 +262,7 @@ def draft_email(case: Case, lang: str, slots: list[str], sender: str, team: str,
         lines += ["", t["bye"], sender or "", team or ""]
         return {"subject": t["subject"].format(company=case.company), "body": "\n".join(lines).strip() + "\n",
                 "to": case.contact_email, "matches": [m.id for m in approved]}
-    approved = [m for m in case.matches if m.selected and m.review == "ok"] or [m for m in case.matches if m.selected]
+    approved = [m for m in case.matches if m.selected]
     lines = [t["hello"].format(name=case.contact_name or case.company), "", t["intro"].format(need=""), ""]
     for m in approved:
         who = ", ".join(x for x in [m.role, m.unit] if x)
@@ -288,7 +289,7 @@ def ics(case: Case, start_iso: str, minutes: int, organizer: str, organizer_emai
     start = start.astimezone(timezone.utc)
     end = start + timedelta(minutes=minutes)
     fmt = "%Y%m%dT%H%M%SZ"
-    experts = ", ".join(m.name for m in case.matches if m.selected and m.review != "no")
+    experts = ", ".join(m.name for m in case.matches if m.selected)
     desc = (f"Introduction call: {case.company} and research partners in Bern ({experts}). "
             f"Prepared with the Bern Expertise Navigator.").replace("\n", " ")
     attendees = [a for a in [case.contact_email, organizer_email] if a]

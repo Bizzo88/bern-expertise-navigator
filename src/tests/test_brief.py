@@ -31,9 +31,8 @@ PAGES = [Page(url=PUB_URL, source="dcb", title="Projects", fetched_at="2026", te
     "Recent publications\nExample J, Other A. Accuracy of a new CGM system in daily life. Diabetes Care 2025. "
     "doi: 10.1234/dc25-0001\nUnrelated B. Something else entirely, 2024, doi: 10.9999/xyz-2"))]
 REQ = {"company": "Example Sensors (fictional)", "contact_email": "ceo@example.com",
-       "request_text": "We build a needle-free CGM patch and look for a clinical study partner.", "actor": "Maria", "role": "officer"}
-OFF = {"actor": "Maria", "role": "officer"}
-REV = {"actor": "Dr. R", "role": "reviewer"}
+       "request_text": "We build a needle-free CGM patch and look for a clinical study partner.", "actor": "Maria"}
+OFF = {"actor": "Maria"}
 
 
 @pytest.fixture()
@@ -53,21 +52,17 @@ def client(tmp_path, monkeypatch):
     return TestClient(api.app)
 
 
-def _approved_case(client):
+def _chosen_case(client):
     cid = client.post("/cases", json=REQ).json()["id"]
-    client.post(f"/cases/{cid}/selection", json={"selected": ["p1", "p2"], **OFF})
-    client.post(f"/cases/{cid}/review-request", json={"reviewer": "Dr. R", **OFF})
-    client.post(f"/cases/{cid}/review", json={"decision": "approved", **REV,
-                                              "verdicts": [{"id": "p1", "verdict": "ok"}, {"id": "p2", "verdict": "no"}]})
+    client.post(f"/cases/{cid}/selection", json={"selected": ["p1"], **OFF})   # p2 is offered but not chosen
     return cid
 
 
-def test_brief_only_approved_and_everything_sourced(client):
-    cid = _approved_case(client)
-    assert client.post(f"/cases/{cid}/brief", json={"lang": "en", **REV}).status_code == 403  # officer only
+def test_brief_only_chosen_partners_and_everything_sourced(client):
+    cid = _chosen_case(client)
     r = client.post(f"/cases/{cid}/brief", json={"lang": "en", "email": "maria@x.ch", **OFF}).json()
     b = r["brief"]
-    assert [i["name"] for i in b["items"]] == ["Prof. Jane Example"]  # the rejected partner is not pitched
+    assert [i["name"] for i in b["items"]] == ["Prof. Jane Example"]  # a partner not chosen is not pitched
     item = b["items"][0]
     assert item["topics"][0]["term"] == "continuous glucose monitoring"
     assert "continuous glucose monitoring" in item["quote"]["text"] and item["quote"]["ref"] >= 1
@@ -88,10 +83,10 @@ def test_brief_only_approved_and_everything_sourced(client):
     assert r2["token"] == r["token"] and "Bern" in r2["brief"]["hook"]
 
 
-def test_brief_needs_approval_and_email_links_it(client):
+def test_brief_needs_chosen_partners_and_email_links_it(client):
     cid = client.post("/cases", json=REQ).json()["id"]
     assert client.post(f"/cases/{cid}/brief", json={"lang": "en", **OFF}).status_code == 400
-    cid = _approved_case(client)
+    cid = _chosen_case(client)
     tok = client.post(f"/cases/{cid}/brief", json={"lang": "en", **OFF}).json()["token"]
     d = client.post(f"/cases/{cid}/draft", json={"lang": "en", "link": f"http://h/#/b/{tok}", **OFF}).json()
     assert f"#/b/{tok}" in d["body"] and "Prof. Jane Example" in d["body"] and "Dr. Not Approved" not in d["body"]

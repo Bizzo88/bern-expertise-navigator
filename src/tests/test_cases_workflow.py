@@ -1,4 +1,4 @@
-"""Company-request workflow over the API: understand -> select -> review -> invite (no LLM, temp database)."""
+"""Company-request workflow over the API: understand -> choose partners -> pitch & invite (no LLM, temp database)."""
 import sys
 from pathlib import Path
 
@@ -10,12 +10,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
 from navigator import api, cases, llm, plain  # noqa: E402
 from navigator.cases import Match  # noqa: E402
 
+OFF = {"actor": "Maria"}
 REQ = {"company": "Example Sensors GmbH (fictional)", "contact_name": "Anna Example", "contact_email": "anna@example.com",
        "country": "Germany", "request_text": "We develop a needle-free CGM patch for type 1 diabetes. "
-       "We are looking for a clinical study partner and need help with CE marking.",
-       "actor": "Maria", "role": "officer"}
-OFF = {"actor": "Maria", "role": "officer"}
-REV = {"actor": "Dr. R", "role": "reviewer"}
+       "We are looking for a clinical study partner and need help with CE marking.", **OFF}
 
 
 @pytest.fixture()
@@ -24,7 +22,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(llm, "available", lambda *a, **k: False)
     fake = [Match(id=f"e{i}", name=n, entity_type=t, institution="DCB", url=f"https://www.dcberne.com/{i}", why="test")
             for i, (n, t) in enumerate([("Prof. A", "person"), ("Lab B", "unit"), ("Dr. C", "person")])]
-    monkeypatch.setattr(cases, "find_matches", lambda analysis, k=12: (list(fake), None))
+    monkeypatch.setattr(cases, "find_matches", lambda analysis, k=12: ([m.model_copy() for m in fake], None))
     monkeypatch.setattr(cases.showcase, "build", lambda: {"highlights": [{"quote": "Verified sentence.", "url": "https://x.ch/a"}]})
     return TestClient(api.app)
 
@@ -40,51 +38,34 @@ def test_full_workflow(client):
     c = client.post("/cases", json=REQ).json()
     cid = c["id"]
     assert c["status"] == "new" and c["analysis"]["generated_by"] == "rules" and len(c["matches"]) == 3
-    assert client.post(f"/cases/{cid}/review-request", json={"reviewer": "Dr. R", **OFF}).status_code == 400  # nothing selected
-    client.post(f"/cases/{cid}/selection", json={"selected": ["e0", "e1"], **OFF})
-    assert client.post(f"/cases/{cid}/draft", json=OFF).status_code == 400  # not approved yet
-    assert client.post(f"/cases/{cid}/review-request", json={"reviewer": "Dr. R", "note": "ok?", **OFF}).json()["status"] == "in_review"
-    bad = client.post(f"/cases/{cid}/review", json={"decision": "approved", "verdicts": [{"id": "e0", "verdict": "no"}], **REV})
-    assert bad.status_code == 400  # cannot approve with zero suitable partners
-    r = client.post(f"/cases/{cid}/review", json={"decision": "approved", "comment": "fine", **REV,
-                                                  "verdicts": [{"id": "e0", "verdict": "ok"}, {"id": "e1", "verdict": "no"}]})
-    assert r.json()["status"] == "approved"
+    assert client.post(f"/cases/{cid}/draft", json=OFF).status_code == 400          # no partner chosen yet
+    client.post(f"/cases/{cid}/selection", json={"selected": ["e0", "e2"], **OFF})
     d = client.post(f"/cases/{cid}/draft", json={"lang": "de", "slots": ["Di 10:00"], "sender": "Maria", **OFF}).json()
-    assert "Prof. A" in d["body"] and "Lab B" not in d["body"]  # only partners the reviewer approved
+    assert "Prof. A" in d["body"] and "Dr. C" in d["body"] and "Lab B" not in d["body"]  # only chosen partners
     assert "Verified sentence." in d["body"] and "Di 10:00" in d["body"] and d["to"] == REQ["contact_email"]
     ics = client.get(f"/cases/{cid}/invite.ics", params={"start": "2026-10-22T14:00", "organizer_email": "m@x.ch"})
     assert ics.status_code == 200 and "BEGIN:VEVENT" in ics.text and "ATTENDEE;RSVP=TRUE:mailto:anna@example.com" in ics.text
     done = client.post(f"/cases/{cid}/outcome", json={"kind": "email", "subject": d["subject"], "body": d["body"], **OFF}).json()
     assert done["status"] == "contacted"
-    kinds = [e["kind"] for e in done["events"]]
-    assert kinds == ["created", "analysed", "review_requested", "approved", "emailed"]
+    assert [e["kind"] for e in done["events"]] == ["created", "analysed", "emailed"]
+    assert client.post(f"/cases/{cid}/selection", json={"selected": [], **OFF}).status_code == 409  # locked once contacted
     assert client.get("/cases").json()[0]["status"] == "contacted"
 
 
-def test_changes_requested_reopens_selection(client):
+def test_review_endpoints_are_gone_and_actions_need_a_name(client):
     cid = client.post("/cases", json=REQ).json()["id"]
-    client.post(f"/cases/{cid}/selection", json={"selected": ["e2"], **OFF})
-    client.post(f"/cases/{cid}/review-request", json={"reviewer": "Dr. R", **OFF})
-    r = client.post(f"/cases/{cid}/review", json={"decision": "changes_requested", "comment": "wrong field", **REV}).json()
-    assert r["status"] == "changes_requested" and r["review_comment"] == "wrong field"
-    assert client.post(f"/cases/{cid}/review-request", json={"reviewer": "Dr. R", **OFF}).json()["status"] == "in_review"
+    assert client.post(f"/cases/{cid}/review-request", json={"reviewer": "x", **OFF}).status_code in (404, 405)
+    assert client.post(f"/cases/{cid}/review", json={"decision": "approved", **OFF}).status_code in (404, 405)
+    assert client.post("/cases", json={**REQ, "actor": ""}).status_code == 422       # anonymous staff actions refused
 
 
-def test_roles_are_enforced(client):
-    """Officers cannot approve; reviewers cannot create, select or invite."""
-    assert client.post("/cases", json={**REQ, **REV}).status_code == 403
-    cid = client.post("/cases", json=REQ).json()["id"]
-    assert client.post(f"/cases/{cid}/selection", json={"selected": ["e0"], **REV}).status_code == 403
-    client.post(f"/cases/{cid}/selection", json={"selected": ["e0"], **OFF})
-    client.post(f"/cases/{cid}/review-request", json={"reviewer": "Dr. R", **OFF})
-    verdict = {"decision": "approved", "verdicts": [{"id": "e0", "verdict": "ok"}]}
-    assert client.post(f"/cases/{cid}/review", json={**verdict, **OFF}).status_code == 403
-    assert client.post(f"/cases/{cid}/selection", json={"selected": [], **OFF}).status_code == 409  # locked in review
-    assert client.post(f"/cases/{cid}/review", json={**verdict, **REV}).status_code == 200
-    assert client.post(f"/cases/{cid}/draft", json=REV).status_code == 403
-    assert client.post("/cases", json={**REQ, "actor": ""}).status_code == 422  # anonymous staff actions refused
-    events = client.get(f"/cases/{cid}").json()["events"]
-    assert [(e["actor"], e["role"]) for e in events if e["kind"] == "approved"] == [("Dr. R", "reviewer")]
+def test_old_requests_from_the_review_era_still_load():
+    raw = {"id": "abcdef1234", "created_at": "2026", "updated_at": "2026", "status": "approved", "company": "X",
+           "request_text": "abc", "analysis": {"summary": "s"}, "reviewer": "Dr. R", "review_comment": "ok",
+           "matches": [{"id": "e0", "name": "A", "entity_type": "person", "selected": True, "review": "ok"}],
+           "events": [{"at": "2026", "actor": "Dr. R", "role": "reviewer", "kind": "approved"}]}
+    c = cases.Case.model_validate(raw)
+    assert c.status == "new" and c.matches[0].selected
 
 
 def test_search_first_request_with_filters(client, monkeypatch):
@@ -109,9 +90,6 @@ def test_search_first_request_with_filters(client, monkeypatch):
 def test_company_details_needed_before_pitch(client):
     cid = client.post("/cases", json={"request_text": "partner for a sensor study", **OFF}).json()["id"]
     client.post(f"/cases/{cid}/selection", json={"selected": ["e0"], **OFF})
-    client.post(f"/cases/{cid}/review-request", json={"reviewer": "Dr. R", **OFF})
-    client.post(f"/cases/{cid}/review", json={"decision": "approved", "verdicts": [{"id": "e0", "verdict": "ok"}], **REV})
     assert client.post(f"/cases/{cid}/brief", json={"lang": "en", **OFF}).status_code == 400   # no company yet
-    assert client.post(f"/cases/{cid}/details", json={"company": "X AG", **REV}).status_code == 403
     d = client.post(f"/cases/{cid}/details", json={"company": "X AG", "contact_email": "ceo@x.ch", **OFF}).json()
     assert d["company"] == "X AG" and d["contact_email"] == "ceo@x.ch"

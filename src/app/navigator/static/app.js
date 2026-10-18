@@ -2,11 +2,8 @@
  *
  * Three clearly separated areas:
  *   PUBLIC  #/ , #/search, #/directory          — the navigator from the brief, for anyone
- *   STAFF   #/staff/...                          — canton workspace; staff say who they are on entry:
- *           officer  (business development): requests → partners → technical review → pitch & invite
- *           reviewer (technical colleague):  review queue → approve / request changes
+ *   STAFF   #/staff/...                          — canton business development: request → partners → pitch & invite
  *   BRIEF   #/b/<token>                          — the executive brief a CEO receives (read-only, printable)
- * The server enforces the roles (403 otherwise); the UI only shows what the current role may do.
  */
 (() => {
   "use strict";
@@ -59,8 +56,8 @@
     en: {
       "brand.sub": "Research & expertise in Bern", "brand.staffSub": "Staff workspace", "brand.briefSub": "Executive brief",
       "nav.search": "Search", "nav.dir": "Labs & facilities", "nav.staff": "Staff workspace",
-      "nav.requests": "Requests", "nav.new": "New request", "nav.queue": "Review queue", "nav.public": "Public site",
-      "staff.tag": "Staff", "who.switch": "Switch user", "role.officer": "Business development", "role.reviewer": "Technical reviewer",
+      "nav.requests": "Requests", "nav.new": "New request", "nav.public": "Public site",
+      "staff.tag": "Staff", "who.switch": "Change person", 
       "foot.public": "Information from the public websites of the University of Bern, the ARTORG Center and Diabetes Center Berne. Every result links to its source.",
       "foot.staff": "Staff workspace (prototype): identities are self-declared, no passwords. Requests are stored locally and never sent anywhere by the server.",
       "foot.brief": "Prepared with the Bern Expertise Navigator. Every statement links to its public source.",
@@ -82,18 +79,13 @@
       "t.people": "People", "t.labs": "Labs", "t.projects": "Projects", "t.facilities": "Facilities",
       "dir.title": "Labs & facilities", "dir.lead": "Every research group and every facility found on the indexed websites, with its lead and a link to its page.",
       "dir.labs": "Labs & groups", "dir.fac": "Facilities & services", "dir.all": "All institutions",
-      "id.title": "Staff workspace", "id.lead": "Who are you? Your role decides what you see and what you can do. Stored only in this browser.",
-      "id.officerT": "Business development", "id.officerD": "You handle company requests and invite companies to Bern.",
-      "id.officer1": "Understand requests in plain language", "id.officer2": "Pick research partners in Bern", "id.officer3": "Send a sourced pitch and invite the CEO",
-      "id.reviewerT": "Technical reviewer", "id.reviewerD": "You check the proposed research partners before a company is contacted.",
-      "id.reviewer1": "See the technical evidence", "id.reviewer2": "Mark each partner suitable or not", "id.reviewer3": "Approve or ask for changes",
+      "id.title": "Staff workspace", "id.lead": "Enter your name: it appears in the activity log and as the sender of invitations. Stored only in this browser.",
       "id.name": "Your name", "id.email": "Your email", "id.team": "Team / email signature", "id.enter": "Enter workspace", "id.recent": "Recently used",
-      "id.pick": "Choose a role first.",
-      "st.new": "New", "st.in_review": "In technical review", "st.changes_requested": "Changes requested", "st.approved": "Approved — ready to pitch",
+      "st.new": "New", 
       "st.contacted": "Invited", "st.call_scheduled": "Call scheduled", "st.closed": "Closed",
-      "rq.title": "Company requests", "rq.lead": "Each request goes through four steps: understand → choose partners → technical review → pitch & invite to Bern.",
-      "kpi.open": "open", "kpi.review": "in review", "kpi.ready": "ready to pitch", "kpi.invited": "invited",
-      "col.todo": "To do", "col.review": "In technical review", "col.ready": "Ready to pitch", "col.done": "Invited",
+      "rq.title": "Company requests", "rq.lead": "Each request has three steps: understand → choose partners → pitch & invite to Bern.",
+      "kpi.open": "to do", "kpi.ready": "pitch ready", "kpi.invited": "invited",
+      "col.todo": "To do", "col.ready": "Pitch ready", "col.done": "Invited",
       "col.empty": "Nothing here", "rq.empty": "No requests yet", "rq.emptyD": "Paste a company's request, or try one of the fictional examples.",
       "partners": "partners",
       "nw.title": "New company request", "nw.lead": "Paste the company's email or message. Technical words are fine — they will be explained.",
@@ -107,18 +99,14 @@
       "d.title": "Company details", "d.lead": "Needed for the pitch and the email to the company.", "d.save": "Save details", "d.edit": "Edit",
       "cs.back": "All requests", "cs.backQ": "Review queue", "cs.received": "Received", "cs.contact": "Company contact", "cs.activity": "Activity",
       "cs.delete": "Delete request", "cs.confirmDelete": "Delete this request permanently?",
-      "step.1": "Understand", "step.2": "Choose partners", "step.3": "Technical review", "step.4": "Pitch & invite",
+      "step.1": "Understand", "step.2": "Choose partners", "step.3": "Pitch & invite", 
       "u.title": "In plain words", "u.ai": "Summary by Apertus", "u.rules": "Glossary-based (Apertus offline)",
       "u.does": "What the company does", "u.needs": "What they need", "u.words": "Words explained",
       "u.gloss": "reviewed glossary", "u.aiterm": "AI explanation – check", "u.orig": "Original request", "u.none": "No technical terms from the glossary found.",
       "m.title": "Possible partners in Bern", "m.lead": "Tick the partners to propose. Each is backed by a public web page.",
       "m.again": "Search again", "m.more": "Find more in search", "m.sel": "selected", "m.none": "No matching partners found in the indexed sources.",
-      "m.src": "source", "m.ok": "Reviewer: suitable", "m.no": "Reviewer: not suitable", "m.locked": "locked while in review",
-      "r.title": "Technical review", "r.lead": "Ask a colleague who knows the field to check the selected partners.",
-      "r.reviewer": "Reviewer", "r.note": "Note for the reviewer", "r.send": "Send for review", "r.needSel": "Select at least one partner first.",
-      "r.waiting": "Waiting for {who} to check {n} partner(s).", "r.waitHint": "{who} sees this request in the review queue of the staff workspace.",
-      "r.changes": "{who} asked for changes", "r.approved": "{who} approved {n} partner(s)",
-      "i.title": "Pitch & invite", "i.locked": "Unlocks when the technical review approves the partners.",
+      "m.src": "source", 
+      "i.title": "Pitch & invite", "i.locked": "Choose at least one partner above to prepare the pitch.",
       "i.lead": "Two outputs: a plain explanation for you, and a short, fully sourced brief for the company's CEO. Goal: a visit to Bern.",
       "i.lang": "Language of the pitch", "i.prep": "Prepare the pitch", "i.regen": "Update the pitch",
       "i.forYou": "For you", "i.forYouT": "What you are sending — in plain words", "i.forCeo": "For the CEO", "i.forCeoT": "Executive brief",
@@ -127,22 +115,16 @@
       "i.mail": "Send it", "i.slots": "Propose call times", "i.dur": "Call length (min)", "i.prepMail": "Prepare the email",
       "i.subj": "Subject", "i.body": "Email (editable)", "i.openMail": "Open in email app", "i.copy": "Copy text", "i.sent": "Mark as sent",
       "i.ics": "Calendar invite (.ics)", "i.doneEmail": "Invitation sent on {d}.", "i.doneCall": "Call scheduled: {d}.",
-      "q.title": "Review queue", "q.lead": "Company requests where a business developer wants your technical opinion on the proposed Bern partners.",
-      "q.mine": "Assigned to you", "q.others": "Other open reviews", "q.done": "Recently decided", "q.empty": "Nothing waiting for review.",
-      "rv.banner": "Technical review requested by {who}", "rv.note": "Their question", "rv.request": "The company's request",
-      "rv.check": "Partners to check", "rv.ok": "Suitable", "rv.no": "Not suitable", "rv.comment1": "Comment (optional)",
-      "rv.evidence": "Evidence on the source pages", "rv.comment": "Your overall comment for {who}",
-      "rv.approve": "Approve", "rv.changes": "Request changes", "rv.need": "Mark at least one partner as suitable to approve.",
-      "rv.notOpen": "This request is not waiting for a review.", "rv.assigned": "Assigned to {who}",
       "ctx": "Adding partners to the request from {c}", "ctxBack": "Back to the request",
       "bf.prepared": "prepared {d}", "bf.missing": "This brief does not exist or has been withdrawn.", "bf.teams": "research teams",
-      "err": "Something went wrong", "forbidden": "Your role can't do this.",
+      "err": "Something went wrong",
+      "st.pitch": "Pitch ready",
     },
     de: {
       "brand.sub": "Forschung & Expertise in Bern", "brand.staffSub": "Arbeitsbereich", "brand.briefSub": "Executive Brief",
       "nav.search": "Suche", "nav.dir": "Labore & Infrastruktur", "nav.staff": "Arbeitsbereich",
-      "nav.requests": "Anfragen", "nav.new": "Neue Anfrage", "nav.queue": "Prüfungen", "nav.public": "Öffentliche Seite",
-      "staff.tag": "Intern", "who.switch": "Person wechseln", "role.officer": "Wirtschaftsförderung", "role.reviewer": "Technische Prüfung",
+      "nav.requests": "Anfragen", "nav.new": "Neue Anfrage", "nav.public": "Öffentliche Seite",
+      "staff.tag": "Intern", "who.switch": "Person wechseln", 
       "foot.public": "Informationen von den öffentlichen Websites der Universität Bern, des ARTORG Center und des Diabetes Center Berne. Jedes Ergebnis ist mit seiner Quelle verlinkt.",
       "foot.staff": "Arbeitsbereich (Prototyp): Identität selbst angegeben, keine Passwörter. Anfragen werden lokal gespeichert und vom Server nirgends hin gesendet.",
       "foot.brief": "Erstellt mit dem Bern Expertise Navigator. Jede Aussage ist mit ihrer öffentlichen Quelle verlinkt.",
@@ -164,18 +146,13 @@
       "t.people": "Personen", "t.labs": "Labore", "t.projects": "Projekte", "t.facilities": "Infrastruktur",
       "dir.title": "Labore & Infrastruktur", "dir.lead": "Alle Forschungsgruppen und Infrastrukturen der indexierten Websites, mit Leitung und Link zur Seite.",
       "dir.labs": "Labore & Gruppen", "dir.fac": "Infrastruktur & Dienste", "dir.all": "Alle Institutionen",
-      "id.title": "Arbeitsbereich", "id.lead": "Wer sind Sie? Ihre Rolle bestimmt, was Sie sehen und tun können. Nur in diesem Browser gespeichert.",
-      "id.officerT": "Wirtschaftsförderung", "id.officerD": "Sie bearbeiten Firmenanfragen und laden Firmen nach Bern ein.",
-      "id.officer1": "Anfragen in einfacher Sprache verstehen", "id.officer2": "Forschungspartner in Bern auswählen", "id.officer3": "Belegten Pitch senden und die Geschäftsleitung einladen",
-      "id.reviewerT": "Technische Prüfung", "id.reviewerD": "Sie prüfen die vorgeschlagenen Forschungspartner, bevor eine Firma kontaktiert wird.",
-      "id.reviewer1": "Technische Belege sehen", "id.reviewer2": "Jeden Partner als passend oder nicht markieren", "id.reviewer3": "Freigeben oder Änderungen anfordern",
+      "id.title": "Arbeitsbereich", "id.lead": "Geben Sie Ihren Namen ein: Er erscheint im Verlauf und als Absender der Einladungen. Nur in diesem Browser gespeichert.",
       "id.name": "Ihr Name", "id.email": "Ihre E-Mail", "id.team": "Team / E-Mail-Signatur", "id.enter": "Arbeitsbereich öffnen", "id.recent": "Zuletzt verwendet",
-      "id.pick": "Bitte zuerst eine Rolle wählen.",
-      "st.new": "Neu", "st.in_review": "In technischer Prüfung", "st.changes_requested": "Änderungen gewünscht", "st.approved": "Freigegeben — bereit für den Pitch",
+      "st.new": "Neu", 
       "st.contacted": "Eingeladen", "st.call_scheduled": "Gespräch geplant", "st.closed": "Abgeschlossen",
-      "rq.title": "Firmenanfragen", "rq.lead": "Jede Anfrage durchläuft vier Schritte: verstehen → Partner wählen → technische Prüfung → Pitch & Einladung nach Bern.",
-      "kpi.open": "offen", "kpi.review": "in Prüfung", "kpi.ready": "bereit für Pitch", "kpi.invited": "eingeladen",
-      "col.todo": "Zu erledigen", "col.review": "In technischer Prüfung", "col.ready": "Bereit für Pitch", "col.done": "Eingeladen",
+      "rq.title": "Firmenanfragen", "rq.lead": "Jede Anfrage hat drei Schritte: verstehen → Partner wählen → Pitch & Einladung nach Bern.",
+      "kpi.open": "zu erledigen", "kpi.ready": "Pitch bereit", "kpi.invited": "eingeladen",
+      "col.todo": "Zu erledigen", "col.ready": "Pitch bereit", "col.done": "Eingeladen",
       "col.empty": "Nichts", "rq.empty": "Noch keine Anfragen", "rq.emptyD": "Fügen Sie eine Firmenanfrage ein oder probieren Sie ein fiktives Beispiel.",
       "partners": "Partner",
       "nw.title": "Neue Firmenanfrage", "nw.lead": "E-Mail oder Nachricht der Firma einfügen. Fachbegriffe sind kein Problem — sie werden erklärt.",
@@ -189,18 +166,14 @@
       "d.title": "Angaben zur Firma", "d.lead": "Nötig für den Pitch und die E-Mail an die Firma.", "d.save": "Angaben speichern", "d.edit": "Bearbeiten",
       "cs.back": "Alle Anfragen", "cs.backQ": "Prüfungen", "cs.received": "Eingegangen", "cs.contact": "Kontakt der Firma", "cs.activity": "Verlauf",
       "cs.delete": "Anfrage löschen", "cs.confirmDelete": "Diese Anfrage endgültig löschen?",
-      "step.1": "Verstehen", "step.2": "Partner wählen", "step.3": "Technische Prüfung", "step.4": "Pitch & Einladung",
+      "step.1": "Verstehen", "step.2": "Partner wählen", "step.3": "Pitch & Einladung", 
       "u.title": "In einfachen Worten", "u.ai": "Zusammenfassung von Apertus", "u.rules": "Glossar-basiert (Apertus offline)",
       "u.does": "Was die Firma macht", "u.needs": "Was sie braucht", "u.words": "Fachbegriffe erklärt",
       "u.gloss": "geprüftes Glossar", "u.aiterm": "KI-Erklärung – prüfen", "u.orig": "Originalanfrage", "u.none": "Keine Fachbegriffe aus dem Glossar gefunden.",
       "m.title": "Mögliche Partner in Bern", "m.lead": "Partner zum Vorschlagen ankreuzen. Jeder ist durch eine öffentliche Webseite belegt.",
       "m.again": "Neu suchen", "m.more": "Mehr in der Suche finden", "m.sel": "ausgewählt", "m.none": "Keine passenden Partner in den indexierten Quellen gefunden.",
-      "m.src": "Quelle", "m.ok": "Prüfung: passend", "m.no": "Prüfung: nicht passend", "m.locked": "während der Prüfung gesperrt",
-      "r.title": "Technische Prüfung", "r.lead": "Eine Fachperson prüft die ausgewählten Partner.",
-      "r.reviewer": "Prüfperson", "r.note": "Notiz für die Prüfperson", "r.send": "Zur Prüfung senden", "r.needSel": "Bitte zuerst mindestens einen Partner auswählen.",
-      "r.waiting": "Wartet auf {who} ({n} Partner).", "r.waitHint": "{who} sieht die Anfrage in den Prüfungen des Arbeitsbereichs.",
-      "r.changes": "{who} wünscht Änderungen", "r.approved": "{who} hat {n} Partner freigegeben",
-      "i.title": "Pitch & Einladung", "i.locked": "Wird freigeschaltet, sobald die technische Prüfung die Partner freigibt.",
+      "m.src": "Quelle", 
+      "i.title": "Pitch & Einladung", "i.locked": "Wählen Sie oben mindestens einen Partner, um den Pitch vorzubereiten.",
       "i.lead": "Zwei Ergebnisse: eine einfache Erklärung für Sie und ein kurzes, vollständig belegtes Dokument für die Geschäftsleitung der Firma. Ziel: ein Besuch in Bern.",
       "i.lang": "Sprache des Pitch", "i.prep": "Pitch vorbereiten", "i.regen": "Pitch aktualisieren",
       "i.forYou": "Für Sie", "i.forYouT": "Was Sie versenden — in einfachen Worten", "i.forCeo": "Für die Geschäftsleitung", "i.forCeoT": "Executive Brief",
@@ -209,22 +182,16 @@
       "i.mail": "Versenden", "i.slots": "Gesprächstermine vorschlagen", "i.dur": "Dauer (Min.)", "i.prepMail": "E-Mail vorbereiten",
       "i.subj": "Betreff", "i.body": "E-Mail (bearbeitbar)", "i.openMail": "Im E-Mail-Programm öffnen", "i.copy": "Text kopieren", "i.sent": "Als gesendet markieren",
       "i.ics": "Kalendereinladung (.ics)", "i.doneEmail": "Einladung gesendet am {d}.", "i.doneCall": "Gespräch geplant: {d}.",
-      "q.title": "Prüfungen", "q.lead": "Firmenanfragen, bei denen die Wirtschaftsförderung Ihre fachliche Einschätzung der vorgeschlagenen Berner Partner möchte.",
-      "q.mine": "Ihnen zugewiesen", "q.others": "Weitere offene Prüfungen", "q.done": "Kürzlich entschieden", "q.empty": "Nichts zu prüfen.",
-      "rv.banner": "Technische Prüfung angefragt von {who}", "rv.note": "Ihre Frage", "rv.request": "Anfrage der Firma",
-      "rv.check": "Zu prüfende Partner", "rv.ok": "Passend", "rv.no": "Nicht passend", "rv.comment1": "Kommentar (optional)",
-      "rv.evidence": "Belege auf den Quellseiten", "rv.comment": "Ihr Gesamtkommentar an {who}",
-      "rv.approve": "Freigeben", "rv.changes": "Änderungen anfordern", "rv.need": "Mindestens einen Partner als passend markieren, um freizugeben.",
-      "rv.notOpen": "Diese Anfrage wartet nicht auf eine Prüfung.", "rv.assigned": "Zugewiesen an {who}",
       "ctx": "Partner für die Anfrage von {c} hinzufügen", "ctxBack": "Zurück zur Anfrage",
       "bf.prepared": "erstellt {d}", "bf.missing": "Dieses Dokument existiert nicht oder wurde zurückgezogen.", "bf.teams": "Forschungsteams",
-      "err": "Etwas ist schiefgelaufen", "forbidden": "Ihre Rolle darf das nicht.",
+      "err": "Etwas ist schiefgelaufen",
+      "st.pitch": "Pitch bereit",
     },
     fr: {
       "brand.sub": "Recherche & expertise à Berne", "brand.staffSub": "Espace collaborateurs", "brand.briefSub": "Note de direction",
       "nav.search": "Recherche", "nav.dir": "Laboratoires & infrastructures", "nav.staff": "Espace collaborateurs",
-      "nav.requests": "Demandes", "nav.new": "Nouvelle demande", "nav.queue": "Validations", "nav.public": "Site public",
-      "staff.tag": "Interne", "who.switch": "Changer de personne", "role.officer": "Promotion économique", "role.reviewer": "Validation technique",
+      "nav.requests": "Demandes", "nav.new": "Nouvelle demande", "nav.public": "Site public",
+      "staff.tag": "Interne", "who.switch": "Changer de personne", 
       "foot.public": "Informations issues des sites publics de l'Université de Berne, de l'ARTORG Center et du Diabetes Center Berne. Chaque résultat renvoie à sa source.",
       "foot.staff": "Espace collaborateurs (prototype) : identité déclarée, sans mot de passe. Les demandes sont stockées localement et jamais envoyées par le serveur.",
       "foot.brief": "Préparé avec le Bern Expertise Navigator. Chaque affirmation renvoie à sa source publique.",
@@ -246,18 +213,13 @@
       "t.people": "Personnes", "t.labs": "Laboratoires", "t.projects": "Projets", "t.facilities": "Infrastructures",
       "dir.title": "Laboratoires & infrastructures", "dir.lead": "Tous les groupes de recherche et infrastructures des sites indexés, avec leur direction et un lien vers leur page.",
       "dir.labs": "Laboratoires & groupes", "dir.fac": "Infrastructures & services", "dir.all": "Toutes les institutions",
-      "id.title": "Espace collaborateurs", "id.lead": "Qui êtes-vous ? Votre rôle détermine ce que vous voyez et pouvez faire. Enregistré uniquement dans ce navigateur.",
-      "id.officerT": "Promotion économique", "id.officerD": "Vous traitez les demandes d'entreprises et les invitez à Berne.",
-      "id.officer1": "Comprendre les demandes simplement", "id.officer2": "Choisir des partenaires de recherche à Berne", "id.officer3": "Envoyer un pitch sourcé et inviter la direction",
-      "id.reviewerT": "Validation technique", "id.reviewerD": "Vous vérifiez les partenaires proposés avant tout contact avec l'entreprise.",
-      "id.reviewer1": "Voir les preuves techniques", "id.reviewer2": "Marquer chaque partenaire adapté ou non", "id.reviewer3": "Valider ou demander des modifications",
+      "id.title": "Espace collaborateurs", "id.lead": "Indiquez votre nom : il apparaît dans l'historique et comme expéditeur des invitations. Enregistré uniquement dans ce navigateur.",
       "id.name": "Votre nom", "id.email": "Votre e-mail", "id.team": "Équipe / signature", "id.enter": "Entrer dans l'espace", "id.recent": "Utilisés récemment",
-      "id.pick": "Choisissez d'abord un rôle.",
-      "st.new": "Nouvelle", "st.in_review": "En validation technique", "st.changes_requested": "Modifications demandées", "st.approved": "Validée — prête pour le pitch",
+      "st.new": "Nouvelle", 
       "st.contacted": "Invitée", "st.call_scheduled": "Appel planifié", "st.closed": "Close",
-      "rq.title": "Demandes d'entreprises", "rq.lead": "Chaque demande suit quatre étapes : comprendre → choisir les partenaires → validation technique → pitch et invitation à Berne.",
-      "kpi.open": "ouvertes", "kpi.review": "en validation", "kpi.ready": "prêtes pour le pitch", "kpi.invited": "invitées",
-      "col.todo": "À traiter", "col.review": "En validation technique", "col.ready": "Prêtes pour le pitch", "col.done": "Invitées",
+      "rq.title": "Demandes d'entreprises", "rq.lead": "Chaque demande comporte trois étapes : comprendre → choisir les partenaires → pitch et invitation à Berne.",
+      "kpi.open": "à traiter", "kpi.ready": "pitch prêt", "kpi.invited": "invitées",
+      "col.todo": "À traiter", "col.ready": "Pitch prêt", "col.done": "Invitées",
       "col.empty": "Rien", "rq.empty": "Aucune demande", "rq.emptyD": "Collez la demande d'une entreprise ou essayez un exemple fictif.",
       "partners": "partenaires",
       "nw.title": "Nouvelle demande d'entreprise", "nw.lead": "Collez l'e-mail ou le message de l'entreprise. Les termes techniques seront expliqués.",
@@ -271,18 +233,14 @@
       "d.title": "Coordonnées de l'entreprise", "d.lead": "Nécessaires pour le pitch et l'e-mail à l'entreprise.", "d.save": "Enregistrer", "d.edit": "Modifier",
       "cs.back": "Toutes les demandes", "cs.backQ": "Validations", "cs.received": "Reçue", "cs.contact": "Contact de l'entreprise", "cs.activity": "Historique",
       "cs.delete": "Supprimer la demande", "cs.confirmDelete": "Supprimer définitivement cette demande ?",
-      "step.1": "Comprendre", "step.2": "Choisir les partenaires", "step.3": "Validation technique", "step.4": "Pitch & invitation",
+      "step.1": "Comprendre", "step.2": "Choisir les partenaires", "step.3": "Pitch & invitation", 
       "u.title": "En termes simples", "u.ai": "Résumé par Apertus", "u.rules": "Basé sur le glossaire (Apertus hors ligne)",
       "u.does": "Ce que fait l'entreprise", "u.needs": "Ce dont elle a besoin", "u.words": "Termes expliqués",
       "u.gloss": "glossaire validé", "u.aiterm": "Explication IA – à vérifier", "u.orig": "Demande originale", "u.none": "Aucun terme du glossaire trouvé.",
       "m.title": "Partenaires possibles à Berne", "m.lead": "Cochez les partenaires à proposer. Chacun est appuyé par une page web publique.",
       "m.again": "Relancer", "m.more": "Chercher davantage", "m.sel": "sélectionné(s)", "m.none": "Aucun partenaire trouvé dans les sources indexées.",
-      "m.src": "source", "m.ok": "Validation : adapté", "m.no": "Validation : non adapté", "m.locked": "verrouillé pendant la validation",
-      "r.title": "Validation technique", "r.lead": "Un collègue du domaine vérifie les partenaires choisis.",
-      "r.reviewer": "Validateur", "r.note": "Note pour le validateur", "r.send": "Envoyer en validation", "r.needSel": "Sélectionnez d'abord au moins un partenaire.",
-      "r.waiting": "En attente de {who} ({n} partenaire(s)).", "r.waitHint": "{who} voit la demande dans les validations de l'espace collaborateurs.",
-      "r.changes": "{who} demande des modifications", "r.approved": "{who} a validé {n} partenaire(s)",
-      "i.title": "Pitch & invitation", "i.locked": "Débloqué dès que la validation technique approuve les partenaires.",
+      "m.src": "source", 
+      "i.title": "Pitch & invitation", "i.locked": "Choisissez au moins un partenaire ci-dessus pour préparer le pitch.",
       "i.lead": "Deux résultats : une explication simple pour vous, et une note courte et entièrement sourcée pour la direction de l'entreprise. Objectif : une visite à Berne.",
       "i.lang": "Langue du pitch", "i.prep": "Préparer le pitch", "i.regen": "Mettre à jour le pitch",
       "i.forYou": "Pour vous", "i.forYouT": "Ce que vous envoyez — en termes simples", "i.forCeo": "Pour la direction", "i.forCeoT": "Note de direction",
@@ -291,16 +249,10 @@
       "i.mail": "L'envoyer", "i.slots": "Proposer des créneaux d'appel", "i.dur": "Durée (min)", "i.prepMail": "Préparer l'e-mail",
       "i.subj": "Objet", "i.body": "E-mail (modifiable)", "i.openMail": "Ouvrir dans la messagerie", "i.copy": "Copier le texte", "i.sent": "Marquer comme envoyé",
       "i.ics": "Invitation calendrier (.ics)", "i.doneEmail": "Invitation envoyée le {d}.", "i.doneCall": "Appel planifié : {d}.",
-      "q.title": "Validations", "q.lead": "Demandes pour lesquelles la promotion économique souhaite votre avis technique sur les partenaires bernois proposés.",
-      "q.mine": "Qui vous sont attribuées", "q.others": "Autres validations ouvertes", "q.done": "Décidées récemment", "q.empty": "Rien à valider.",
-      "rv.banner": "Validation technique demandée par {who}", "rv.note": "Sa question", "rv.request": "La demande de l'entreprise",
-      "rv.check": "Partenaires à vérifier", "rv.ok": "Adapté", "rv.no": "Non adapté", "rv.comment1": "Commentaire (facultatif)",
-      "rv.evidence": "Preuves sur les pages sources", "rv.comment": "Votre commentaire général pour {who}",
-      "rv.approve": "Valider", "rv.changes": "Demander des modifications", "rv.need": "Marquez au moins un partenaire comme adapté pour valider.",
-      "rv.notOpen": "Cette demande n'attend pas de validation.", "rv.assigned": "Attribuée à {who}",
       "ctx": "Ajout de partenaires à la demande de {c}", "ctxBack": "Retour à la demande",
       "bf.prepared": "préparée le {d}", "bf.missing": "Cette note n'existe pas ou a été retirée.", "bf.teams": "équipes de recherche",
-      "err": "Une erreur est survenue", "forbidden": "Votre rôle ne permet pas cette action.",
+      "err": "Une erreur est survenue",
+      "st.pitch": "Pitch prêt",
     },
   };
   let LANG = store.get("nav-lang", null) || ((navigator.language || "en").startsWith("de") ? "de" : (navigator.language || "").startsWith("fr") ? "fr" : "en");
@@ -324,14 +276,14 @@
   const recent = () => store.get("nav-recent", []);
   function setStaff(p) {
     staff = p; store.set("nav-staff", p);
-    if (p) store.set("nav-recent", [p, ...recent().filter((x) => !(x.name === p.name && x.role === p.role))].slice(0, 6));
+    if (p) store.set("nav-recent", [p, ...recent().filter((x) => x.name !== p.name)].slice(0, 6));
   }
   const initialsOf = (name) => {
     const parts = (name || "?").split(/\s+/).filter((p) => !/^(prof\.?|dr\.?|pd|med\.?|phil\.?|em\.?|nat\.?|rer\.?|dr\.-ing\.?|ing\.?|msc|phd)$/i.test(p));
     return (((parts[0] || "")[0] || "") + ((parts.length > 1 ? parts[parts.length - 1][0] : "") || "")).toUpperCase() || "?";
   };
-  const roleHome = () => (staff?.role === "reviewer" ? "#/staff/review" : "#/staff/requests");
-  const asStaff = (extra = {}) => ({ actor: staff.name, role: staff.role, ...extra });
+  const roleHome = () => "#/staff/requests";
+  const asStaff = (extra = {}) => ({ actor: staff.name, ...extra });
 
   /* ======================= API ======================= */
   async function api(path, opts = {}) {
@@ -340,7 +292,6 @@
     if (!r.ok) {
       let msg = `${r.status}`;
       try { const j = await r.json(); msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch {}
-      if (r.status === 403) msg = `${t("forbidden")} (${msg})`;
       const e = new Error(msg); e.status = r.status; throw e;
     }
     return r.json();
@@ -419,16 +370,13 @@
         <div class="topbar-right">${langSel()}${themeBtn()}<a class="staff-link" href="#/staff">${ICON.lock}<span>${esc(t("nav.staff"))}</span></a></div></div>`;
       $("#foot").innerHTML = `<span>${esc(t("foot.public"))}</span>`;
     } else {
-      const open = S.cases.filter((c) => ["new", "changes_requested", "in_review", "approved"].includes(c.status)).length;
-      const rev = S.cases.filter((c) => c.status === "in_review").length;
-      const nav = !staff ? "" : staff.role === "officer"
-        ? tab("#/staff/requests", "requests", t("nav.requests"), open || "") + tab("#/staff/new", "new", t("nav.new")) + tab("#/staff/search", "ssearch", t("nav.search"))
-        : tab("#/staff/review", "queue", t("nav.queue"), rev || "") + tab("#/staff/search", "ssearch", t("nav.search"));
+      const open = S.cases.filter((c) => c.status === "new" && !c.has_brief).length;   // still to do
+      const nav = !staff ? "" : tab("#/staff/requests", "requests", t("nav.requests"), open || "") + tab("#/staff/new", "new", t("nav.new")) + tab("#/staff/search", "ssearch", t("nav.search"));
       bar.innerHTML = `<div class="topbar-in">${brand(t("brand.staffSub"), staff ? roleHome() : "#/staff")}<span class="staff-tag">${esc(t("staff.tag"))}</span>
         ${nav ? `<nav class="tabs" aria-label="Workspace">${nav}</nav>` : ""}
         <div class="topbar-right">${langSel()}${themeBtn()}
-          ${staff ? `<div class="whoami"><span class="av ${esc(staff.role)}">${esc(initialsOf(staff.name))}</span>
-            <span class="txt"><b>${esc(staff.name)}</b><small>${esc(t("role." + staff.role))}</small></span>
+          ${staff ? `<div class="whoami"><span class="av officer">${esc(initialsOf(staff.name))}</span>
+            <span class="txt"><b>${esc(staff.name)}</b>${staff.team ? `<small>${esc(staff.team)}</small>` : ""}</span>
             <button type="button" id="switchUser">${esc(t("who.switch"))}</button></div>` : ""}
           <a class="staff-link" href="#/">${ICON.ext}<span>${esc(t("nav.public"))}</span></a></div></div>`;
       $("#foot").innerHTML = `<span>${esc(t("foot.staff"))}</span>`;
@@ -461,11 +409,10 @@
     if (p[1] === "who" || !staff) { renderChrome("staff", ""); return viewIdentity(); }
     await refreshCases();
     const sub = p[1] || "";
-    if (!sub || (staff.role === "reviewer" && ["requests", "new"].includes(sub)) || (staff.role === "officer" && sub === "review")) return go(roleHome());
-    renderChrome("staff", { requests: "requests", new: "new", review: "queue", search: "ssearch", case: staff.role === "officer" ? "requests" : "queue" }[sub] || "");
+    if (!["requests", "new", "search", "case"].includes(sub)) return go(roleHome());
+    renderChrome("staff", { requests: "requests", new: "new", search: "ssearch", case: "requests" }[sub] || "");
     if (sub === "requests") return viewRequests();
     if (sub === "new") return viewNew();
-    if (sub === "review") return viewQueue();
     if (sub === "search") return params.get("q") ? viewSearch(params, "staff") : viewStaffSearchHome();
     if (sub === "case" && p[2]) return viewCase(p[2]);
     return go(roleHome());
@@ -517,7 +464,7 @@
   async function viewSearch(params, shell) {
     await loadGlossary();
     const q = params.get("q") || "";
-    const ctx = shell === "staff" && staff?.role === "officer" ? S.ctx : null;
+    const ctx = shell === "staff" ? S.ctx : null;
     view().innerHTML = `
       ${ctx ? `<div class="ctx-banner"><span>${ICON.info} ${esc(t("ctx", { c: ctx.company }))}</span>
         <span class="actions"><a class="btn btn-sm" href="#/staff/case/${esc(ctx.id)}">${esc(t("ctxBack"))}</a>
@@ -670,33 +617,22 @@
 
   /* ======================= STAFF: identity ======================= */
   function viewIdentity() {
-    let role = staff?.role || "";
-    const rc = (r, ico) => `<button type="button" class="role-card ${r} ${role === r ? "on" : ""}" data-role="${r}" aria-pressed="${role === r}">
-      <span class="ico">${ICON[ico]}</span><h2>${esc(t(`id.${r}T`))}</h2><p>${esc(t(`id.${r}D`))}</p>
-      <ul>${[1, 2, 3].map((n) => `<li>${esc(t(`id.${r}${n}`))}</li>`).join("")}</ul></button>`;
     const rec = recent();
     view().innerHTML = `<div class="ident"><h1>${esc(t("id.title"))}</h1><p>${esc(t("id.lead"))}</p>
-      <div class="role-cards">${rc("officer", "briefcase")}${rc("reviewer", "microscope")}</div>
       <form class="panel" id="idForm"><div class="grid-form">
         <label class="field">${esc(t("id.name"))}<input name="name" required maxlength="80" value="${esc(staff?.name || "")}" autocomplete="name"></label>
         <label class="field">${esc(t("id.email"))}<input name="email" type="email" maxlength="120" value="${esc(staff?.email || "")}" autocomplete="email"></label>
         <label class="field full">${esc(t("id.team"))}<input name="team" maxlength="120" value="${esc(staff?.team || "")}"></label></div>
-        <div class="sel-bar"><span class="muted" id="idHint"></span><button class="btn-primary btn-brand" type="submit">${esc(t("id.enter"))}</button></div>
+        <div class="sel-bar"><span></span><button class="btn-primary btn-brand" type="submit">${esc(t("id.enter"))}</button></div>
         ${rec.length ? `<div class="recent"><span class="muted">${esc(t("id.recent"))}:</span>${rec.map((p, i) => `<button type="button" data-rec="${i}">
-          <span class="av ${esc(p.role)}">${esc(initialsOf(p.name))}</span>${esc(p.name)} · <span class="muted">${esc(t("role." + p.role))}</span></button>`).join("")}</div>` : ""}
+          <span class="av officer">${esc(initialsOf(p.name))}</span>${esc(p.name)}</button>`).join("")}</div>` : ""}
       </form></div>`;
-    $$("[data-role]").forEach((b) => b.addEventListener("click", () => {
-      role = b.dataset.role;
-      $$("[data-role]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
-      $("#idHint").textContent = "";
-      $("#idForm").name.focus();
-    }));
+    $("#idForm").name.focus();
     $$("[data-rec]").forEach((b) => b.addEventListener("click", () => { setStaff(rec[+b.dataset.rec]); go(roleHome()); }));
     $("#idForm").addEventListener("submit", (ev) => {
       ev.preventDefault();
-      if (!role) { $("#idHint").textContent = t("id.pick"); return; }
       const f = ev.target;
-      setStaff({ name: f.name.value.trim(), email: f.email.value.trim(), team: f.team.value.trim(), role });
+      setStaff({ name: f.name.value.trim(), email: f.email.value.trim(), team: f.team.value.trim() });
       go(roleHome());
     });
   }
@@ -704,18 +640,18 @@
   /* ======================= STAFF/officer: requests board ======================= */
   async function viewRequests() {
     await areas();
-    const by = (sts) => S.cases.filter((c) => sts.includes(c.status));
-    const cols = [["col.todo", ["new", "changes_requested"]], ["col.review", ["in_review"]], ["col.ready", ["approved"]], ["col.done", ["contacted", "call_scheduled", "closed"]]];
+    const stage = (c) => (c.status !== "new" ? "done" : c.has_brief ? "ready" : "todo");
+    const by = (st) => S.cases.filter((c) => stage(c) === st);
+    const cols = [["col.todo", "todo"], ["col.ready", "ready"], ["col.done", "done"]];
     const card = (c) => `<a class="case-card" href="#/staff/case/${esc(c.id)}"><h3>${esc(companyOf(c))}</h3><p>${esc(c.summary)}</p>
-      <div class="case-meta">${pill(c.status)}${c.niche || c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}${placeOf(c) ? `<span>${esc(placeOf(c))}</span>` : ""}
-      ${c.selected ? `<span>${c.selected} ${esc(t("partners"))}</span>` : ""}${c.reviewer && c.status === "in_review" ? `<span>→ ${esc(c.reviewer)}</span>` : ""}
+      <div class="case-meta">${pill(c.status === "new" && c.has_brief ? "pitch" : c.status)}${c.niche || c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}${placeOf(c) ? `<span>${esc(placeOf(c))}</span>` : ""}
+      ${c.selected ? `<span>${c.selected} ${esc(t("partners"))}</span>` : ""}
       <span>${esc(fmtDate(c.updated_at, false))}</span></div></a>`;
     const kpi = (v, l) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(t(l))}</div></div>`;
     view().innerHTML = `<div class="page-h"><div><h1>${esc(t("rq.title"))}</h1><p>${esc(t("rq.lead"))}</p></div>
         <a class="btn-primary btn-brand" href="#/staff/new">${ICON.plus}${esc(t("nav.new"))}</a></div>
-      <div class="kpis">${kpi(by(["new", "changes_requested", "in_review", "approved"]).length, "kpi.open")}${kpi(by(["in_review"]).length, "kpi.review")}
-        ${kpi(by(["approved"]).length, "kpi.ready")}${kpi(by(["contacted", "call_scheduled"]).length, "kpi.invited")}</div>
-      ${S.cases.length ? `<div class="board">${cols.map(([l, sts]) => { const xs = by(sts);
+      <div class="kpis">${kpi(by("todo").length, "kpi.open")}${kpi(by("ready").length, "kpi.ready")}${kpi(by("done").length, "kpi.invited")}</div>
+      ${S.cases.length ? `<div class="board">${cols.map(([l, st]) => { const xs = by(st);
         return `<section class="col" aria-label="${esc(t(l))}"><div class="col-h"><span>${esc(t(l))}</span><i class="count">${xs.length || ""}</i></div>
           ${xs.map(card).join("") || `<div class="col-empty">${esc(t("col.empty"))}</div>`}</section>`; }).join("")}</div>`
       : `<div class="panel empty"><div class="empty-ico">${ICON.inbox}</div><h3>${esc(t("rq.empty"))}</h3><p>${esc(t("rq.emptyD"))}</p>
@@ -780,26 +716,26 @@
 
   /* ======================= STAFF: request page (different per role) ======================= */
   let CASE = null;
-  const stepOf = (st) => ({ new: 2, changes_requested: 2, in_review: 3, approved: 4 }[st] || 5);
+  // 2 = choosing partners, 3 = pitch & invite, 4 = invited (all steps done)
+  const stepOf = (c) => (c.status !== "new" ? 4 : c.matches.some((m) => m.selected) ? 3 : 2);
   async function viewCase(id) {
     view().innerHTML = spinner();
     await Promise.all([loadGlossary(), areas()]);
     try { CASE = await api(`/cases/${encodeURIComponent(id)}`); }
     catch { view().innerHTML = `<div class="panel empty"><h3>${esc(t("err"))}</h3><p><a href="${roleHome()}">${esc(t("cs.back"))}</a></p></div>`; return; }
-    staff.role === "reviewer" ? renderReviewerCase() : renderOfficerCase();
+    renderOfficerCase();
   }
-  const requester = (c) => (c.events.find((e) => e.kind === "review_requested") || c.events.find((e) => e.kind === "created"))?.actor || "—";
 
   function sidePanels(c) {
     return `<aside class="side">
       <div class="panel contact-box"><div class="panel-h"><h2>${esc(t("cs.contact"))}</h2></div>
         <dl><dt>${esc(t("nw.company"))}</dt><dd>${esc(c.company || "—")}</dd>
           ${c.contact_name ? `<dt>${esc(t("nw.contact"))}</dt><dd>${esc(c.contact_name)}</dd>` : ""}
-          ${c.contact_email ? `<dt>Email</dt><dd>${staff.role === "officer" ? `<a href="mailto:${esc(c.contact_email)}">${esc(c.contact_email)}</a>` : esc(c.contact_email)}</dd>` : ""}
+          ${c.contact_email ? `<dt>Email</dt><dd><a href="mailto:${esc(c.contact_email)}">${esc(c.contact_email)}</a></dd>` : ""}
           ${placeOf(c) ? `<dt>${esc(t("nw.country"))}</dt><dd>${esc(placeOf(c))}</dd>` : ""}</dl></div>
       <div class="panel"><div class="panel-h"><h2>${esc(t("cs.activity"))}</h2></div>
-        <ol class="timeline">${[...c.events].reverse().map((e) => `<li><b>${esc(e.actor)}</b>${e.role ? ` <span class="muted">(${esc(t("role." + e.role))})</span>` : ""} · ${esc(e.text)}<time>${esc(fmtDate(e.at))}</time></li>`).join("")}</ol></div>
-      ${staff.role === "officer" ? `<button class="link-btn" id="delCase" type="button">${ICON.trash}${esc(t("cs.delete"))}</button>` : ""}
+        <ol class="timeline">${[...c.events].reverse().map((e) => `<li><b>${esc(e.actor)}</b> · ${esc(e.text)}<time>${esc(fmtDate(e.at))}</time></li>`).join("")}</ol></div>
+      <button class="link-btn" id="delCase" type="button">${ICON.trash}${esc(t("cs.delete"))}</button>
     </aside>`;
   }
 
@@ -824,60 +760,36 @@
 
   /* ---------- officer ---------- */
   function renderOfficerCase() {
-    const c = CASE, step = stepOf(c.status), cls = (n) => (n < step ? "done" : n === step ? "now" : "");
+    const c = CASE, step = stepOf(c), cls = (n) => (n < step ? "done" : n === step ? "now" : "");
     view().innerHTML = `<a class="back" href="#/staff/requests">${ICON.back}${esc(t("cs.back"))}</a>
       <div class="case-h"><div><h1>${esc(companyOf(c))}</h1><div class="sub">${placeOf(c) ? `<span>${esc(placeOf(c))}</span>` : ""}${c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}<span>${esc(t("cs.received"))} ${esc(fmtDate(c.created_at))}</span></div></div>${pill(c.status)}</div>
-      <ol class="stepper">${[1, 2, 3, 4].map((n) => `<li class="${cls(n)}"><span class="dotn">${n < step ? "✓" : n}</span>${esc(t("step." + n))}</li>`).join("")}</ol>
-      <div class="case-grid"><div>${panelUnderstand(c.analysis)}${officerPartners(c, step)}${officerReview(c, step)}${officerPitch(c, step)}</div>${sidePanels(c)}</div>`;
+      <ol class="stepper three">${[1, 2, 3].map((n) => `<li class="${cls(n)}"><span class="dotn">${n < step ? "✓" : n}</span>${esc(t("step." + n))}</li>`).join("")}</ol>
+      <div class="case-grid"><div>${panelUnderstand(c.analysis)}${officerPartners(c, step)}${officerPitch(c, step)}</div>${sidePanels(c)}</div>`;
     bindOfficerCase();
   }
 
   function matchRow(m, editable) {
     const who = [m.role, m.unit].filter(Boolean).map(esc).join(" · ");
-    const verdict = m.review === "ok" ? `<span class="verdict ok">${esc(t("m.ok"))}</span>` : m.review === "no" ? `<span class="verdict no">${esc(t("m.no"))}</span>` : "";
-    return `<div class="match ${m.selected ? "sel" : ""} ${m.review === "no" ? "rej" : ""}">
+    return `<div class="match ${m.selected ? "sel" : ""}">
       <input type="checkbox" data-sel="${esc(m.id)}" ${m.selected ? "checked" : ""} ${editable ? "" : "disabled"} aria-label="${esc(m.name)}">
       ${avatar(m.name, m.entity_type, true)}
       <div><h3>${esc(m.name)}</h3><div class="who">${who ? who + " · " : ""}${esc(m.institution)}</div>
         ${m.plain ? `<p class="plain">${jargon(m.plain.length > 240 ? m.plain.slice(0, 237) + "…" : m.plain)}</p>` : ""}
-        <p class="why">${esc(m.why)}${m.review_note ? ` · <b>${esc(m.review_note)}</b>` : ""}</p></div>
-      <div class="right"><span class="type-badge ${esc(m.entity_type)}">${esc(t("type." + m.entity_type))}</span>${verdict}
+        <p class="why">${esc(m.why)}</p></div>
+      <div class="right"><span class="type-badge ${esc(m.entity_type)}">${esc(t("type." + m.entity_type))}</span>
         <a class="link-btn" href="${esc(safeUrl(m.url))}" target="_blank" rel="noopener">${ICON.ext}${esc(t("m.src"))}</a></div></div>`;
   }
 
   function officerPartners(c, step) {
-    const editable = ["new", "changes_requested"].includes(c.status);
+    const editable = c.status === "new";
     const nSel = c.matches.filter((m) => m.selected).length;
     const shown = editable ? c.matches : c.matches.filter((m) => m.selected);
     return `<section class="panel ${step === 2 ? "active" : step > 2 ? "done" : ""}">
-      <div class="panel-h"><h2><span class="num">${step > 2 ? "✓" : 2}</span>${esc(t("m.title"))}</h2><span class="muted">${nSel} ${esc(t("m.sel"))}${editable ? "" : ` · ${esc(t("m.locked"))}`}</span></div>
+      <div class="panel-h"><h2><span class="num">${step > 2 ? "✓" : 2}</span>${esc(t("m.title"))}</h2><span class="muted">${nSel} ${esc(t("m.sel"))}</span></div>
       ${editable ? `<p class="muted" style="margin:-4px 0 12px">${esc(t("m.lead"))}</p>
         <form class="match-tools" id="rematch"><input name="q" value="${esc(c.analysis.search_query)}" aria-label="${esc(t("m.again"))}">
           <button class="btn" type="submit">${esc(t("m.again"))}</button><button class="btn" type="button" id="moreSearch">${esc(t("m.more"))}</button></form>` : ""}
       ${shown.length ? `<div class="matches">${shown.map((m) => matchRow(m, editable)).join("")}</div>` : `<div class="callout warn">${ICON.info}<span>${esc(c.no_match_message || t("m.none"))}</span></div>`}</section>`;
-  }
-
-  function officerReview(c, step) {
-    const sel = c.matches.filter((m) => m.selected);
-    const reviewers = [...new Set(recent().filter((p) => p.role === "reviewer").map((p) => p.name))];
-    let body;
-    if (["new", "changes_requested"].includes(c.status)) {
-      body = `${c.status === "changes_requested" ? `<div class="callout warn" style="margin-bottom:12px">${ICON.info}<div><b>${esc(t("r.changes", { who: c.reviewer }))}</b>${c.review_comment ? `<br>“${esc(c.review_comment)}”` : ""}</div></div>` : ""}
-        <p class="muted" style="margin:-4px 0 12px">${esc(t("r.lead"))}</p>
-        <form id="reviewReq" class="grid-form">
-          <label class="field">${esc(t("r.reviewer"))}<input name="reviewer" required maxlength="120" list="reviewerList" value="${esc(c.reviewer || reviewers[0] || "")}"></label>
-          <datalist id="reviewerList">${reviewers.map((r) => `<option value="${esc(r)}">`).join("")}</datalist>
-          <label class="field full">${esc(t("r.note"))}<textarea name="note" rows="2" maxlength="2000" style="min-height:70px"></textarea></label>
-          <div class="full actions"><button class="btn-primary" type="submit" ${sel.length ? "" : "disabled"}>${ICON.send}${esc(t("r.send"))}</button>
-            ${sel.length ? "" : `<span class="muted">${esc(t("r.needSel"))}</span>`}</div></form>`;
-    } else if (c.status === "in_review") {
-      body = `<div class="callout info">${ICON.info}<div><b>${esc(t("r.waiting", { who: c.reviewer, n: sel.length }))}</b><br>${esc(t("r.waitHint", { who: c.reviewer }))}
-        ${c.review_note ? `<br>“${esc(c.review_note)}”` : ""}</div></div>`;
-    } else {
-      body = `<div class="callout ok">${ICON.check}<div><b>${esc(t("r.approved", { who: c.reviewer, n: c.matches.filter((m) => m.selected && m.review === "ok").length }))}</b>${c.review_comment ? `<br>“${esc(c.review_comment)}”` : ""}</div></div>`;
-    }
-    return `<section class="panel ${step === 3 ? "active" : step > 3 ? "done" : ""}"><div class="panel-h"><h2><span class="num">${step > 3 ? "✓" : 3}</span>${esc(t("r.title"))}</h2>
-      ${c.reviewer ? `<span class="muted">${esc(c.reviewer)}</span>` : ""}</div>${body}</section>`;
   }
 
   function nextSlots() {
@@ -905,7 +817,7 @@
   }
 
   function officerPitch(c, step) {
-    if (step < 4) return `<section class="panel locked"><div class="panel-h"><h2><span class="num">4</span>${esc(t("i.title"))}</h2><span class="muted">${ICON.lock}</span></div>
+    if (step < 3) return `<section class="panel locked"><div class="panel-h"><h2><span class="num">3</span>${esc(t("i.title"))}</h2><span class="muted">${ICON.lock}</span></div>
       <p class="muted" style="margin:0">${esc(t("i.locked"))}</p></section>`;
     const done = ["contacted", "call_scheduled", "closed"].includes(c.status), b = c.outreach?.brief;
     const details = `<form class="details ${c.company ? "" : "need"}" id="detailsForm" ${c.company ? "hidden" : ""}>
@@ -916,7 +828,7 @@
         <div class="actions" style="margin-top:10px"><button class="btn-primary" type="submit">${ICON.check}${esc(t("d.save"))}</button></div></form>
       ${c.company ? `<div class="details-line">${ICON.briefcase.replace("<svg", '<svg class="i"')}<b>${esc(c.company)}</b>${c.contact_name ? ` · ${esc(c.contact_name)}` : ""}${c.contact_email ? ` · ${esc(c.contact_email)}` : ""}
         <button class="link-btn" type="button" id="editDetails">${esc(t("d.edit"))}</button></div>` : ""}`;
-    return `<section class="panel ${done ? "done" : "active"}"><div class="panel-h"><h2><span class="num">${done ? "✓" : 4}</span>${esc(t("i.title"))}</h2></div>
+    return `<section class="panel ${done ? "done" : "active"}"><div class="panel-h"><h2><span class="num">${done ? "✓" : 3}</span>${esc(t("i.title"))}</h2></div>
       <p class="muted" style="margin:-4px 0 12px">${esc(t("i.lead"))}</p>${details}
       ${c.outreach?.sent_at ? `<div class="callout ok" style="margin-bottom:12px">${ICON.check}<span>${esc(t("i.doneEmail", { d: fmtDate(c.outreach.sent_at) }))}</span></div>` : ""}
       ${c.outreach?.call ? `<div class="callout ok" style="margin-bottom:12px">${ICON.cal}<span>${esc(t("i.doneCall", { d: c.outreach.call }))}</span></div>` : ""}
@@ -953,11 +865,6 @@
     $("#moreSearch")?.addEventListener("click", () => {
       S.ctx = { id: c.id, company: c.company }; store.set("nav-ctx", S.ctx);
       go(`#/staff/search?q=${encodeURIComponent(c.analysis.search_query)}`);
-    });
-    $("#reviewReq")?.addEventListener("submit", async (ev) => {
-      ev.preventDefault(); const f = ev.target;
-      try { CASE = await api(`/cases/${c.id}/review-request`, { method: "POST", body: asStaff({ reviewer: f.reviewer.value.trim(), note: f.note.value }) }); toast(t("st.in_review")); rerender(); }
-      catch (e) { toast(e.message); }
     });
     $("#editDetails")?.addEventListener("click", () => { $("#detailsForm").hidden = false; $("#detailsForm").company.focus(); });
     $("#detailsForm")?.addEventListener("submit", async (ev) => {
@@ -998,73 +905,6 @@
       CASE = await api(`/cases/${c.id}/outcome`, { method: "POST", body: asStaff({ kind: "call", detail: fmtDate(start) }) });
       toast(t("st.call_scheduled")); rerender();
     });
-  }
-
-  /* ---------- reviewer ---------- */
-  function renderReviewerCase() {
-    const c = CASE, sel = c.matches.filter((m) => m.selected), who = requester(c), open = c.status === "in_review";
-    view().innerHTML = `<a class="back" href="#/staff/review">${ICON.back}${esc(t("cs.backQ"))}</a>
-      <div class="case-h"><div><h1>${esc(companyOf(c))}</h1><div class="sub">${placeOf(c) ? `<span>${esc(placeOf(c))}</span>` : ""}${c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}<span>${esc(t("rv.assigned", { who: c.reviewer || "—" }))}</span></div></div>${pill(c.status)}</div>
-      <div class="role-banner reviewer">${ICON.shield}<div><b>${esc(t("rv.banner", { who }))}</b>${c.review_note ? `<br>${esc(t("rv.note"))}: “${esc(c.review_note)}”` : ""}</div></div>
-      <div class="case-grid"><div>
-        <section class="panel"><div class="panel-h"><h2>${esc(t("rv.request"))}</h2></div><div class="orig-text" style="margin:0">${jargon(c.request_text)}</div></section>
-        ${panelUnderstand(c.analysis, false)}
-        <section class="panel ${open ? "active" : "done"}"><div class="panel-h"><h2>${esc(t("rv.check"))}</h2><span class="muted">${sel.length}</span></div>
-          ${open ? "" : `<div class="callout ${c.status === "changes_requested" ? "warn" : "ok"}" style="margin-bottom:12px">${ICON.info}<span>${esc(t("rv.notOpen"))} ${pill(c.status)}</span></div>`}
-          <div id="rvItems">${sel.map((m) => `<div class="review-item" data-rv="${esc(m.id)}">
-            <div class="review-row"><div style="display:flex;gap:10px;align-items:center;min-width:0">${avatar(m.name, m.entity_type, true)}<div><b>${esc(m.name)}</b>
-              <div class="muted">${[m.role, m.unit, m.institution].filter(Boolean).map(esc).join(" · ")}</div></div></div>
-              ${open ? `<div class="seg" role="group" aria-label="${esc(m.name)}"><button type="button" data-v="ok">${esc(t("rv.ok"))}</button><button type="button" data-v="no">${esc(t("rv.no"))}</button></div>`
-                : m.review ? `<span class="verdict ${m.review}">${esc(t(m.review === "ok" ? "m.ok" : "m.no"))}</span>` : ""}</div>
-            <p class="muted" style="margin:8px 0 4px">${esc(m.why)}</p>
-            <div class="rv-details" data-ev="${esc(m.id)}"><div class="sk" style="width:70%"></div></div>
-            ${open ? `<input class="rv-note" placeholder="${esc(t("rv.comment1"))}" aria-label="${esc(t("rv.comment1"))}" style="margin-top:8px">` : m.review_note ? `<p><b>${esc(m.review_note)}</b></p>` : ""}
-          </div>`).join("")}</div>
-          ${open ? `<label class="field" style="margin-top:14px">${esc(t("rv.comment", { who }))}<textarea id="rvComment" rows="2" style="min-height:70px"></textarea></label>
-            <div class="actions" style="margin-top:12px"><button class="btn-primary btn-ok" id="rvApprove" type="button" disabled>${ICON.check}${esc(t("rv.approve"))}</button>
-              <button class="btn" id="rvChanges" type="button">${esc(t("rv.changes"))}</button><span class="muted" id="rvHint">${esc(t("rv.need"))}</span></div>`
-            : c.review_comment ? `<div class="callout" style="margin-top:12px">“${esc(c.review_comment)}”</div>` : ""}
-        </section></div>${sidePanels(c)}</div>`;
-    $$("[data-ev]").forEach(async (box) => {
-      try {
-        const d = await entity(box.dataset.ev);
-        const seen = new Set(), evs = d.entity.evidence.filter((ev) => !seen.has(ev.snippet) && seen.add(ev.snippet)).slice(0, 8);
-        box.innerHTML = `<div class="muted small" style="margin-top:6px">${esc(t("rv.evidence"))}</div><ul class="evidence">${evs.map((ev) =>
-          `<li><span class="f">${esc(ev.field)}</span>“${esc(ev.snippet.length > 240 ? ev.snippet.slice(0, 237) + "…" : ev.snippet)}” <a href="${esc(safeUrl(ev.url))}" target="_blank" rel="noopener" title="${esc(ev.url)}">${esc(hostPath(ev.url))}</a></li>`).join("")}</ul>`;
-      } catch { box.innerHTML = ""; }
-    });
-    if (!open) return;
-    const verdicts = {};
-    $$("[data-rv]").forEach((it) => $$(".seg button", it).forEach((b) => b.addEventListener("click", () => {
-      verdicts[it.dataset.rv] = b.dataset.v;
-      $$(".seg button", it).forEach((x) => x.classList.remove("on-ok", "on-no"));
-      b.classList.add(b.dataset.v === "ok" ? "on-ok" : "on-no");
-      const ok = Object.values(verdicts).includes("ok");
-      $("#rvApprove").disabled = !ok; $("#rvHint").hidden = ok;
-    })));
-    const submit = async (decision) => {
-      const body = asStaff({ decision, comment: $("#rvComment").value,
-        verdicts: $$("[data-rv]").filter((it) => verdicts[it.dataset.rv]).map((it) => ({ id: it.dataset.rv, verdict: verdicts[it.dataset.rv], note: $(".rv-note", it).value })) });
-      try { await api(`/cases/${c.id}/review`, { method: "POST", body }); toast(t("st." + decision)); go("#/staff/review"); }
-      catch (e) { toast(e.message); }
-    };
-    $("#rvApprove").addEventListener("click", () => submit("approved"));
-    $("#rvChanges").addEventListener("click", () => submit("changes_requested"));
-  }
-
-  /* ======================= STAFF/reviewer: queue ======================= */
-  async function viewQueue() {
-    await areas();
-    const mine = (c) => c.reviewer && c.reviewer.trim().toLowerCase() === staff.name.trim().toLowerCase();
-    const open = S.cases.filter((c) => c.status === "in_review");
-    const decided = S.cases.filter((c) => ["approved", "changes_requested", "contacted", "call_scheduled"].includes(c.status) && c.reviewer).slice(0, 6);
-    const card = (c) => `<a class="case-card" href="#/staff/case/${esc(c.id)}"><h3>${esc(companyOf(c))}</h3><p>${esc(c.summary)}</p>
-      <div class="case-meta">${pill(c.status)}${c.niche || c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}<span>${c.selected} ${esc(t("partners"))}</span><span>→ ${esc(c.reviewer)}</span><span>${esc(fmtDate(c.updated_at, false))}</span></div></a>`;
-    const section = (title, xs) => xs.length ? `<div class="section-h"><h2>${esc(title)}</h2><span class="muted">${xs.length}</span></div><div class="dir">${xs.map(card).join("")}</div>` : "";
-    view().innerHTML = `<div class="page-h"><div><h1>${esc(t("q.title"))}</h1><p>${esc(t("q.lead"))}</p></div></div>
-      ${open.length ? section(t("q.mine"), open.filter(mine)) + section(t("q.others"), open.filter((c) => !mine(c)))
-        : `<div class="panel empty"><div class="empty-ico">${ICON.check}</div><h3>${esc(t("q.empty"))}</h3></div>`}
-      ${section(t("q.done"), decided)}`;
   }
 
   function viewStaffSearchHome() {

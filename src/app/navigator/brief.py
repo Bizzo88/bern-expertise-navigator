@@ -1,4 +1,4 @@
-"""The two outputs of a request, once the technical review has approved the partners.
+"""The two outputs of a request, once the officer has chosen the partners.
 
 Output 1 — for the business-development officer: a plain-language explanation of what was
 prepared and why, so she understands what she is sending without knowing the field.
@@ -44,15 +44,13 @@ T = {
         "x.why": "Why these partners — in plain words",
         "x.why1": "{name} ({where}) works on {topic}.",
         "x.mean": "That means: {plain}",
-        "x.why2": "{name} ({where}) was approved by {reviewer} as a good fit for the request.",
+        "x.why2": "{name} ({where}) was chosen for this request; see the quoted sources in the brief.",
         "x.check": "What the CEO can check",
         "x.check1": "{c} statement(s), each linked to the public page it comes from, and {p} scientific publication(s) "
                     "with a DOI. Nothing in the brief is invented or estimated.",
         "x.not": "What we deliberately do not say",
         "x.not1": "No promises: we do not say that anyone has agreed to meet, we do not mention money, funding or "
                   "conditions, and we do not compare Bern with other places.",
-        "x.review": "Checked by",
-        "x.review1": "{reviewer} (technical review) approved these partners on {date}.",
         "x.next": "Your next step",
         "x.next1": "Send the link (or the PDF) with the short email below. If they are interested, propose a call or "
                    "a visit date.",
@@ -79,15 +77,13 @@ T = {
         "x.why": "Warum diese Partner — in einfachen Worten",
         "x.why1": "{name} ({where}) arbeitet an {topic}.",
         "x.mean": "Das heisst: {plain}",
-        "x.why2": "{name} ({where}) wurde von {reviewer} als passend für die Anfrage bestätigt.",
+        "x.why2": "{name} ({where}) wurde für diese Anfrage ausgewählt; die Belege stehen im Dokument.",
         "x.check": "Was die Geschäftsleitung prüfen kann",
         "x.check1": "{c} Aussage(n), jede mit der öffentlichen Seite verlinkt, von der sie stammt, und {p} "
                     "wissenschaftliche Publikation(en) mit DOI. Nichts ist erfunden oder geschätzt.",
         "x.not": "Was wir bewusst nicht sagen",
         "x.not1": "Keine Versprechen: Wir sagen nicht, dass jemand einem Treffen zugestimmt hat, erwähnen weder Geld, "
                   "Förderung noch Konditionen und vergleichen Bern nicht mit anderen Standorten.",
-        "x.review": "Geprüft von",
-        "x.review1": "{reviewer} (technische Prüfung) hat diese Partner am {date} freigegeben.",
         "x.next": "Ihr nächster Schritt",
         "x.next1": "Senden Sie den Link (oder das PDF) mit der kurzen E-Mail unten. Bei Interesse schlagen Sie ein "
                    "Gespräch oder einen Besuchstermin vor.",
@@ -114,15 +110,13 @@ T = {
         "x.why": "Pourquoi ces partenaires — en termes simples",
         "x.why1": "{name} ({where}) travaille sur {topic}.",
         "x.mean": "Autrement dit : {plain}",
-        "x.why2": "{name} ({where}) a été validé(e) par {reviewer} comme adapté(e) à la demande.",
+        "x.why2": "{name} ({where}) a été choisi(e) pour cette demande ; les sources figurent dans la note.",
         "x.check": "Ce que la direction peut vérifier",
         "x.check1": "{c} affirmation(s), chacune liée à la page publique d'où elle provient, et {p} publication(s) "
                     "scientifique(s) avec DOI. Rien n'est inventé ni estimé.",
         "x.not": "Ce que nous ne disons volontairement pas",
         "x.not1": "Aucune promesse : nous ne disons pas que quelqu'un a accepté de rencontrer l'entreprise, ne parlons "
                   "ni d'argent, ni de financement, ni de conditions, et ne comparons pas Berne à d'autres lieux.",
-        "x.review": "Vérifié par",
-        "x.review1": "{reviewer} (validation technique) a approuvé ces partenaires le {date}.",
         "x.next": "Votre prochaine étape",
         "x.next1": "Envoyez le lien (ou le PDF) avec le court e-mail ci-dessous. En cas d'intérêt, proposez un appel "
                    "ou une date de visite.",
@@ -219,7 +213,7 @@ def _best_quote(e: Entity, topics: list[dict], ents: dict[str, Entity], used: se
 def build(case: Case, lang: str, officer: dict) -> dict:
     t = T.get(lang, T["en"])
     ents = index.load_entities()
-    approved = [m for m in case.matches if m.selected and m.review == "ok" and m.id in ents]
+    approved = [m for m in case.matches if m.selected and m.id in ents]
     sources: list[dict] = []
 
     def cite(url: str, label: str, kind: str = "page") -> int:
@@ -252,7 +246,7 @@ def build(case: Case, lang: str, officer: dict) -> dict:
                       "institution": e.source_label, "email": e.email, "page": e.source_urls[0],
                       "page_ref": cite(e.source_urls[0], f"{e.source_label} — {e.name}"),
                       "topics": [{"term": x["term"], "plain": x["plain"]} for x in topics],
-                      "quote": q, "technical": tech, "publications": pubs, "review_note": m.review_note})
+                      "quote": q, "technical": tech, "publications": pubs})
 
     proof = []
     for h in showcase.build().get("highlights", [])[:3]:
@@ -274,7 +268,6 @@ def build(case: Case, lang: str, officer: dict) -> dict:
              "contact": {"name": officer.get("name", ""), "email": officer.get("email", ""), "team": officer.get("team", "")}}
 
     # ---- Output 1: what the officer is sending, in plain words
-    rev_event = next((ev for ev in reversed(case.events) if ev.kind == "approved"), None)
     why = []
     for it in items:
         where = ", ".join(x for x in [it["unit"], it["institution"]] if x)
@@ -283,7 +276,7 @@ def build(case: Case, lang: str, officer: dict) -> dict:
             why.append({"text": t["x.why1"].format(name=it["name"], where=where, topic=tp["term"]),
                         "plain": t["x.mean"].format(plain=tp["plain"])})
         else:
-            why.append({"text": t["x.why2"].format(name=it["name"], where=where, reviewer=case.reviewer), "plain": ""})
+            why.append({"text": t["x.why2"].format(name=it["name"], where=where), "plain": ""})
     n_claims = sum(1 for i in items if i["quote"]) + sum(len(i["technical"]) for i in items) + len(proof)
     n_pubs = sum(len(i["publications"]) for i in items)
     explainer = [
@@ -291,8 +284,6 @@ def build(case: Case, lang: str, officer: dict) -> dict:
         {"title": t["x.why"], "lines": why},
         {"title": t["x.check"], "lines": [{"text": t["x.check1"].format(c=n_claims, p=n_pubs)}]},
         {"title": t["x.not"], "lines": [{"text": t["x.not1"]}]},
-        {"title": t["x.review"], "lines": [{"text": t["x.review1"].format(reviewer=case.reviewer,
-                                                                           date=(rev_event.at[:10] if rev_event else ""))}]},
         {"title": t["x.next"], "lines": [{"text": t["x.next1"]}]},
     ]
     return {"brief": brief, "explainer": explainer, "stats": {"claims": n_claims, "publications": n_pubs, "sources": len(sources)}}

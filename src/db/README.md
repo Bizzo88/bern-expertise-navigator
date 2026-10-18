@@ -8,7 +8,7 @@ SQLite, Qdrant/NumPy and the BM25 pickle.
 ## Architecture
 
 - Immagine `bern-pg:18-age1.8.0-vec0.8.6`: `apache/age:release_PG18_1.8.0` (PG 18.6, AGE 1.8.0) + `postgresql-18-pgvector=0.8.6-1.pgdg13+1`.
-  The `initdb/` scripts are copied into the image and run **only on first start** (empty volume). Later schema changes are made with migrations recorded in `nav.schema_migrations`.
+  The `initdb/` scripts are copied into the image and run **only on first start** (empty volume). Later schema changes are made with migrations recorded in `nav.schema_migrations`. Migration files live in `migrations/` (e.g. `0002_remove_technical_review.sql`, which drops the former technical-review columns and statuses); apply them as `postgres` on databases created before the change.
 - A single `db` service. The port is published only on `127.0.0.1:${PG_HOST_PORT:-5432}`. It uses the `pgdata` volume (mounted at `/var/lib/postgresql`, PG18 layout) and the `bern` network, which the app containers join.
 - AGE is in `shared_preload_libraries`: no `LOAD 'age'` needed. The `bern_app` role has `search_path = nav, ag_catalog, public`.
 - Roles:

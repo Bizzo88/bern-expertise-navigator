@@ -11,13 +11,13 @@ The app has three clearly separated areas:
 | Area | Who | What |
 |---|---|---|
 | **Public navigator** (`#/`) | anyone | The challenge's deliverable: natural-language and keyword search with structured, source-backed results (person, role, affiliation, expertise, projects, infrastructure/services, why it matches, source link), a labs & facilities directory, and "How it works" with the measured success criteria |
-| **Staff workspace** (`#/staff`, dark header) | canton staff, who pick their role on entry | **Business development:** company request → plain-language explanation → pick Bern partners → send for technical review → **pitch & invite**. **Technical reviewer:** review queue → technical evidence per partner → approve or request changes. The server enforces the roles |
+| **Staff workspace** (`#/staff`, dark header) | the canton's business-development team, who enter their name | Company request (search field + filters) → plain-language explanation → choose Bern partners → **pitch & invite** |
 | **Executive brief** (`#/b/<private link>`) | the company's CEO | A short, interactive brief whose only goal is a visit to Bern; saved as PDF with one click |
 
-**The two outputs of a request** (step 4, after the technical review approves):
+**The two outputs of a request** (step 3, once partners are chosen):
 
 1. **For the officer:** a plain explanation of what was prepared and why: what she is sending, why each partner fits
-   (with the jargon explained), what the CEO can check, what we deliberately do not say, who reviewed it.
+   (with the jargon explained), what the CEO can check, and what we deliberately do not say.
 2. **For the CEO:** the executive brief. A plain hook, "who you would meet" (each with a plain explanation, a verbatim
    quote and **Technical details** on demand, including publications with DOI), "Bern in numbers", a proposed
    half-day visit and "Plan your visit". **No overselling:** every statement is a verbatim quote from a public
@@ -53,14 +53,13 @@ make test                       # unit tests: no GPU, no network, no model downl
 1. Open **Staff workspace** → choose *Business development*, enter your name → **New request**: type what the
    company is looking for (or paste their email), optionally set the company's country (Switzerland → canton) and a
    medtech area → niche (e.g. *Diabetes → Glucose sensing*), or click a fictional example → **Find partners in Bern**
-   → tick partners → send to a reviewer by name. Company name and contact are asked only at the pitch step.
-2. **Switch user** → *Technical reviewer* with that name → the request is in the **Review queue** → mark partners → **Approve**.
-3. **Switch user** back (one click under "Recently used") → open the request → **Prepare the pitch** → read
-   *For you*, open the **executive brief**, *Save as PDF*, then **Prepare the email** (it links the brief) or download
-   a calendar invite.
+   → tick the partners to propose.
+2. In **Pitch & invite**, add the company name and contact (asked only now) → **Prepare the pitch** → read *For you*,
+   open the **executive brief**, *Save as PDF*, then **Prepare the email** (it links the brief) or download a
+   calendar invite → **Mark as sent**.
 
-Identities are self-declared and stored only in the browser (prototype, no passwords). The server still refuses
-actions from the wrong role (HTTP 403).
+Names are self-declared and stored only in the browser (prototype, no passwords); every action is recorded in the
+request's activity log with that name.
 
 Emails are never sent by the server: **Open in email app** uses `mailto:` and the officer sends from their own mail
 client. **Calendar invite** downloads a standard `.ics` file.
@@ -73,7 +72,7 @@ public websites ─► 1 crawl ─► 2 classify ─► 3 extract ────�
                     (explicit)   Apertus       or rules baseline;        e5 vectors  fairness cap, cited "why",
                                                verbatim snippet or drop  (per snippet) honest abstention
                                                                                  │
-             company request ─► plain language (glossary / Apertus) ─► matches ─► review ─► invitation
+             company request ─► plain language (glossary / Apertus) ─► matches ─► pitch & invitation
 ```
 
 | Stage | Module | Where Apertus is used, and why |
@@ -84,7 +83,7 @@ public websites ─► 1 crawl ─► 2 classify ─► 3 extract ────�
 | 4 Index | `index.py` | none (local multilingual embeddings + BM25) |
 | 5 Search | `search.py` | Query analysis (synonyms, lay terms, DE/EN/FR, person names) and match explanations written only from the cited evidence |
 | Requests | `plain.py`, `cases.py` | Plain-language summary of a company request plus explanations of terms the glossary lacks (labelled *AI explanation – check*). Emails are a deterministic template: no generated claims |
-| Pitch | `brief.py` | none in the claims: the brief and the officer's explanation are assembled only from approved partners, verbatim snippets, verified proof points and DOIs found on the institutions' pages |
+| Pitch | `brief.py` | none in the claims: the brief and the officer's explanation are assembled only from the chosen partners, verbatim snippets, verified proof points and DOIs found on the institutions' pages |
 | Showcase | `showcase.py` | none: live counts from the index, and proof points re-verified against the saved pages at startup |
 
 ## How we meet the success criteria
@@ -117,7 +116,7 @@ against the saved page, and anything unverifiable is dropped automatically. The 
 | `GET /entity/{id}` | Full entity with all evidence and linked people/labs |
 | `GET /showcase` | Landing data: themes (live), verified proof points, labs, facilities |
 | `POST /cases` · `GET /cases` · `GET /cases/{id}` | Company requests (staff actions carry `actor` + `role`) |
-| `POST /cases/{id}/selection` · `/review-request` · `/review` · `/brief` · `/draft` · `/outcome` | Workflow steps (role-checked) |
+| `POST /cases/{id}/selection` · `/details` · `/brief` · `/draft` · `/outcome` | Workflow steps |
 | `GET /briefs/{token}` | The executive brief behind a private link (read-only) |
 | `GET /cases/{id}/invite.ics` | Calendar invite |
 | `GET /glossary?lang=` · `GET /health` · `GET /stats` | Support |
