@@ -106,3 +106,55 @@ def analyze_request(text: str, lang: str = "en") -> RequestAnalysis:
     return RequestAnalysis(summary=r.summary, company_does=r.company_does, company_needs=r.company_needs,
                            sector=r.sector, search_query=r.search_query or base.search_query,
                            terms=base.terms + ai_terms, generated_by="apertus")
+
+
+def analyze_company(name: str, description: str, text: str, need: str = "", lang: str = "en") -> RequestAnalysis:
+    """The company in plain words, from its website and/or what the officer pasted, plus the optional
+    "what are they looking for". The search query leads with the stated need: that is what Bern answers."""
+    base = _rules_analysis(" ".join(x for x in [description, text] if x), lang)
+    # whole sentences only, line by line, so headings and menu items never run into a sentence
+    sents = [x.strip() for line in text.splitlines() for x in _SENT.split(" ".join(line.split()))
+             if 40 <= len(x.strip()) <= 400 and x.strip()[-1:] in ".!?" and not x.strip()[0].islower()]
+    does = description or base.company_does or (sents[0] if sents else "")
+    lead = f"{name}: {does}" if name and does and name.lower() not in does.lower() else does
+    summary = lead
+    for x in sents:
+        if len(summary) + len(x) > 600:
+            break
+        if x != does and x not in summary:
+            summary = f"{summary} {x}".strip()
+    needs = [need.strip()] if need.strip() else []
+    terms = find_terms(" ".join([need, description, text]), lang)
+    query = " ".join(dict.fromkeys([need.strip(), *(t["term"] for t in terms[:8])])).strip() \
+        or (description or text)[:200]
+    base = RequestAnalysis(summary=summary, company_does=does, company_needs=needs, sector="",
+                           search_query=query[:300], terms=terms, generated_by="rules")
+    if not llm.available():
+        return base
+    language = {"de": "German", "fr": "French"}.get(lang, "English")
+    try:
+        r: _LLMAnalysis = llm.chat_json([  # type: ignore[assignment]
+            {"role": "system", "content": (
+                "You help an economic-development officer of the Canton of Bern who is NOT a technical expert "
+                "understand a company. Use ONLY the text given. Do not invent facts about the company. Plain, "
+                f"friendly language a 15-year-old understands. Write in {language}. JSON only.")},
+            {"role": "user", "content": (
+                f"Company: {name or 'unknown'}\n"
+                + (f"What the officer says they are looking for: {need}\n" if need else "")
+                + "Text from the company's website or the officer's notes:\n<<<\n" + text[:6000] + "\n>>>\n\n"
+                "Return: summary (2-3 plain sentences: who they are and what they make), company_does (1 sentence), "
+                "company_needs (what they are looking for if stated; otherwise the kinds of research partners, "
+                "clinics or test facilities that could help them, as short phrases), sector, "
+                "search_query (5-10 technical keywords to find matching university researchers, labs and facilities), "
+                "terms (technical words or abbreviations in the text, each with a one-sentence plain explanation).")},
+        ], _LLMAnalysis, max_tokens=900)
+    except llm.LLMError:
+        return base
+    known = {t["term"] for t in base.terms} | {t["found_as"] for t in base.terms}
+    ai_terms = [{"term": t.get("term", ""), "found_as": t.get("term", "").lower(), "plain": t.get("plain", ""),
+                 "source": "apertus"} for t in r.terms
+                if t.get("term") and t.get("plain") and t["term"].lower() not in known]
+    query = " ".join(x for x in [need.strip(), r.search_query] if x) or base.search_query
+    return RequestAnalysis(summary=r.summary, company_does=r.company_does,
+                           company_needs=needs + [n for n in r.company_needs if n not in needs], sector=r.sector,
+                           search_query=query[:300], terms=base.terms + ai_terms, generated_by="apertus")

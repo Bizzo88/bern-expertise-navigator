@@ -165,7 +165,7 @@ def pubs_for(e: Entity, limit: int = 2) -> list[dict]:
 # ---------------- topic overlap: request terms <-> partner evidence --------------------------------
 def _topics(case: Case, e: Entity, lang: str) -> list[dict]:
     """Glossary topics named in the company's request AND in this partner's own evidence."""
-    req_terms = {t["term"] for t in plain.find_terms(case.request_text, lang)}
+    req_terms = {t["term"] for t in plain.find_terms(case.source_text(), lang)}
     text = e.search_text()
     return [t for t in plain.find_terms(text, lang) if t["term"] in req_terms]
 

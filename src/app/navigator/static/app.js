@@ -19,10 +19,12 @@
   };
   const isNarrow = () => matchMedia("(max-width: 1100px)").matches;
   const hostPath = (u) => { try { const x = new URL(u); return x.hostname.replace(/^www\./, "") + x.pathname.replace(/\/index_\w+\.html$|\/$/, ""); } catch { return u; } };
-  function toast(msg) { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2400); }
+  function toast(msg, ms = 2400) { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), ms); }
   const go = (h) => { if (location.hash !== h) location.hash = h; else route(); };
   const briefUrl = (token) => `${location.origin}${location.pathname}#/b/${token}`;
 
+  const DOC_ACCEPT = ".pdf,.docx,.docm,.pptx,.pptm,.xlsx,.xlsm,.odt,.odp,.ods,.rtf,.txt,.md,.csv,.html,.htm,.eml,.doc,.ppt,.xls";
+  const DOC_MAX_MB = 25;
   const ICON = {
     plus: '<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
     back: '<svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>',
@@ -32,6 +34,8 @@
     infrastructure: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>',
     link: '<svg class="i" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
     ext: '<svg class="i" viewBox="0 0 24 24"><path d="M14 3h7v7M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>',
+    file: '<svg class="i" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg>',
+    x: '<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
     check: '<svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
     mail: '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
     cal: '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
@@ -92,7 +96,12 @@
       "nw.company": "Company", "nw.country": "Country", "nw.contact": "Contact person", "nw.email": "Contact email",
       "nw.text": "What is the company asking for?", "nw.textHint": "any language", "nw.submit": "Understand & find partners",
       "nw.examples": "Fictional examples", "nw.working": "Reading the request and searching Bern's research landscape…",
-      "nw.q": "What is the company looking for?", "nw.qPh": "e.g. a clinical partner for a needle-free glucose sensor — or paste the company's email",
+      "nw.q": "Which company is it about?", "nw.urlPh": "Company website, e.g. www.example-medtech.com", "nw.info": "…or paste information about the company (email, description)", "nw.infoPh": "Optional when you give the website",
+      "nw.need": "What are they looking for? (optional)", "nw.needPh": "e.g. a clinical study partner, a test lab, experts in imaging", "nw.missing": "Enter the company's website or paste some information about it.", "nw.reading": "Reading the company's website, writing a plain summary and searching Bern…",
+      "nw.docs": "Documents the company shared (pitch deck, brochure…)", "nw.docsHint": "Drop files here or click to choose — PDF, Word, PowerPoint, Excel, OpenDocument, text",
+      "nw.pages": "{n} pages/slides", "nw.remove": "Remove", "nw.uploading": "Reading {n} file(s)…", "nw.tooBig": "is larger than {n} MB.",
+      "nw.readingDocs": "Reading the documents, writing a plain summary and searching Bern…", "u.docs": "Read from the documents:", "u.docText": "Show the text that was read",
+      "u.web": "Read from the company website:", "u.info": "Information you pasted",
       "nw.company2": "Company (optional)", "nw.countryAny": "Company's country", "nw.canton": "Canton", "nw.cantonAny": "All cantons",
       "nw.area": "Medtech area", "nw.niche": "Niche", "nw.any": "Any", "nw.find": "Find partners in Bern", "nw.try": "Try",
       "rq.untitled": "New request",
@@ -159,7 +168,12 @@
       "nw.company": "Firma", "nw.country": "Land", "nw.contact": "Kontaktperson", "nw.email": "E-Mail der Kontaktperson",
       "nw.text": "Was sucht die Firma?", "nw.textHint": "jede Sprache", "nw.submit": "Verstehen & Partner finden",
       "nw.examples": "Fiktive Beispiele", "nw.working": "Die Anfrage wird gelesen und die Berner Forschungslandschaft durchsucht…",
-      "nw.q": "Was sucht die Firma?", "nw.qPh": "z. B. klinischer Partner für einen nadelfreien Glukosesensor — oder E-Mail der Firma einfügen",
+      "nw.q": "Um welche Firma geht es?", "nw.urlPh": "Website der Firma, z. B. www.beispiel-medtech.ch", "nw.info": "…oder Informationen zur Firma einfügen (E-Mail, Beschreibung)", "nw.infoPh": "Optional, wenn Sie die Website angeben",
+      "nw.need": "Was sucht die Firma? (optional)", "nw.needPh": "z. B. Partner für eine klinische Studie, Testlabor, Fachleute für Bildgebung", "nw.missing": "Geben Sie die Website der Firma an oder fügen Sie Informationen zur Firma ein.", "nw.reading": "Website der Firma wird gelesen, einfach zusammengefasst und mit Bern abgeglichen…",
+      "nw.docs": "Dokumente der Firma (Pitch-Deck, Broschüre…)", "nw.docsHint": "Dateien hierher ziehen oder klicken — PDF, Word, PowerPoint, Excel, OpenDocument, Text",
+      "nw.pages": "{n} Seiten/Folien", "nw.remove": "Entfernen", "nw.uploading": "{n} Datei(en) werden gelesen…", "nw.tooBig": "ist grösser als {n} MB.",
+      "nw.readingDocs": "Dokumente werden gelesen, einfach zusammengefasst und mit Bern abgeglichen…", "u.docs": "Aus den Dokumenten gelesen:", "u.docText": "Gelesenen Text anzeigen",
+      "u.web": "Von der Website der Firma gelesen:", "u.info": "Von Ihnen eingefügte Informationen",
       "nw.company2": "Firma (optional)", "nw.countryAny": "Land der Firma", "nw.canton": "Kanton", "nw.cantonAny": "Alle Kantone",
       "nw.area": "Medtech-Bereich", "nw.niche": "Nische", "nw.any": "Alle", "nw.find": "Partner in Bern finden", "nw.try": "Beispiele",
       "rq.untitled": "Neue Anfrage",
@@ -226,7 +240,12 @@
       "nw.company": "Entreprise", "nw.country": "Pays", "nw.contact": "Personne de contact", "nw.email": "E-mail de contact",
       "nw.text": "Que cherche l'entreprise ?", "nw.textHint": "toute langue", "nw.submit": "Comprendre et trouver des partenaires",
       "nw.examples": "Exemples fictifs", "nw.working": "Lecture de la demande et recherche dans le paysage bernois de la recherche…",
-      "nw.q": "Que cherche l'entreprise ?", "nw.qPh": "p. ex. un partenaire clinique pour un capteur de glucose sans aiguille — ou collez l'e-mail de l'entreprise",
+      "nw.q": "De quelle entreprise s'agit-il ?", "nw.urlPh": "Site web de l'entreprise, p. ex. www.exemple-medtech.ch", "nw.info": "…ou collez des informations sur l'entreprise (e-mail, description)", "nw.infoPh": "Facultatif si vous indiquez le site web",
+      "nw.need": "Que recherche-t-elle ? (facultatif)", "nw.needPh": "p. ex. un partenaire pour une étude clinique, un laboratoire d'essais, des experts en imagerie", "nw.missing": "Indiquez le site web de l'entreprise ou collez des informations à son sujet.", "nw.reading": "Lecture du site de l'entreprise, résumé simple et recherche à Berne…",
+      "nw.docs": "Documents partagés par l'entreprise (pitch deck, brochure…)", "nw.docsHint": "Déposez les fichiers ici ou cliquez — PDF, Word, PowerPoint, Excel, OpenDocument, texte",
+      "nw.pages": "{n} pages/diapositives", "nw.remove": "Retirer", "nw.uploading": "Lecture de {n} fichier(s)…", "nw.tooBig": "dépasse {n} Mo.",
+      "nw.readingDocs": "Lecture des documents, résumé simple et recherche à Berne…", "u.docs": "Lu dans les documents :", "u.docText": "Afficher le texte lu",
+      "u.web": "Lu sur le site de l'entreprise :", "u.info": "Informations collées",
       "nw.company2": "Entreprise (facultatif)", "nw.countryAny": "Pays de l'entreprise", "nw.canton": "Canton", "nw.cantonAny": "Tous les cantons",
       "nw.area": "Domaine medtech", "nw.niche": "Niche", "nw.any": "Tous", "nw.find": "Trouver des partenaires à Berne", "nw.try": "Essayer",
       "rq.untitled": "Nouvelle demande",
@@ -658,16 +677,24 @@
           <p style="margin-top:14px"><a class="btn-primary btn-brand" href="#/staff/new">${ICON.plus}${esc(t("nav.new"))}</a></p></div>`}`;
   }
 
-  /* ======================= STAFF/officer: new request (search first) ======================= */
-  async function viewNew() {
+  /* ======================= STAFF/officer: new request (company link or info first) ======================= */
+  async function viewNew(prev = {}) {
     if (!S.examples) { try { S.examples = await api("/examples"); } catch { S.examples = []; } }
     const ar = await areas();
-    const f = { area: "", niche: "" };
+    const f = { area: prev.area || "", niche: prev.niche || "", docs: [...(prev.documents || [])], pending: 0 };
     view().innerHTML = `<a class="back" href="#/staff/requests">${ICON.back}${esc(t("cs.back"))}</a>
-      <form class="nr" id="newForm">
+      <form class="nr" id="newForm" novalidate>
         <h1>${esc(t("nw.q"))}</h1>
-        <div class="nr-box">${ICON.search}<textarea name="request_text" id="nrText" rows="1" required minlength="3" maxlength="12000" placeholder="${esc(t("nw.qPh"))}"></textarea>
-          <button class="btn-primary btn-brand" type="submit">${esc(t("nw.find"))}</button></div>
+        <div class="nr-box">${ICON.link}<input name="company_url" id="nrUrl" inputmode="url" autocomplete="off" spellcheck="false" maxlength="500" placeholder="${esc(t("nw.urlPh"))}">
+          <button class="btn-primary btn-brand" type="submit" id="nrGo">${esc(t("nw.find"))}</button></div>
+        <div class="nr-f nr-wide"><span>${esc(t("nw.docs"))}</span>
+          <label class="drop" id="drop">${ICON.file}<span>${esc(t("nw.docsHint"))}</span>
+            <input type="file" id="nrFiles" multiple accept="${esc(DOC_ACCEPT)}"></label>
+          <ul class="docs" id="docList"></ul></div>
+        <label class="nr-f nr-wide"><span>${esc(t("nw.info"))}</span>
+          <textarea name="request_text" id="nrText" rows="3" maxlength="12000" placeholder="${esc(t("nw.infoPh"))}"></textarea></label>
+        <label class="nr-f nr-wide"><span>${esc(t("nw.need"))}</span>
+          <input name="need" maxlength="500" autocomplete="off" placeholder="${esc(t("nw.needPh"))}"></label>
         ${S.examples.length ? `<div class="chips nr-try"><span class="muted">${esc(t("nw.try"))}:</span>${S.examples.map((x, i) => `<button type="button" class="chip" data-ex="${i}">${esc(L(x.label) || x.company)}</button>`).join("")}</div>` : ""}
         <div class="nr-filters">
           <label class="nr-f"><span>${esc(t("nw.company2"))}</span><input name="company" maxlength="200" autocomplete="off"></label>
@@ -681,11 +708,41 @@
             ${ar.map((a) => `<button type="button" class="chip" data-area="${esc(a.id)}">${esc(L(a.label))}</button>`).join("")}</div>
           <div id="nicheBox" hidden><div class="nr-lbl">${esc(t("nw.niche"))}</div><div class="chips" id="nicheChips"></div></div></div>
       </form>`;
-    const form = $("#newForm"), txt = $("#nrText");
-    const grow = () => { txt.style.height = "auto"; txt.style.height = Math.min(txt.scrollHeight, 260) + "px"; };
-    txt.addEventListener("input", grow); txt.focus();
+    const form = $("#newForm"), url = $("#nrUrl"), txt = $("#nrText");
+    for (const k of ["company_url", "request_text", "need", "company", "country"]) form[k].value = prev[k] || "";
+    url.focus();
+    const drawDocs = (errors = []) => {
+      $("#docList").innerHTML = f.docs.map((d, i) => `<li class="ok">${ICON.check}<b>${esc(d.name)}</b><span class="muted">${esc(d.kind)}${d.pages ? " · " + esc(t("nw.pages", { n: d.pages })) : ""}</span>
+          <button type="button" class="icon-btn" data-rm="${i}" aria-label="${esc(t("nw.remove"))}">${ICON.x}</button></li>`).join("")
+        + (f.pending ? `<li class="muted">${esc(t("nw.uploading", { n: f.pending }))}</li>` : "")
+        + errors.map((e) => `<li class="bad"><b>${esc(e.name)}</b> ${esc(e.msg)}</li>`).join("");
+      $$("[data-rm]").forEach((b) => b.addEventListener("click", () => { f.docs.splice(+b.dataset.rm, 1); drawDocs(); }));
+      $("#nrGo").disabled = f.pending > 0;
+    };
+    const upload = async (files) => {
+      const errors = [];
+      files = [...files].slice(0, Math.max(0, 5 - f.docs.length));
+      f.pending += files.length; drawDocs();
+      await Promise.all(files.map(async (file) => {
+        try {
+          if (file.size > DOC_MAX_MB * 1e6) throw new Error(t("nw.tooBig", { n: DOC_MAX_MB }));
+          const r = await fetch(`/documents?name=${encodeURIComponent(file.name)}`, { method: "POST", body: file,
+            headers: { "Content-Type": "application/octet-stream" } });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : `${r.status}`);
+          f.docs.push(j);
+        } catch (e) { errors.push({ name: file.name, msg: e.message }); }
+        finally { f.pending -= 1; drawDocs(errors); }
+      }));
+    };
+    $("#nrFiles").addEventListener("change", (ev) => { upload(ev.target.files); ev.target.value = ""; });
+    const drop = $("#drop");
+    ["dragenter", "dragover"].forEach((k) => drop.addEventListener(k, (ev) => { ev.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach((k) => drop.addEventListener(k, () => drop.classList.remove("over")));
+    drop.addEventListener("drop", (ev) => { ev.preventDefault(); upload(ev.dataTransfer.files); });
+    drawDocs();
     const syncCanton = () => { const sw = isSwiss(form.country.value); $("#cantonBox").hidden = !sw; if (!sw) form.canton.value = ""; };
-    form.country.addEventListener("input", syncCanton);
+    form.country.addEventListener("input", syncCanton); syncCanton(); form.canton.value = prev.canton || "";
     const drawNiches = () => {
       $$("#areaChips .chip").forEach((c) => c.classList.toggle("on", c.dataset.area === f.area));
       const A = ar.find((a) => a.id === f.area);
@@ -694,23 +751,25 @@
         A.niches.map((n) => `<button type="button" class="chip ${f.niche === n.id ? "on" : ""}" data-niche="${esc(n.id)}">${esc(L(n.label))}</button>`).join("") : "";
       $$("#nicheChips .chip").forEach((c) => c.addEventListener("click", () => { f.niche = c.dataset.niche; drawNiches(); }));
     };
+    drawNiches();
     $$("#areaChips .chip").forEach((c) => c.addEventListener("click", () => { f.area = c.dataset.area; f.niche = ""; drawNiches(); }));
     $$("[data-ex]").forEach((b) => b.addEventListener("click", () => {
       const x = S.examples[+b.dataset.ex];
-      txt.value = x.request_text || ""; grow();
+      url.value = ""; txt.value = x.request_text || ""; form.need.value = "";
       form.company.value = x.company || ""; form.country.value = x.country || ""; syncCanton(); form.canton.value = x.canton || "";
       f.area = x.area || ""; f.niche = x.niche || ""; f.example = x; drawNiches();
     }));
     form.addEventListener("submit", async (ev) => {
       ev.preventDefault();
-      const body = asStaff({ request_text: txt.value.trim(), company: form.company.value.trim(), country: form.country.value.trim(),
-        canton: form.canton.value, area: f.area, niche: f.niche, lang: LANG,
-        contact_name: f.example?.company === form.company.value ? f.example.contact_name || "" : "",
-        contact_email: f.example?.company === form.company.value ? f.example.contact_email || "" : "" });
-      if (body.request_text.length < 3) { txt.focus(); return; }
-      form.innerHTML = spinner(t("nw.working"));
+      const ex = f.example?.company === form.company.value ? f.example : null;
+      if (f.pending) return;
+      const body = asStaff({ company_url: url.value.trim(), documents: f.docs, request_text: txt.value.trim(), need: form.need.value.trim(),
+        company: form.company.value.trim(), country: form.country.value.trim(), canton: form.canton.value,
+        area: f.area, niche: f.niche, lang: LANG, contact_name: ex?.contact_name || "", contact_email: ex?.contact_email || "" });
+      if (!body.company_url && !body.documents.length && body.request_text.length < 3) { toast(t("nw.missing")); url.focus(); return; }
+      form.innerHTML = spinner(t(body.company_url ? "nw.reading" : body.documents.length ? "nw.readingDocs" : "nw.working"));
       try { const c = await api("/cases", { method: "POST", body }); go(`#/staff/case/${c.id}`); }
-      catch (e) { toast(`${t("err")}: ${e.message}`); viewNew(); }
+      catch (e) { toast(`${t("err")}: ${e.message}`, 9000); viewNew(body); }
     });
   }
 
@@ -755,7 +814,12 @@
       ${withWords ? `<div class="words-h">${esc(t("u.words"))}</div>${a.terms.length ? `<div class="words">${a.terms.map((w) => `<div class="word"><b>${esc(termLabel(w))}
           <span class="src-tag ${w.source === "apertus" ? "ai" : ""}">${esc(t(w.source === "apertus" ? "u.aiterm" : "u.gloss"))}</span></b><p>${esc(w.plain)}</p></div>`).join("")}</div>`
         : `<p class="muted">${esc(t("u.none"))}</p>`}
-      <details class="orig"><summary>${esc(t("u.orig"))}</summary><div class="orig-text">${jargon(CASE.request_text)}</div></details>` : ""}</section>`;
+      ${(CASE.documents || []).length ? `<div class="web-src">${ICON.file}<div><b>${esc(t("u.docs"))}</b>
+        <ul>${CASE.documents.map((d) => `<li>${esc(d.name)} <span class="muted">(${esc(d.kind)}${d.pages ? ", " + esc(t("nw.pages", { n: d.pages })) : ""})</span>
+          <details class="doc-text"><summary>${esc(t("u.docText"))}</summary><div class="orig-text">${esc(d.text)}</div></details></li>`).join("")}</ul></div></div>` : ""}
+      ${CASE.website ? `<div class="web-src">${ICON.link}<div><b>${esc(t("u.web"))}</b> <a href="${esc(safeUrl(CASE.website.url))}" target="_blank" rel="noopener">${esc(hostPath(CASE.website.url))}</a>
+        <ul>${CASE.website.pages.map((p) => `<li><a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title || hostPath(p.url))}</a></li>`).join("")}</ul></div></div>` : ""}
+      ${CASE.request_text ? `<details class="orig"><summary>${esc(t(CASE.website || CASE.need ? "u.info" : "u.orig"))}</summary><div class="orig-text">${jargon(CASE.request_text)}</div></details>` : ""}` : ""}</section>`;
   }
 
   /* ---------- officer ---------- */

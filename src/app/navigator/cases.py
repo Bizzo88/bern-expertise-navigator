@@ -1,4 +1,4 @@
-"""Company requests ("cases"): understand -> choose partners -> pitch & invite to Bern.
+"""Company requests ("cases"): company link or info -> plain summary -> partners in Bern -> pitch & invite.
 
 Stored locally in SQLite (data/cases.db): one JSON document per case plus its activity log.
 Nothing is sent anywhere by the server: emails open in the officer's own mail client (mailto)
@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, model_validator
 
 import yaml
 
-from . import index, plain, search, showcase
+from . import company as company_web, documents as docs, index, plain, search, showcase
 from .config import CONFIG_DIR, DATA_DIR
 
 DB = DATA_DIR / "cases.db"
@@ -63,7 +63,11 @@ class Case(BaseModel):
     canton: str = ""                 # when the company is in Switzerland
     area: str = ""                   # medtech area id   (config/medtech_areas.yaml)
     niche: str = ""                  # niche id within the area
-    request_text: str
+    company_url: str = ""
+    need: str = ""                   # what the company is looking for, if the officer knows
+    website: company_web.CompanyWebsite | None = None   # what was read from company_url
+    documents: list[docs.Document] = []                  # text read from files the company shared
+    request_text: str = ""           # the officer's pasted information about the company
     analysis: plain.RequestAnalysis
     matches: list[Match] = []
     no_match_message: str | None = None
@@ -77,10 +81,19 @@ class Case(BaseModel):
             data = {**data, "status": _LEGACY_STATUS[data["status"]]}
         return data
 
+    def source_text(self) -> str:
+        """Everything known about the company, for finding the topics it shares with Bern."""
+        return "\n".join(x for x in [self.need, *(d.text for d in self.documents), self.request_text,
+                                      self.website.text if self.website else ""] if x)
+
 
 class NewCase(BaseModel):
-    """Search-first: what the company is looking for + optional filters. Contact details come later."""
-    request_text: str = Field(..., min_length=3, max_length=12000)
+    """The company's website link, shared documents (already read by POST /documents) and/or pasted
+    information, an optional need, optional filters. Contact details can come later."""
+    company_url: str = Field("", max_length=500)
+    documents: list[docs.Document] = Field([], max_length=5)
+    request_text: str = Field("", max_length=12000)
+    need: str = Field("", max_length=500)
     company: str = Field("", max_length=200)
     contact_name: str = Field("", max_length=200)
     contact_email: str = Field("", max_length=200)
@@ -90,6 +103,12 @@ class NewCase(BaseModel):
     niche: str = Field("", max_length=40)
     lang: str = "en"
     actor: str = Field(..., min_length=1, max_length=120)
+
+    @model_validator(mode="after")
+    def _something(self):
+        if not self.company_url.strip() and not self.documents and len(self.request_text.strip()) < 3:
+            raise ValueError("Give the company's website link, upload a document or paste some information.")
+        return self
 
 
 def _now() -> str:
@@ -176,7 +195,16 @@ def find_matches(analysis: plain.RequestAnalysis, k: int = 12) -> tuple[list[Mat
 
 
 def create(req: NewCase) -> Case:
-    analysis = plain.analyze_request(req.request_text, req.lang)
+    """Raises company_web.FetchError when the link cannot be read (the officer can paste the text instead)."""
+    site = company_web.read(req.company_url) if req.company_url.strip() else None
+    name = req.company.strip() or (site.name if site else "")
+    # the company's own pitch says most about what they do, then the officer's notes, then the website
+    text = "\n\n".join(x for x in [*(d.text for d in req.documents), req.request_text.strip(),
+                                    site.text if site else ""] if x)
+    if site or req.documents or req.need.strip():
+        analysis = plain.analyze_company(name, site.description if site else "", text, req.need, req.lang)
+    else:
+        analysis = plain.analyze_request(req.request_text, req.lang)   # an email from the company: the old path
     # the chosen medtech niche sharpens the search; the company's own words stay in the query
     extra = niche_query(req.area, req.niche)
     if extra:
@@ -184,11 +212,16 @@ def create(req: NewCase) -> Case:
     matches, msg = find_matches(analysis)
     now = _now()
     swiss = req.country.strip().lower() in ("switzerland", "schweiz", "suisse", "svizzera", "ch")
-    case = Case(id=uuid.uuid4().hex[:10], created_at=now, updated_at=now, company=req.company.strip(),
+    case = Case(id=uuid.uuid4().hex[:10], created_at=now, updated_at=now, company=name,
+                company_url=site.url if site else "", need=req.need.strip(), website=site, documents=req.documents,
                 contact_name=req.contact_name.strip(), contact_email=req.contact_email.strip(),
                 country=req.country.strip(), canton=req.canton.strip() if swiss else "", area=req.area, niche=req.niche,
                 request_text=req.request_text.strip(), analysis=analysis, matches=matches, no_match_message=msg)
     log(case, req.actor, "created", f"Request received{' from ' + case.company if case.company else ''}")
+    for d in req.documents:
+        log(case, "Navigator", "document", f"Read {d.kind} document {d.name}")
+    if site:
+        log(case, "Navigator", "website", f"Read {len(site.pages)} page(s) of {site.url}")
     log(case, "Navigator", "analysed",
         f"Plain-language summary by {'Apertus' if analysis.generated_by == 'apertus' else 'glossary rules'}; "
         f"{len(matches)} possible partners found in Bern")
