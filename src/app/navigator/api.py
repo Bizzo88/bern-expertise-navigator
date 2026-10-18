@@ -18,7 +18,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import brief, cases, crawl, documents, index, llm, plain, search as search_mod, showcase
+from . import archetypes, brief, cases, crawl, documents, index, llm, plain, search as search_mod, showcase
 from .config import DATA_DIR, load_sources, settings
 from .schema import EntityDetail, RelatedRef, SearchResponse
 
@@ -140,6 +140,11 @@ def _case_or_404(cid: str) -> cases.Case:
     if not c:
         raise HTTPException(404, "unknown request")
     return c
+
+
+@app.get("/archetypes")
+def get_archetypes():
+    return archetypes.ARCHETYPES
 
 
 @app.get("/medtech-areas")

@@ -122,3 +122,20 @@ def test_upload_then_case(tmp_path, monkeypatch):
     assert c["documents"][0]["name"] == "deck.pptx" and "needle-free CGM" in c["analysis"]["summary"]
     assert "continuous glucose monitoring" in queries[0]
     assert any(e["kind"] == "document" for e in c["events"])
+
+
+def test_archetypes_follow_the_inventory():
+    from navigator.archetypes import classify
+    assert classify("person", "Prof. Dr. A", "Group Head", "a@unibe.ch") == "expert"
+    assert classify("person", "Dr. med. B", "Chief Physician", "") == "clinician"
+    assert classify("person", "C", "Senior Researcher", "c@insel.ch") == "clinician"     # hospital email
+    assert classify("person", "D", "MD-PhD Student", "d@insel.ch") == "workforce"        # learners stay workforce
+    assert classify("person", "E", "Head of Regulatory and Quality Affairs") == "specialist"
+    assert classify("person", "F", "Study Nurse") == "specialist"
+    assert classify("person", "PD Dr. G", "Head Urogenital Engineering (UGE)") == "expert"
+    assert classify("infrastructure", "ARTORG 3D-Printing Core Facility", text="rapid prototyping") == "facility"
+    assert classify("infrastructure", "Clinical Research Database") == "digital"
+    assert classify("infrastructure", "Biomechanical Testing") == "service"
+    assert classify("infrastructure", "Unitectra") == "technology"
+    assert classify("project", "SPN-005 – Pilot study on painless glucose monitoring") == "study"
+    assert classify("project", "Master's Thesis") == "project"

@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, model_validator
 
 import yaml
 
-from . import company as company_web, documents as docs, index, plain, search, showcase
+from . import archetypes, company as company_web, documents as docs, index, plain, search, showcase
 from .config import CONFIG_DIR, DATA_DIR
 
 DB = DATA_DIR / "cases.db"
@@ -42,6 +42,13 @@ class Match(BaseModel):
     confidence: float = 0.0
     via: str | None = None
     selected: bool = False
+    archetype: str = ""                # see archetypes.py; filled in for older requests too
+
+    @model_validator(mode="after")
+    def _archetype(self):
+        if not self.archetype:
+            self.archetype = archetypes.classify(self.entity_type, self.name, self.role, self.contact, self.plain)
+        return self
 
 
 class Event(BaseModel):
@@ -169,29 +176,40 @@ def niche_query(area: str, niche: str) -> str:
     return ""
 
 
-def find_matches(analysis: plain.RequestAnalysis, k: int = 12) -> tuple[list[Match], str | None]:
-    """People, labs and facilities first (someone to contact), projects after (context)."""
+PER_ARCHETYPE = 8
+
+
+def find_matches(analysis: plain.RequestAnalysis, k: int = 40) -> tuple[list[Match], str | None]:
+    """Everything Bern can offer this company, grouped by archetype (people, units, facilities, studies…).
+    Up to PER_ARCHETYPE per archetype, in relevance order; among people the leads come first, so a
+    company meets the professor or group head before an intern."""
     ents = index.load_entities()
-    r = search.search(analysis.search_query, k=k + 6)
+    r = search.search(analysis.search_query, k=k)
     if r.abstained:
         return [], r.message
     out = []
     for x in r.results:
         e = ents.get(x.id)
+        desc = " ".join(e.description) if e and e.description else ""
         out.append(Match(
             id=x.id, name=x.person_or_unit, entity_type=x.entity_type, role=x.role, unit=x.affiliation.unit,
             institution=x.institution, why=x.why_match, url=(x.sources[0].url if x.sources else ""),
             plain=(e.description[0] if e and e.description else None), contact=x.contact,
-            confidence=x.confidence, via=x.via))
-    # People first (someone to contact), and among people the leads first: a company should meet the
-    # professor or group head, not an intern. Stable sort keeps relevance order within each band.
-    def rank(m: Match) -> tuple:
+            confidence=x.confidence, via=x.via,
+            archetype=archetypes.classify(x.entity_type, x.person_or_unit, x.role, e.email if e else x.contact, desc)))
+
+    def band(m: Match) -> int:  # stable sort keeps relevance order within each band
         e = ents.get(m.id)
         sen = search.seniority(e) if e and m.entity_type == "person" else 1.0
-        band = 0 if sen >= 1.2 else 1 if sen >= 0.8 else 2
-        return (_ORDER.get(m.entity_type, 9), band if m.entity_type == "person" else 0)
-    out.sort(key=rank)
-    return out[:k], None
+        return 0 if sen >= 1.2 else 1 if sen >= 0.8 else 2
+    out.sort(key=lambda m: (archetypes.ORDER.get(m.archetype, 99), band(m)))
+    per: dict[str, int] = {}
+    kept = []
+    for m in out:
+        per[m.archetype] = per.get(m.archetype, 0) + 1
+        if per[m.archetype] <= PER_ARCHETYPE:
+            kept.append(m)
+    return kept, None
 
 
 def create(req: NewCase) -> Case:
@@ -202,7 +220,8 @@ def create(req: NewCase) -> Case:
     text = "\n\n".join(x for x in [*(d.text for d in req.documents), req.request_text.strip(),
                                     site.text if site else ""] if x)
     if site or req.documents or req.need.strip():
-        analysis = plain.analyze_company(name, site.description if site else "", text, req.need, req.lang)
+        analysis = plain.analyze_company(name, site.description if site else "", text, req.need, req.lang,
+                                         page_titles=[p.title for p in site.pages] if site else None)
     else:
         analysis = plain.analyze_request(req.request_text, req.lang)   # an email from the company: the old path
     # the chosen medtech niche sharpens the search; the company's own words stay in the query

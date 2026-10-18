@@ -58,6 +58,9 @@
   /* ======================= i18n ======================= */
   const I18N = {
     en: {
+      "u.sources": "Sources analysed",
+      "u.kw": "Key business keywords",
+      "u.offer": "Solutions & offerings",
       "brand.sub": "Research & expertise in Bern", "brand.staffSub": "Staff workspace", "brand.briefSub": "Executive brief",
       "nav.search": "Search", "nav.dir": "Labs & facilities", "nav.staff": "Staff workspace",
       "nav.requests": "Requests", "nav.new": "New request", "nav.public": "Public site",
@@ -87,41 +90,40 @@
       "id.name": "Your name", "id.email": "Your email", "id.team": "Team / email signature", "id.enter": "Enter workspace", "id.recent": "Recently used",
       "st.new": "New", 
       "st.contacted": "Invited", "st.call_scheduled": "Call scheduled", "st.closed": "Closed",
-      "rq.title": "Company requests", "rq.lead": "Each request has three steps: understand → choose partners → pitch & invite to Bern.",
+      "rq.title": "Company requests", "rq.lead": "Each request follows three steps: company profile → matching Bern assets → pitch and invitation.",
       "kpi.open": "to do", "kpi.ready": "pitch ready", "kpi.invited": "invited",
       "col.todo": "To do", "col.ready": "Pitch ready", "col.done": "Invited",
-      "col.empty": "Nothing here", "rq.empty": "No requests yet", "rq.emptyD": "Paste a company's request, or try one of the fictional examples.",
+      "col.empty": "Nothing here", "rq.empty": "No requests yet", "rq.emptyD": "Start from a company's website, its documents or its request, or open one of the fictional examples.",
       "partners": "partners",
-      "nw.title": "New company request", "nw.lead": "Paste the company's email or message. Technical words are fine — they will be explained.",
+      "nw.title": "New company request", "nw.lead": "Paste the company's email or message.",
       "nw.company": "Company", "nw.country": "Country", "nw.contact": "Contact person", "nw.email": "Contact email",
       "nw.text": "What is the company asking for?", "nw.textHint": "any language", "nw.submit": "Understand & find partners",
-      "nw.examples": "Fictional examples", "nw.working": "Reading the request and searching Bern's research landscape…",
+      "nw.examples": "Fictional examples", "nw.working": "Analysing the request and matching it with Bern's assets…",
       "nw.q": "Which company is it about?", "nw.urlPh": "Company website, e.g. www.example-medtech.com", "nw.info": "…or paste information about the company (email, description)", "nw.infoPh": "Optional when you give the website",
-      "nw.need": "What are they looking for? (optional)", "nw.needPh": "e.g. a clinical study partner, a test lab, experts in imaging", "nw.missing": "Enter the company's website or paste some information about it.", "nw.reading": "Reading the company's website, writing a plain summary and searching Bern…",
+      "nw.need": "Business need (optional)", "nw.needPh": "e.g. clinical validation partner, testing facility, market entry in Switzerland", "nw.missing": "Enter the company's website or paste some information about it.", "nw.reading": "Analysing the company website and matching it with Bern's assets…",
       "nw.docs": "Documents the company shared (pitch deck, brochure…)", "nw.docsHint": "Drop files here or click to choose — PDF, Word, PowerPoint, Excel, OpenDocument, text",
       "nw.pages": "{n} pages/slides", "nw.remove": "Remove", "nw.uploading": "Reading {n} file(s)…", "nw.tooBig": "is larger than {n} MB.",
-      "nw.readingDocs": "Reading the documents, writing a plain summary and searching Bern…", "u.docs": "Read from the documents:", "u.docText": "Show the text that was read",
-      "u.web": "Read from the company website:", "u.info": "Information you pasted",
+      "nw.readingDocs": "Analysing the documents and matching them with Bern's assets…", "u.docs": "Documents", "u.docText": "Show the text that was read",
+      "u.web": "Company website", "u.info": "Information provided",
       "nw.company2": "Company (optional)", "nw.countryAny": "Company's country", "nw.canton": "Canton", "nw.cantonAny": "All cantons",
-      "nw.area": "Medtech area", "nw.niche": "Niche", "nw.any": "Any", "nw.find": "Find partners in Bern", "nw.try": "Try",
+      "nw.area": "Medtech area", "nw.niche": "Niche", "nw.any": "Any", "nw.find": "Match with Bern", "nw.try": "Try",
       "rq.untitled": "New request",
       "d.title": "Company details", "d.lead": "Needed for the pitch and the email to the company.", "d.save": "Save details", "d.edit": "Edit",
       "cs.back": "All requests", "cs.backQ": "Review queue", "cs.received": "Received", "cs.contact": "Company contact", "cs.activity": "Activity",
       "cs.delete": "Delete request", "cs.confirmDelete": "Delete this request permanently?",
-      "step.1": "Understand", "step.2": "Choose partners", "step.3": "Pitch & invite", 
-      "u.title": "In plain words", "u.ai": "Summary by Apertus", "u.rules": "Glossary-based (Apertus offline)",
-      "u.does": "What the company does", "u.needs": "What they need", "u.words": "Words explained",
-      "u.gloss": "reviewed glossary", "u.aiterm": "AI explanation – check", "u.orig": "Original request", "u.none": "No technical terms from the glossary found.",
-      "m.title": "Possible partners in Bern", "m.lead": "Tick the partners to propose. Each is backed by a public web page.",
-      "m.again": "Search again", "m.more": "Find more in search", "m.sel": "selected", "m.none": "No matching partners found in the indexed sources.",
+      "step.1": "Company profile", "step.2": "Bern assets", "step.3": "Pitch & invitation", 
+      "u.title": "Company profile",
+      "u.does": "Business activity", "u.needs": "Business needs", "u.orig": "Original request",
+      "m.title": "Matching assets in Bern", "m.lead": "Select the assets to include in the pitch. Each entry is supported by a public source.",
+      "m.again": "Search again", "m.more": "Find more in search", "m.sel": "selected", "m.none": "No matching assets were found in the indexed sources.",
       "m.src": "source", 
-      "i.title": "Pitch & invite", "i.locked": "Choose at least one partner above to prepare the pitch.",
-      "i.lead": "Two outputs: a plain explanation for you, and a short, fully sourced brief for the company's CEO. Goal: a visit to Bern.",
+      "i.title": "Pitch & invite", "i.locked": "Select at least one asset above to prepare the pitch.",
+      "i.lead": "Two outputs: an internal briefing for you and a concise, fully sourced executive brief for the company's leadership. Objective: a visit to Bern.",
       "i.lang": "Language of the pitch", "i.prep": "Prepare the pitch", "i.regen": "Update the pitch",
-      "i.forYou": "For you", "i.forYouT": "What you are sending — in plain words", "i.forCeo": "For the CEO", "i.forCeoT": "Executive brief",
+      "i.forYou": "For you", "i.forYouT": "Internal briefing", "i.forCeo": "For the CEO", "i.forCeoT": "Executive brief",
       "i.open": "Open the brief", "i.pdf": "Save as PDF", "i.copyLink": "Copy link", "i.copied": "Link copied",
       "i.teams": "research teams", "i.stmt": "sourced statements", "i.pubs": "publications", "i.srcs": "sources",
-      "i.mail": "Send it", "i.slots": "Propose call times", "i.dur": "Call length (min)", "i.prepMail": "Prepare the email",
+      "i.mail": "Send", "i.slots": "Propose call times", "i.dur": "Call length (min)", "i.prepMail": "Prepare the email",
       "i.subj": "Subject", "i.body": "Email (editable)", "i.openMail": "Open in email app", "i.copy": "Copy text", "i.sent": "Mark as sent",
       "i.ics": "Calendar invite (.ics)", "i.doneEmail": "Invitation sent on {d}.", "i.doneCall": "Call scheduled: {d}.",
       "ctx": "Adding partners to the request from {c}", "ctxBack": "Back to the request",
@@ -130,6 +132,9 @@
       "st.pitch": "Pitch ready",
     },
     de: {
+      "u.sources": "Analysierte Quellen",
+      "u.kw": "Zentrale Geschäftsbegriffe",
+      "u.offer": "Lösungen & Angebote",
       "brand.sub": "Forschung & Expertise in Bern", "brand.staffSub": "Arbeitsbereich", "brand.briefSub": "Executive Brief",
       "nav.search": "Suche", "nav.dir": "Labore & Infrastruktur", "nav.staff": "Arbeitsbereich",
       "nav.requests": "Anfragen", "nav.new": "Neue Anfrage", "nav.public": "Öffentliche Seite",
@@ -159,41 +164,40 @@
       "id.name": "Ihr Name", "id.email": "Ihre E-Mail", "id.team": "Team / E-Mail-Signatur", "id.enter": "Arbeitsbereich öffnen", "id.recent": "Zuletzt verwendet",
       "st.new": "Neu", 
       "st.contacted": "Eingeladen", "st.call_scheduled": "Gespräch geplant", "st.closed": "Abgeschlossen",
-      "rq.title": "Firmenanfragen", "rq.lead": "Jede Anfrage hat drei Schritte: verstehen → Partner wählen → Pitch & Einladung nach Bern.",
+      "rq.title": "Firmenanfragen", "rq.lead": "Jede Anfrage durchläuft drei Schritte: Firmenprofil → passende Berner Angebote → Pitch und Einladung.",
       "kpi.open": "zu erledigen", "kpi.ready": "Pitch bereit", "kpi.invited": "eingeladen",
       "col.todo": "Zu erledigen", "col.ready": "Pitch bereit", "col.done": "Eingeladen",
-      "col.empty": "Nichts", "rq.empty": "Noch keine Anfragen", "rq.emptyD": "Fügen Sie eine Firmenanfrage ein oder probieren Sie ein fiktives Beispiel.",
+      "col.empty": "Nichts", "rq.empty": "Noch keine Anfragen", "rq.emptyD": "Starten Sie mit der Website, Dokumenten oder der Anfrage einer Firma – oder öffnen Sie ein fiktives Beispiel.",
       "partners": "Partner",
-      "nw.title": "Neue Firmenanfrage", "nw.lead": "E-Mail oder Nachricht der Firma einfügen. Fachbegriffe sind kein Problem — sie werden erklärt.",
+      "nw.title": "Neue Firmenanfrage", "nw.lead": "Fügen Sie die E-Mail oder Nachricht der Firma ein.",
       "nw.company": "Firma", "nw.country": "Land", "nw.contact": "Kontaktperson", "nw.email": "E-Mail der Kontaktperson",
       "nw.text": "Was sucht die Firma?", "nw.textHint": "jede Sprache", "nw.submit": "Verstehen & Partner finden",
-      "nw.examples": "Fiktive Beispiele", "nw.working": "Die Anfrage wird gelesen und die Berner Forschungslandschaft durchsucht…",
+      "nw.examples": "Fiktive Beispiele", "nw.working": "Die Anfrage wird analysiert und mit den Berner Angeboten abgeglichen…",
       "nw.q": "Um welche Firma geht es?", "nw.urlPh": "Website der Firma, z. B. www.beispiel-medtech.ch", "nw.info": "…oder Informationen zur Firma einfügen (E-Mail, Beschreibung)", "nw.infoPh": "Optional, wenn Sie die Website angeben",
-      "nw.need": "Was sucht die Firma? (optional)", "nw.needPh": "z. B. Partner für eine klinische Studie, Testlabor, Fachleute für Bildgebung", "nw.missing": "Geben Sie die Website der Firma an oder fügen Sie Informationen zur Firma ein.", "nw.reading": "Website der Firma wird gelesen, einfach zusammengefasst und mit Bern abgeglichen…",
+      "nw.need": "Geschäftlicher Bedarf (optional)", "nw.needPh": "z. B. Partner für klinische Validierung, Testinfrastruktur, Markteintritt in der Schweiz", "nw.missing": "Geben Sie die Website der Firma an oder fügen Sie Informationen zur Firma ein.", "nw.reading": "Die Website der Firma wird analysiert und mit den Berner Angeboten abgeglichen…",
       "nw.docs": "Dokumente der Firma (Pitch-Deck, Broschüre…)", "nw.docsHint": "Dateien hierher ziehen oder klicken — PDF, Word, PowerPoint, Excel, OpenDocument, Text",
       "nw.pages": "{n} Seiten/Folien", "nw.remove": "Entfernen", "nw.uploading": "{n} Datei(en) werden gelesen…", "nw.tooBig": "ist grösser als {n} MB.",
-      "nw.readingDocs": "Dokumente werden gelesen, einfach zusammengefasst und mit Bern abgeglichen…", "u.docs": "Aus den Dokumenten gelesen:", "u.docText": "Gelesenen Text anzeigen",
-      "u.web": "Von der Website der Firma gelesen:", "u.info": "Von Ihnen eingefügte Informationen",
+      "nw.readingDocs": "Die Dokumente werden analysiert und mit den Berner Angeboten abgeglichen…", "u.docs": "Dokumente", "u.docText": "Gelesenen Text anzeigen",
+      "u.web": "Website der Firma", "u.info": "Bereitgestellte Informationen",
       "nw.company2": "Firma (optional)", "nw.countryAny": "Land der Firma", "nw.canton": "Kanton", "nw.cantonAny": "Alle Kantone",
-      "nw.area": "Medtech-Bereich", "nw.niche": "Nische", "nw.any": "Alle", "nw.find": "Partner in Bern finden", "nw.try": "Beispiele",
+      "nw.area": "Medtech-Bereich", "nw.niche": "Nische", "nw.any": "Alle", "nw.find": "Mit Bern abgleichen", "nw.try": "Beispiele",
       "rq.untitled": "Neue Anfrage",
       "d.title": "Angaben zur Firma", "d.lead": "Nötig für den Pitch und die E-Mail an die Firma.", "d.save": "Angaben speichern", "d.edit": "Bearbeiten",
       "cs.back": "Alle Anfragen", "cs.backQ": "Prüfungen", "cs.received": "Eingegangen", "cs.contact": "Kontakt der Firma", "cs.activity": "Verlauf",
       "cs.delete": "Anfrage löschen", "cs.confirmDelete": "Diese Anfrage endgültig löschen?",
-      "step.1": "Verstehen", "step.2": "Partner wählen", "step.3": "Pitch & Einladung", 
-      "u.title": "In einfachen Worten", "u.ai": "Zusammenfassung von Apertus", "u.rules": "Glossar-basiert (Apertus offline)",
-      "u.does": "Was die Firma macht", "u.needs": "Was sie braucht", "u.words": "Fachbegriffe erklärt",
-      "u.gloss": "geprüftes Glossar", "u.aiterm": "KI-Erklärung – prüfen", "u.orig": "Originalanfrage", "u.none": "Keine Fachbegriffe aus dem Glossar gefunden.",
-      "m.title": "Mögliche Partner in Bern", "m.lead": "Partner zum Vorschlagen ankreuzen. Jeder ist durch eine öffentliche Webseite belegt.",
-      "m.again": "Neu suchen", "m.more": "Mehr in der Suche finden", "m.sel": "ausgewählt", "m.none": "Keine passenden Partner in den indexierten Quellen gefunden.",
+      "step.1": "Firmenprofil", "step.2": "Berner Angebote", "step.3": "Pitch & Einladung", 
+      "u.title": "Firmenprofil",
+      "u.does": "Geschäftstätigkeit", "u.needs": "Geschäftlicher Bedarf", "u.orig": "Ursprüngliche Anfrage",
+      "m.title": "Passende Angebote in Bern", "m.lead": "Wählen Sie die Angebote für den Pitch. Jeder Eintrag ist durch eine öffentliche Quelle belegt.",
+      "m.again": "Neu suchen", "m.more": "Mehr in der Suche finden", "m.sel": "ausgewählt", "m.none": "In den indexierten Quellen wurden keine passenden Angebote gefunden.",
       "m.src": "Quelle", 
-      "i.title": "Pitch & Einladung", "i.locked": "Wählen Sie oben mindestens einen Partner, um den Pitch vorzubereiten.",
-      "i.lead": "Zwei Ergebnisse: eine einfache Erklärung für Sie und ein kurzes, vollständig belegtes Dokument für die Geschäftsleitung der Firma. Ziel: ein Besuch in Bern.",
+      "i.title": "Pitch & Einladung", "i.locked": "Wählen Sie oben mindestens ein Angebot, um den Pitch vorzubereiten.",
+      "i.lead": "Zwei Ergebnisse: ein internes Briefing für Sie und ein kurzes, vollständig belegtes Executive Brief für die Geschäftsleitung der Firma. Ziel: ein Besuch in Bern.",
       "i.lang": "Sprache des Pitch", "i.prep": "Pitch vorbereiten", "i.regen": "Pitch aktualisieren",
-      "i.forYou": "Für Sie", "i.forYouT": "Was Sie versenden — in einfachen Worten", "i.forCeo": "Für die Geschäftsleitung", "i.forCeoT": "Executive Brief",
+      "i.forYou": "Für Sie", "i.forYouT": "Internes Briefing", "i.forCeo": "Für die Geschäftsleitung", "i.forCeoT": "Executive Brief",
       "i.open": "Brief öffnen", "i.pdf": "Als PDF speichern", "i.copyLink": "Link kopieren", "i.copied": "Link kopiert",
       "i.teams": "Forschungsteams", "i.stmt": "belegte Aussagen", "i.pubs": "Publikationen", "i.srcs": "Quellen",
-      "i.mail": "Versenden", "i.slots": "Gesprächstermine vorschlagen", "i.dur": "Dauer (Min.)", "i.prepMail": "E-Mail vorbereiten",
+      "i.mail": "Versand", "i.slots": "Gesprächstermine vorschlagen", "i.dur": "Dauer (Min.)", "i.prepMail": "E-Mail vorbereiten",
       "i.subj": "Betreff", "i.body": "E-Mail (bearbeitbar)", "i.openMail": "Im E-Mail-Programm öffnen", "i.copy": "Text kopieren", "i.sent": "Als gesendet markieren",
       "i.ics": "Kalendereinladung (.ics)", "i.doneEmail": "Einladung gesendet am {d}.", "i.doneCall": "Gespräch geplant: {d}.",
       "ctx": "Partner für die Anfrage von {c} hinzufügen", "ctxBack": "Zurück zur Anfrage",
@@ -202,6 +206,9 @@
       "st.pitch": "Pitch bereit",
     },
     fr: {
+      "u.sources": "Sources analysées",
+      "u.kw": "Mots-clés de l'activité",
+      "u.offer": "Solutions & offres",
       "brand.sub": "Recherche & expertise à Berne", "brand.staffSub": "Espace collaborateurs", "brand.briefSub": "Note de direction",
       "nav.search": "Recherche", "nav.dir": "Laboratoires & infrastructures", "nav.staff": "Espace collaborateurs",
       "nav.requests": "Demandes", "nav.new": "Nouvelle demande", "nav.public": "Site public",
@@ -231,41 +238,40 @@
       "id.name": "Votre nom", "id.email": "Votre e-mail", "id.team": "Équipe / signature", "id.enter": "Entrer dans l'espace", "id.recent": "Utilisés récemment",
       "st.new": "Nouvelle", 
       "st.contacted": "Invitée", "st.call_scheduled": "Appel planifié", "st.closed": "Close",
-      "rq.title": "Demandes d'entreprises", "rq.lead": "Chaque demande comporte trois étapes : comprendre → choisir les partenaires → pitch et invitation à Berne.",
+      "rq.title": "Demandes d'entreprises", "rq.lead": "Chaque demande suit trois étapes : profil de l'entreprise → atouts bernois correspondants → pitch et invitation.",
       "kpi.open": "à traiter", "kpi.ready": "pitch prêt", "kpi.invited": "invitées",
       "col.todo": "À traiter", "col.ready": "Pitch prêt", "col.done": "Invitées",
-      "col.empty": "Rien", "rq.empty": "Aucune demande", "rq.emptyD": "Collez la demande d'une entreprise ou essayez un exemple fictif.",
+      "col.empty": "Rien", "rq.empty": "Aucune demande", "rq.emptyD": "Commencez par le site web, les documents ou la demande d'une entreprise, ou ouvrez l'un des exemples fictifs.",
       "partners": "partenaires",
-      "nw.title": "Nouvelle demande d'entreprise", "nw.lead": "Collez l'e-mail ou le message de l'entreprise. Les termes techniques seront expliqués.",
+      "nw.title": "Nouvelle demande d'entreprise", "nw.lead": "Collez l'e-mail ou le message de l'entreprise.",
       "nw.company": "Entreprise", "nw.country": "Pays", "nw.contact": "Personne de contact", "nw.email": "E-mail de contact",
       "nw.text": "Que cherche l'entreprise ?", "nw.textHint": "toute langue", "nw.submit": "Comprendre et trouver des partenaires",
-      "nw.examples": "Exemples fictifs", "nw.working": "Lecture de la demande et recherche dans le paysage bernois de la recherche…",
+      "nw.examples": "Exemples fictifs", "nw.working": "Analyse de la demande et mise en correspondance avec les atouts bernois…",
       "nw.q": "De quelle entreprise s'agit-il ?", "nw.urlPh": "Site web de l'entreprise, p. ex. www.exemple-medtech.ch", "nw.info": "…ou collez des informations sur l'entreprise (e-mail, description)", "nw.infoPh": "Facultatif si vous indiquez le site web",
-      "nw.need": "Que recherche-t-elle ? (facultatif)", "nw.needPh": "p. ex. un partenaire pour une étude clinique, un laboratoire d'essais, des experts en imagerie", "nw.missing": "Indiquez le site web de l'entreprise ou collez des informations à son sujet.", "nw.reading": "Lecture du site de l'entreprise, résumé simple et recherche à Berne…",
+      "nw.need": "Besoin commercial (facultatif)", "nw.needPh": "p. ex. partenaire de validation clinique, infrastructure d'essais, entrée sur le marché suisse", "nw.missing": "Indiquez le site web de l'entreprise ou collez des informations à son sujet.", "nw.reading": "Analyse du site de l'entreprise et mise en correspondance avec les atouts bernois…",
       "nw.docs": "Documents partagés par l'entreprise (pitch deck, brochure…)", "nw.docsHint": "Déposez les fichiers ici ou cliquez — PDF, Word, PowerPoint, Excel, OpenDocument, texte",
       "nw.pages": "{n} pages/diapositives", "nw.remove": "Retirer", "nw.uploading": "Lecture de {n} fichier(s)…", "nw.tooBig": "dépasse {n} Mo.",
-      "nw.readingDocs": "Lecture des documents, résumé simple et recherche à Berne…", "u.docs": "Lu dans les documents :", "u.docText": "Afficher le texte lu",
-      "u.web": "Lu sur le site de l'entreprise :", "u.info": "Informations collées",
+      "nw.readingDocs": "Analyse des documents et mise en correspondance avec les atouts bernois…", "u.docs": "Documents", "u.docText": "Afficher le texte lu",
+      "u.web": "Site web de l'entreprise", "u.info": "Informations fournies",
       "nw.company2": "Entreprise (facultatif)", "nw.countryAny": "Pays de l'entreprise", "nw.canton": "Canton", "nw.cantonAny": "Tous les cantons",
-      "nw.area": "Domaine medtech", "nw.niche": "Niche", "nw.any": "Tous", "nw.find": "Trouver des partenaires à Berne", "nw.try": "Essayer",
+      "nw.area": "Domaine medtech", "nw.niche": "Niche", "nw.any": "Tous", "nw.find": "Rechercher à Berne", "nw.try": "Essayer",
       "rq.untitled": "Nouvelle demande",
       "d.title": "Coordonnées de l'entreprise", "d.lead": "Nécessaires pour le pitch et l'e-mail à l'entreprise.", "d.save": "Enregistrer", "d.edit": "Modifier",
       "cs.back": "Toutes les demandes", "cs.backQ": "Validations", "cs.received": "Reçue", "cs.contact": "Contact de l'entreprise", "cs.activity": "Historique",
       "cs.delete": "Supprimer la demande", "cs.confirmDelete": "Supprimer définitivement cette demande ?",
-      "step.1": "Comprendre", "step.2": "Choisir les partenaires", "step.3": "Pitch & invitation", 
-      "u.title": "En termes simples", "u.ai": "Résumé par Apertus", "u.rules": "Basé sur le glossaire (Apertus hors ligne)",
-      "u.does": "Ce que fait l'entreprise", "u.needs": "Ce dont elle a besoin", "u.words": "Termes expliqués",
-      "u.gloss": "glossaire validé", "u.aiterm": "Explication IA – à vérifier", "u.orig": "Demande originale", "u.none": "Aucun terme du glossaire trouvé.",
-      "m.title": "Partenaires possibles à Berne", "m.lead": "Cochez les partenaires à proposer. Chacun est appuyé par une page web publique.",
-      "m.again": "Relancer", "m.more": "Chercher davantage", "m.sel": "sélectionné(s)", "m.none": "Aucun partenaire trouvé dans les sources indexées.",
+      "step.1": "Profil de l'entreprise", "step.2": "Atouts bernois", "step.3": "Pitch & invitation", 
+      "u.title": "Profil de l'entreprise",
+      "u.does": "Activité", "u.needs": "Besoins commerciaux", "u.orig": "Demande originale",
+      "m.title": "Atouts correspondants à Berne", "m.lead": "Sélectionnez les atouts à inclure dans le pitch. Chaque entrée s'appuie sur une source publique.",
+      "m.again": "Relancer", "m.more": "Chercher davantage", "m.sel": "sélectionné(s)", "m.none": "Aucun atout correspondant n'a été trouvé dans les sources indexées.",
       "m.src": "source", 
-      "i.title": "Pitch & invitation", "i.locked": "Choisissez au moins un partenaire ci-dessus pour préparer le pitch.",
-      "i.lead": "Deux résultats : une explication simple pour vous, et une note courte et entièrement sourcée pour la direction de l'entreprise. Objectif : une visite à Berne.",
+      "i.title": "Pitch & invitation", "i.locked": "Sélectionnez au moins un atout ci-dessus pour préparer le pitch.",
+      "i.lead": "Deux livrables : une note interne pour vous et une note de synthèse concise et entièrement sourcée pour la direction de l'entreprise. Objectif : une visite à Berne.",
       "i.lang": "Langue du pitch", "i.prep": "Préparer le pitch", "i.regen": "Mettre à jour le pitch",
-      "i.forYou": "Pour vous", "i.forYouT": "Ce que vous envoyez — en termes simples", "i.forCeo": "Pour la direction", "i.forCeoT": "Note de direction",
+      "i.forYou": "Pour vous", "i.forYouT": "Note interne", "i.forCeo": "Pour la direction", "i.forCeoT": "Note de direction",
       "i.open": "Ouvrir la note", "i.pdf": "Enregistrer en PDF", "i.copyLink": "Copier le lien", "i.copied": "Lien copié",
       "i.teams": "équipes de recherche", "i.stmt": "affirmations sourcées", "i.pubs": "publications", "i.srcs": "sources",
-      "i.mail": "L'envoyer", "i.slots": "Proposer des créneaux d'appel", "i.dur": "Durée (min)", "i.prepMail": "Préparer l'e-mail",
+      "i.mail": "Envoi", "i.slots": "Proposer des créneaux d'appel", "i.dur": "Durée (min)", "i.prepMail": "Préparer l'e-mail",
       "i.subj": "Objet", "i.body": "E-mail (modifiable)", "i.openMail": "Ouvrir dans la messagerie", "i.copy": "Copier le texte", "i.sent": "Marquer comme envoyé",
       "i.ics": "Invitation calendrier (.ics)", "i.doneEmail": "Invitation envoyée le {d}.", "i.doneCall": "Appel planifié : {d}.",
       "ctx": "Ajout de partenaires à la demande de {c}", "ctxBack": "Retour à la demande",
@@ -360,6 +366,7 @@
   async function stats() { if (!S.stats) { try { S.stats = await api("/stats"); } catch { S.stats = { sources: [], entities_per_source: {}, pages_per_source: {} }; } } return S.stats; }
   async function showcase() { if (!S.showcase) { try { S.showcase = await api("/showcase"); } catch { S.showcase = { themes: [], highlights: [], labs: [], facilities: [], engage: [] }; } } return S.showcase; }
   async function refreshCases() { try { S.cases = await api("/cases"); } catch { S.cases = []; } }
+  async function archetypes() { if (!S.arch) { try { S.arch = await api("/archetypes"); } catch { S.arch = []; } } return S.arch; }
   async function areas() { if (!S.areas) { try { S.areas = await api("/medtech-areas"); } catch { S.areas = []; } } return S.areas; }
   const areaLabel = (a, n) => {
     const A = (S.areas || []).find((x) => x.id === a); if (!A) return "";
@@ -779,7 +786,7 @@
   const stepOf = (c) => (c.status !== "new" ? 4 : c.matches.some((m) => m.selected) ? 3 : 2);
   async function viewCase(id) {
     view().innerHTML = spinner();
-    await Promise.all([loadGlossary(), areas()]);
+    await Promise.all([loadGlossary(), areas(), archetypes()]);
     try { CASE = await api(`/cases/${encodeURIComponent(id)}`); }
     catch { view().innerHTML = `<div class="panel empty"><h3>${esc(t("err"))}</h3><p><a href="${roleHome()}">${esc(t("cs.back"))}</a></p></div>`; return; }
     renderOfficerCase();
@@ -804,22 +811,24 @@
     return shown.toLowerCase() === (w.term || "").toLowerCase() ? shown : `${shown} · ${w.term}`;
   }
 
-  function panelUnderstand(a, withWords = true) {
-    const ai = a.generated_by === "apertus";
-    return `<section class="panel done"><div class="panel-h"><h2><span class="num">✓</span>${esc(t("u.title"))}</h2>
-        <span class="ai-badge ${ai ? "" : "rules"}">${ai ? ICON.sparkle : ""}${esc(t(ai ? "u.ai" : "u.rules"))}</span></div>
+  function panelUnderstand(a) {
+    const site = CASE.website, docs = CASE.documents || [];
+    const list = (xs) => (xs.length ? `<ul>${xs.map((n) => `<li>${jargon(n)}</li>`).join("")}</ul>` : "<p>—</p>");
+    const offer = a.offerings || [], kw = a.keywords || [];
+    return `<section class="panel done"><div class="panel-h"><h2><span class="num">✓</span>${esc(t("u.title"))}</h2></div>
       <p class="plain-summary">${jargon(a.summary)}</p>
       <div class="facts"><div class="fact"><h4>${esc(t("u.does"))}</h4><p>${jargon(a.company_does || "—")}</p></div>
-        <div class="fact"><h4>${esc(t("u.needs"))}</h4>${a.company_needs.length ? `<ul>${a.company_needs.map((n) => `<li>${jargon(n)}</li>`).join("")}</ul>` : "<p>—</p>"}</div></div>
-      ${withWords ? `<div class="words-h">${esc(t("u.words"))}</div>${a.terms.length ? `<div class="words">${a.terms.map((w) => `<div class="word"><b>${esc(termLabel(w))}
-          <span class="src-tag ${w.source === "apertus" ? "ai" : ""}">${esc(t(w.source === "apertus" ? "u.aiterm" : "u.gloss"))}</span></b><p>${esc(w.plain)}</p></div>`).join("")}</div>`
-        : `<p class="muted">${esc(t("u.none"))}</p>`}
-      ${(CASE.documents || []).length ? `<div class="web-src">${ICON.file}<div><b>${esc(t("u.docs"))}</b>
-        <ul>${CASE.documents.map((d) => `<li>${esc(d.name)} <span class="muted">(${esc(d.kind)}${d.pages ? ", " + esc(t("nw.pages", { n: d.pages })) : ""})</span>
-          <details class="doc-text"><summary>${esc(t("u.docText"))}</summary><div class="orig-text">${esc(d.text)}</div></details></li>`).join("")}</ul></div></div>` : ""}
-      ${CASE.website ? `<div class="web-src">${ICON.link}<div><b>${esc(t("u.web"))}</b> <a href="${esc(safeUrl(CASE.website.url))}" target="_blank" rel="noopener">${esc(hostPath(CASE.website.url))}</a>
-        <ul>${CASE.website.pages.map((p) => `<li><a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title || hostPath(p.url))}</a></li>`).join("")}</ul></div></div>` : ""}
-      ${CASE.request_text ? `<details class="orig"><summary>${esc(t(CASE.website || CASE.need ? "u.info" : "u.orig"))}</summary><div class="orig-text">${jargon(CASE.request_text)}</div></details>` : ""}` : ""}</section>`;
+        <div class="fact"><h4>${esc(t("u.needs"))}</h4>${list(a.company_needs)}</div></div>
+      ${offer.length || kw.length ? `<div class="facts biz">
+        ${offer.length ? `<div class="fact"><h4>${esc(t("u.offer"))}</h4>${list(offer)}</div>` : ""}
+        ${kw.length ? `<div class="fact"><h4>${esc(t("u.kw"))}</h4><div class="kw">${kw.map((k) => `<span class="tag">${esc(k)}</span>`).join("")}</div></div>` : ""}</div>` : ""}
+      ${site || docs.length || CASE.request_text ? `<details class="orig"><summary>${esc(t("u.sources"))}</summary><div class="web-src">${ICON.link}<div>
+        ${site ? `<b>${esc(t("u.web"))}</b> <a href="${esc(safeUrl(site.url))}" target="_blank" rel="noopener">${esc(hostPath(site.url))}</a>
+          <ul>${site.pages.map((p) => `<li><a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title || hostPath(p.url))}</a></li>`).join("")}</ul>` : ""}
+        ${docs.length ? `<b>${esc(t("u.docs"))}</b><ul>${docs.map((d) => `<li>${esc(d.name)} <span class="muted">(${esc(d.kind)}${d.pages ? ", " + esc(t("nw.pages", { n: d.pages })) : ""})</span>
+          <details class="doc-text"><summary>${esc(t("u.docText"))}</summary><div class="orig-text">${esc(d.text)}</div></details></li>`).join("")}</ul>` : ""}
+        ${CASE.request_text ? `<b>${esc(t(site || docs.length || CASE.need ? "u.info" : "u.orig"))}</b><div class="orig-text">${esc(CASE.request_text)}</div>` : ""}
+      </div></div></details>` : ""}</section>`;
   }
 
   /* ---------- officer ---------- */
@@ -840,20 +849,32 @@
       <div><h3>${esc(m.name)}</h3><div class="who">${who ? who + " · " : ""}${esc(m.institution)}</div>
         ${m.plain ? `<p class="plain">${jargon(m.plain.length > 240 ? m.plain.slice(0, 237) + "…" : m.plain)}</p>` : ""}
         <p class="why">${esc(m.why)}</p></div>
-      <div class="right"><span class="type-badge ${esc(m.entity_type)}">${esc(t("type." + m.entity_type))}</span>
+      <div class="right"><span class="type-badge ${esc(m.entity_type)}">${esc(m.archetype ? archLabel(m.archetype) : t("type." + m.entity_type))}</span>
         <a class="link-btn" href="${esc(safeUrl(m.url))}" target="_blank" rel="noopener">${ICON.ext}${esc(t("m.src"))}</a></div></div>`;
   }
 
+  const archLabel = (id) => L((S.arch || []).find((a) => a.id === id)?.label) || t("type.person");
   function officerPartners(c, step) {
     const editable = c.status === "new";
     const nSel = c.matches.filter((m) => m.selected).length;
     const shown = editable ? c.matches : c.matches.filter((m) => m.selected);
+    const order = (S.arch || []).map((a) => a.id);
+    const groups = [...new Set(shown.map((m) => m.archetype))].sort((x, y) => order.indexOf(x) - order.indexOf(y));
+    if (!groups.includes(S.atab?.[c.id])) S.atab = { ...(S.atab || {}), [c.id]: groups[0] };
+    const cur = S.atab[c.id];
+    const tabs = groups.map((g) => {
+      const xs = shown.filter((m) => m.archetype === g), sel = xs.filter((m) => m.selected).length;
+      return `<button type="button" role="tab" class="atab ${g === cur ? "on" : ""}" aria-selected="${g === cur}" data-atab="${esc(g)}">${esc(archLabel(g))}
+        <span class="n">${xs.length}</span>${sel ? `<span class="s">${ICON.check}${sel}</span>` : ""}</button>`;
+    }).join("");
     return `<section class="panel ${step === 2 ? "active" : step > 2 ? "done" : ""}">
       <div class="panel-h"><h2><span class="num">${step > 2 ? "✓" : 2}</span>${esc(t("m.title"))}</h2><span class="muted">${nSel} ${esc(t("m.sel"))}</span></div>
       ${editable ? `<p class="muted" style="margin:-4px 0 12px">${esc(t("m.lead"))}</p>
         <form class="match-tools" id="rematch"><input name="q" value="${esc(c.analysis.search_query)}" aria-label="${esc(t("m.again"))}">
           <button class="btn" type="submit">${esc(t("m.again"))}</button><button class="btn" type="button" id="moreSearch">${esc(t("m.more"))}</button></form>` : ""}
-      ${shown.length ? `<div class="matches">${shown.map((m) => matchRow(m, editable)).join("")}</div>` : `<div class="callout warn">${ICON.info}<span>${esc(c.no_match_message || t("m.none"))}</span></div>`}</section>`;
+      ${shown.length ? `<div class="atabs" role="tablist">${tabs}</div>
+        <div class="matches">${shown.filter((m) => m.archetype === cur).map((m) => matchRow(m, editable)).join("")}</div>`
+        : `<div class="callout warn">${ICON.info}<span>${esc(c.no_match_message || t("m.none"))}</span></div>`}</section>`;
   }
 
   function nextSlots() {
@@ -910,6 +931,7 @@
   function bindOfficerCase() {
     const c = CASE;
     const rerender = (keep = true) => { const y = window.scrollY; renderOfficerCase(); if (keep) window.scrollTo(0, y); };
+    $$("[data-atab]").forEach((b) => b.addEventListener("click", () => { S.atab[c.id] = b.dataset.atab; rerender(); }));
     $("#delCase")?.addEventListener("click", async () => { if (!confirm(t("cs.confirmDelete"))) return; await api(`/cases/${c.id}`, { method: "DELETE" }); go("#/staff/requests"); });
     let timer;
     $$("[data-sel]").forEach((cb) => cb.addEventListener("change", () => {
