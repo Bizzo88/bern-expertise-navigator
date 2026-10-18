@@ -1,7 +1,7 @@
 /* Bern Expertise Navigator — vanilla JS, no dependencies (runs air-gapped).
  *
  * Three clearly separated areas:
- *   PUBLIC  #/ , #/search, #/directory, #/about  — the navigator from the brief, for anyone
+ *   PUBLIC  #/ , #/search, #/directory          — the navigator from the brief, for anyone
  *   STAFF   #/staff/...                          — canton workspace; staff say who they are on entry:
  *           officer  (business development): requests → partners → technical review → pitch & invite
  *           reviewer (technical colleague):  review queue → approve / request changes
@@ -58,21 +58,19 @@
   const I18N = {
     en: {
       "brand.sub": "Research & expertise in Bern", "brand.staffSub": "Staff workspace", "brand.briefSub": "Executive brief",
-      "nav.search": "Search", "nav.dir": "Labs & facilities", "nav.about": "How it works", "nav.staff": "Staff workspace",
+      "nav.search": "Search", "nav.dir": "Labs & facilities", "nav.staff": "Staff workspace",
       "nav.requests": "Requests", "nav.new": "New request", "nav.queue": "Review queue", "nav.public": "Public site",
       "staff.tag": "Staff", "who.switch": "Switch user", "role.officer": "Business development", "role.reviewer": "Technical reviewer",
-      "foot.public": "Prototype · built on Apertus, the Swiss open LLM · self-hosted, no data leaves Switzerland · facts only from the institutions' public websites, each linked to its source.",
+      "foot.public": "Information from the public websites of the University of Bern, the ARTORG Center and Diabetes Center Berne. Every result links to its source.",
       "foot.staff": "Staff workspace (prototype): identities are self-declared, no passwords. Requests are stored locally and never sent anywhere by the server.",
       "foot.brief": "Prepared with the Bern Expertise Navigator. Every statement links to its public source.",
       "home.title": "Find the people, labs and facilities behind Bern's research",
       "home.lead": "One search across the University of Bern, the ARTORG Center and Diabetes Center Berne. Use your own words — every result is structured and linked to the public page that supports it.",
       "ph": "e.g. glucose sensors, robots for neurosurgery, 3D printing service…", "go": "Search",
-      "try": "Try", "abstainChip": "best pizza in Bern (shows an honest “no source”)",
-      "proof": "Bern in numbers", "proofNote": "quoted verbatim from the institutions' pages",
-      "themes": "Research strengths", "themesNote": "live counts from the index",
+      "try": "Try", "proof": "Bern in numbers", "proofNote": "quoted verbatim from the institutions' pages",
+      "themes": "Research strengths", "themesNote": "based on the institutions' public pages",
       "people": "people", "labsN": "labs", "projects": "projects", "lead": "Lead",
-      "home.more": "Browse all labs & facilities", "home.how": "How it works and how well",
-      "res.n": "results", "res.also": "also searched for", "res.why": "Why it matches", "res.found": "Found through",
+      "home.more": "Browse all labs & facilities", "res.n": "results", "res.also": "also searched for", "res.why": "Why it matches", "res.found": "Found through",
       "f.role": "Role", "f.aff": "Affiliation", "f.exp": "Expertise", "f.proj": "Projects", "f.infra": "Infrastructure & services",
       "f.contact": "Contact", "res.verified": "Source-verified", "res.sources": "sources",
       "res.none": "No answer without a source", "res.noneHint": "The navigator only answers from pages it has indexed, and never guesses names or expertise.",
@@ -84,17 +82,6 @@
       "t.people": "People", "t.labs": "Labs", "t.projects": "Projects", "t.facilities": "Facilities",
       "dir.title": "Labs & facilities", "dir.lead": "Every research group and every facility found on the indexed websites, with its lead and a link to its page.",
       "dir.labs": "Labs & groups", "dir.fac": "Facilities & services", "dir.all": "All institutions",
-      "about.title": "How it works — and how well", "about.lead": "From public web pages to structured, verifiable answers. Measured against the challenge's success criteria.",
-      "about.pipe": "Pipeline", "about.crit": "Success criteria", "about.cov": "Sources covered", "about.ext": "Adding an institution",
-      "about.ext1": "Add one block to config/sources.yaml (name, domains, start pages).", "about.ext2": "Run: make crawl SOURCE=<name>, then make pipeline.",
-      "about.ext3": "Done — no code changes. The new source appears in search and in the filters.",
-      "crit.c": "Criterion", "crit.t": "Target", "crit.m": "Measured", "crit.how": "How",
-      "cov.pending": "waiting for the subdomain inventory", "cov.pages": "pages", "cov.ents": "entities",
-      "p.1": "Crawl", "p.1d": "Public pages only, robots.txt respected, bounded and polite.",
-      "p.2": "Classify", "p.2d": "URL rules first; Apertus only for unclear pages.",
-      "p.3": "Extract", "p.3d": "Apertus turns pages into people, labs, projects and facilities. Every value must quote the page verbatim — or it is dropped.",
-      "p.4": "Index", "p.4d": "Keywords (BM25) + multilingual vectors, all local.",
-      "p.5": "Search", "p.5d": "Lay terms → expert terms, fair ranking, cited “why”, honest “no source found”.",
       "id.title": "Staff workspace", "id.lead": "Who are you? Your role decides what you see and what you can do. Stored only in this browser.",
       "id.officerT": "Business development", "id.officerD": "You handle company requests and invite companies to Bern.",
       "id.officer1": "Understand requests in plain language", "id.officer2": "Pick research partners in Bern", "id.officer3": "Send a sourced pitch and invite the CEO",
@@ -144,28 +131,23 @@
       "rv.notOpen": "This request is not waiting for a review.", "rv.assigned": "Assigned to {who}",
       "ctx": "Adding partners to the request from {c}", "ctxBack": "Back to the request",
       "bf.prepared": "prepared {d}", "bf.missing": "This brief does not exist or has been withdrawn.", "bf.teams": "research teams",
-      "llm.on": "{m} online", "llm.off": "{m} offline · rules mode",
-      "llm.onT": "Apertus is on: plain-language summaries, query expansion and explanations.",
-      "llm.offT": "Apertus not reachable: reviewed glossary and deterministic rules are used. Nothing is invented either way.",
       "err": "Something went wrong", "forbidden": "Your role can't do this.",
     },
     de: {
       "brand.sub": "Forschung & Expertise in Bern", "brand.staffSub": "Arbeitsbereich", "brand.briefSub": "Executive Brief",
-      "nav.search": "Suche", "nav.dir": "Labore & Infrastruktur", "nav.about": "So funktioniert's", "nav.staff": "Arbeitsbereich",
+      "nav.search": "Suche", "nav.dir": "Labore & Infrastruktur", "nav.staff": "Arbeitsbereich",
       "nav.requests": "Anfragen", "nav.new": "Neue Anfrage", "nav.queue": "Prüfungen", "nav.public": "Öffentliche Seite",
       "staff.tag": "Intern", "who.switch": "Person wechseln", "role.officer": "Wirtschaftsförderung", "role.reviewer": "Technische Prüfung",
-      "foot.public": "Prototyp · basiert auf Apertus, dem offenen Schweizer Sprachmodell · selbst gehostet, keine Daten verlassen die Schweiz · Fakten nur von den öffentlichen Websites der Institutionen, jeweils mit Quelle.",
+      "foot.public": "Informationen von den öffentlichen Websites der Universität Bern, des ARTORG Center und des Diabetes Center Berne. Jedes Ergebnis ist mit seiner Quelle verlinkt.",
       "foot.staff": "Arbeitsbereich (Prototyp): Identität selbst angegeben, keine Passwörter. Anfragen werden lokal gespeichert und vom Server nirgends hin gesendet.",
       "foot.brief": "Erstellt mit dem Bern Expertise Navigator. Jede Aussage ist mit ihrer öffentlichen Quelle verlinkt.",
       "home.title": "Die Menschen, Labore und Infrastruktur hinter Berns Forschung finden",
       "home.lead": "Eine Suche über die Universität Bern, das ARTORG Center und das Diabetes Center Berne. In eigenen Worten — jedes Ergebnis ist strukturiert und mit der öffentlichen Quellseite verlinkt.",
       "ph": "z. B. Glukosesensoren, Roboter für die Neurochirurgie, 3D-Druck…", "go": "Suchen",
-      "try": "Beispiele", "abstainChip": "beste Pizza in Bern (zeigt ehrlich «keine Quelle»)",
-      "proof": "Bern in Zahlen", "proofNote": "wörtlich zitiert von den Seiten der Institutionen",
-      "themes": "Forschungsstärken", "themesNote": "live aus dem Index",
+      "try": "Beispiele", "proof": "Bern in Zahlen", "proofNote": "wörtlich zitiert von den Seiten der Institutionen",
+      "themes": "Forschungsstärken", "themesNote": "gemäss den öffentlichen Seiten der Institutionen",
       "people": "Personen", "labsN": "Labore", "projects": "Projekte", "lead": "Leitung",
-      "home.more": "Alle Labore & Infrastruktur", "home.how": "So funktioniert's — und wie gut",
-      "res.n": "Ergebnisse", "res.also": "auch gesucht nach", "res.why": "Warum es passt", "res.found": "Gefunden über",
+      "home.more": "Alle Labore & Infrastruktur", "res.n": "Ergebnisse", "res.also": "auch gesucht nach", "res.why": "Warum es passt", "res.found": "Gefunden über",
       "f.role": "Funktion", "f.aff": "Zugehörigkeit", "f.exp": "Fachgebiete", "f.proj": "Projekte", "f.infra": "Infrastruktur & Dienste",
       "f.contact": "Kontakt", "res.verified": "Quelle geprüft", "res.sources": "Quellen",
       "res.none": "Keine Antwort ohne Quelle", "res.noneHint": "Der Navigator antwortet nur aus indexierten Seiten und rät nie Namen oder Fachgebiete.",
@@ -177,17 +159,6 @@
       "t.people": "Personen", "t.labs": "Labore", "t.projects": "Projekte", "t.facilities": "Infrastruktur",
       "dir.title": "Labore & Infrastruktur", "dir.lead": "Alle Forschungsgruppen und Infrastrukturen der indexierten Websites, mit Leitung und Link zur Seite.",
       "dir.labs": "Labore & Gruppen", "dir.fac": "Infrastruktur & Dienste", "dir.all": "Alle Institutionen",
-      "about.title": "So funktioniert's — und wie gut", "about.lead": "Von öffentlichen Webseiten zu strukturierten, überprüfbaren Antworten. Gemessen an den Erfolgskriterien der Challenge.",
-      "about.pipe": "Ablauf", "about.crit": "Erfolgskriterien", "about.cov": "Abgedeckte Quellen", "about.ext": "Institution hinzufügen",
-      "about.ext1": "Einen Block in config/sources.yaml ergänzen (Name, Domains, Startseiten).", "about.ext2": "Ausführen: make crawl SOURCE=<name>, dann make pipeline.",
-      "about.ext3": "Fertig — ohne Code-Änderung. Die neue Quelle erscheint in Suche und Filtern.",
-      "crit.c": "Kriterium", "crit.t": "Ziel", "crit.m": "Gemessen", "crit.how": "Wie",
-      "cov.pending": "wartet auf das Subdomain-Inventar", "cov.pages": "Seiten", "cov.ents": "Einträge",
-      "p.1": "Crawlen", "p.1d": "Nur öffentliche Seiten, robots.txt beachtet, begrenzt und rücksichtsvoll.",
-      "p.2": "Einordnen", "p.2d": "Zuerst URL-Regeln; Apertus nur bei unklaren Seiten.",
-      "p.3": "Extrahieren", "p.3d": "Apertus macht aus Seiten Personen, Labore, Projekte und Infrastruktur. Jeder Wert muss wörtlich belegt sein — sonst wird er verworfen.",
-      "p.4": "Indexieren", "p.4d": "Stichworte (BM25) + mehrsprachige Vektoren, alles lokal.",
-      "p.5": "Suchen", "p.5d": "Laienbegriffe → Fachbegriffe, faire Rangfolge, belegtes «Warum», ehrlich «keine Quelle».",
       "id.title": "Arbeitsbereich", "id.lead": "Wer sind Sie? Ihre Rolle bestimmt, was Sie sehen und tun können. Nur in diesem Browser gespeichert.",
       "id.officerT": "Wirtschaftsförderung", "id.officerD": "Sie bearbeiten Firmenanfragen und laden Firmen nach Bern ein.",
       "id.officer1": "Anfragen in einfacher Sprache verstehen", "id.officer2": "Forschungspartner in Bern auswählen", "id.officer3": "Belegten Pitch senden und die Geschäftsleitung einladen",
@@ -237,28 +208,23 @@
       "rv.notOpen": "Diese Anfrage wartet nicht auf eine Prüfung.", "rv.assigned": "Zugewiesen an {who}",
       "ctx": "Partner für die Anfrage von {c} hinzufügen", "ctxBack": "Zurück zur Anfrage",
       "bf.prepared": "erstellt {d}", "bf.missing": "Dieses Dokument existiert nicht oder wurde zurückgezogen.", "bf.teams": "Forschungsteams",
-      "llm.on": "{m} online", "llm.off": "{m} offline · Regelmodus",
-      "llm.onT": "Apertus ist aktiv: Zusammenfassungen, Suchbegriffe und Erklärungen.",
-      "llm.offT": "Apertus nicht erreichbar: geprüftes Glossar und feste Regeln. Erfunden wird so oder so nichts.",
       "err": "Etwas ist schiefgelaufen", "forbidden": "Ihre Rolle darf das nicht.",
     },
     fr: {
       "brand.sub": "Recherche & expertise à Berne", "brand.staffSub": "Espace collaborateurs", "brand.briefSub": "Note de direction",
-      "nav.search": "Recherche", "nav.dir": "Laboratoires & infrastructures", "nav.about": "Fonctionnement", "nav.staff": "Espace collaborateurs",
+      "nav.search": "Recherche", "nav.dir": "Laboratoires & infrastructures", "nav.staff": "Espace collaborateurs",
       "nav.requests": "Demandes", "nav.new": "Nouvelle demande", "nav.queue": "Validations", "nav.public": "Site public",
       "staff.tag": "Interne", "who.switch": "Changer de personne", "role.officer": "Promotion économique", "role.reviewer": "Validation technique",
-      "foot.public": "Prototype · basé sur Apertus, le LLM ouvert suisse · auto-hébergé, aucune donnée ne quitte la Suisse · faits issus uniquement des sites publics des institutions, chacun avec sa source.",
+      "foot.public": "Informations issues des sites publics de l'Université de Berne, de l'ARTORG Center et du Diabetes Center Berne. Chaque résultat renvoie à sa source.",
       "foot.staff": "Espace collaborateurs (prototype) : identité déclarée, sans mot de passe. Les demandes sont stockées localement et jamais envoyées par le serveur.",
       "foot.brief": "Préparé avec le Bern Expertise Navigator. Chaque affirmation renvoie à sa source publique.",
       "home.title": "Trouver les personnes, laboratoires et infrastructures de la recherche bernoise",
       "home.lead": "Une seule recherche sur l'Université de Berne, l'ARTORG Center et le Diabetes Center Berne. Avec vos propres mots — chaque résultat est structuré et lié à la page publique qui le justifie.",
       "ph": "p. ex. capteurs de glucose, robots pour la neurochirurgie, impression 3D…", "go": "Rechercher",
-      "try": "Essayer", "abstainChip": "meilleure pizza à Berne (montre un « pas de source » honnête)",
-      "proof": "Berne en chiffres", "proofNote": "cités mot pour mot depuis les pages des institutions",
-      "themes": "Points forts de la recherche", "themesNote": "chiffres en direct depuis l'index",
+      "try": "Essayer", "proof": "Berne en chiffres", "proofNote": "cités mot pour mot depuis les pages des institutions",
+      "themes": "Points forts de la recherche", "themesNote": "d'après les pages publiques des institutions",
       "people": "personnes", "labsN": "laboratoires", "projects": "projets", "lead": "Direction",
-      "home.more": "Tous les laboratoires & infrastructures", "home.how": "Fonctionnement et qualité",
-      "res.n": "résultats", "res.also": "également cherché", "res.why": "Pourquoi ce résultat", "res.found": "Trouvé via",
+      "home.more": "Tous les laboratoires & infrastructures", "res.n": "résultats", "res.also": "également cherché", "res.why": "Pourquoi ce résultat", "res.found": "Trouvé via",
       "f.role": "Fonction", "f.aff": "Rattachement", "f.exp": "Expertise", "f.proj": "Projets", "f.infra": "Infrastructures & services",
       "f.contact": "Contact", "res.verified": "Source vérifiée", "res.sources": "sources",
       "res.none": "Pas de réponse sans source", "res.noneHint": "Le navigateur ne répond qu'à partir des pages indexées et ne devine jamais de noms ni d'expertises.",
@@ -270,17 +236,6 @@
       "t.people": "Personnes", "t.labs": "Laboratoires", "t.projects": "Projets", "t.facilities": "Infrastructures",
       "dir.title": "Laboratoires & infrastructures", "dir.lead": "Tous les groupes de recherche et infrastructures des sites indexés, avec leur direction et un lien vers leur page.",
       "dir.labs": "Laboratoires & groupes", "dir.fac": "Infrastructures & services", "dir.all": "Toutes les institutions",
-      "about.title": "Fonctionnement — et qualité", "about.lead": "Des pages web publiques à des réponses structurées et vérifiables. Mesuré selon les critères de réussite du challenge.",
-      "about.pipe": "Chaîne de traitement", "about.crit": "Critères de réussite", "about.cov": "Sources couvertes", "about.ext": "Ajouter une institution",
-      "about.ext1": "Ajouter un bloc dans config/sources.yaml (nom, domaines, pages de départ).", "about.ext2": "Lancer : make crawl SOURCE=<nom>, puis make pipeline.",
-      "about.ext3": "Terminé — sans modifier le code. La nouvelle source apparaît dans la recherche et les filtres.",
-      "crit.c": "Critère", "crit.t": "Objectif", "crit.m": "Mesuré", "crit.how": "Comment",
-      "cov.pending": "en attente de l'inventaire des sous-domaines", "cov.pages": "pages", "cov.ents": "entités",
-      "p.1": "Collecter", "p.1d": "Pages publiques uniquement, robots.txt respecté, limité et courtois.",
-      "p.2": "Classer", "p.2d": "Règles d'URL d'abord ; Apertus seulement si nécessaire.",
-      "p.3": "Extraire", "p.3d": "Apertus transforme les pages en personnes, laboratoires, projets et infrastructures. Chaque valeur doit citer la page mot pour mot — sinon elle est écartée.",
-      "p.4": "Indexer", "p.4d": "Mots-clés (BM25) + vecteurs multilingues, tout en local.",
-      "p.5": "Rechercher", "p.5d": "Termes courants → termes experts, classement équitable, « pourquoi » sourcé, « pas de source » honnête.",
       "id.title": "Espace collaborateurs", "id.lead": "Qui êtes-vous ? Votre rôle détermine ce que vous voyez et pouvez faire. Enregistré uniquement dans ce navigateur.",
       "id.officerT": "Promotion économique", "id.officerD": "Vous traitez les demandes d'entreprises et les invitez à Berne.",
       "id.officer1": "Comprendre les demandes simplement", "id.officer2": "Choisir des partenaires de recherche à Berne", "id.officer3": "Envoyer un pitch sourcé et inviter la direction",
@@ -330,9 +285,6 @@
       "rv.notOpen": "Cette demande n'attend pas de validation.", "rv.assigned": "Attribuée à {who}",
       "ctx": "Ajout de partenaires à la demande de {c}", "ctxBack": "Retour à la demande",
       "bf.prepared": "préparée le {d}", "bf.missing": "Cette note n'existe pas ou a été retirée.", "bf.teams": "équipes de recherche",
-      "llm.on": "{m} en ligne", "llm.off": "{m} hors ligne · mode règles",
-      "llm.onT": "Apertus est actif : résumés, élargissement des requêtes et explications.",
-      "llm.offT": "Apertus injoignable : glossaire validé et règles fixes. Rien n'est inventé dans les deux cas.",
       "err": "Une erreur est survenue", "forbidden": "Votre rôle ne permet pas cette action.",
     },
   };
@@ -417,8 +369,6 @@
   async function refreshCases() { try { S.cases = await api("/cases"); } catch { S.cases = []; } }
 
   /* ======================= chrome per area ======================= */
-  let LLM = { on: false, m: "Apertus" };
-  const statusPill = () => `<span class="status ${LLM.on ? "on" : "off"}" title="${esc(t(LLM.on ? "llm.onT" : "llm.offT"))}"><span class="dot"></span><span class="status-label">${esc(t(LLM.on ? "llm.on" : "llm.off", { m: LLM.m }))}</span></span>`;
   const langSel = () => `<select id="lang" class="lang" aria-label="Language">${["en", "de", "fr"].map((l) => `<option value="${l}" ${l === LANG ? "selected" : ""}>${l.toUpperCase()}</option>`).join("")}</select>`;
   const themeBtn = () => `<button class="icon-btn" id="themeBtn" type="button" aria-label="Dark mode" title="Dark mode">${ICON.moon}</button>`;
 
@@ -434,8 +384,8 @@
       $("#foot").innerHTML = `<span>${esc(t("foot.brief"))}</span>`;
     } else if (shell === "public") {
       bar.innerHTML = `<div class="topbar-in">${brand(t("brand.sub"), "#/")}
-        <nav class="tabs" aria-label="Main">${tab("#/", "search", t("nav.search"))}${tab("#/directory", "dir", t("nav.dir"))}${tab("#/about", "about", t("nav.about"))}</nav>
-        <div class="topbar-right">${statusPill()}${langSel()}${themeBtn()}<a class="staff-link" href="#/staff">${ICON.lock}<span>${esc(t("nav.staff"))}</span></a></div></div>`;
+        <nav class="tabs" aria-label="Main">${tab("#/", "search", t("nav.search"))}${tab("#/directory", "dir", t("nav.dir"))}</nav>
+        <div class="topbar-right">${langSel()}${themeBtn()}<a class="staff-link" href="#/staff">${ICON.lock}<span>${esc(t("nav.staff"))}</span></a></div></div>`;
       $("#foot").innerHTML = `<span>${esc(t("foot.public"))}</span>`;
     } else {
       const open = S.cases.filter((c) => ["new", "changes_requested", "in_review", "approved"].includes(c.status)).length;
@@ -472,9 +422,8 @@
 
     if (p[0] === "b" && p[1]) { renderChrome("brief"); return viewBrief(p[1], params); }
     if (p[0] !== "staff") {
-      renderChrome("public", p[0] === "directory" ? "dir" : p[0] === "about" ? "about" : "search");
+      renderChrome("public", p[0] === "directory" ? "dir" : "search");
       if (p[0] === "directory") return viewDirectory();
-      if (p[0] === "about") return viewAbout();
       if (p[0] === "search" && params.get("q")) return viewSearch(params, "public");
       return viewHome();
     }
@@ -503,8 +452,7 @@
     $$(".chip[data-q]").forEach((b) => b.addEventListener("click", () => go(`${$("#sForm").dataset.target}?q=${encodeURIComponent(b.dataset.q)}`)));
   }
   const exampleChips = () => `<div class="chips"><span class="muted">${esc(t("try"))}:</span>
-    ${["glucose sensors", "kontinuierliche Glukosemessung", "robots for neurosurgery", "3D printing facility", "organs-on-chip"].map((x) => `<button class="chip" type="button" data-q="${esc(x)}">${esc(x)}</button>`).join("")}
-    <button class="chip ghost" type="button" data-q="best pizza delivery in Bern">${esc(t("abstainChip"))}</button></div>`;
+    ${["glucose sensors", "kontinuierliche Glukosemessung", "robots for neurosurgery", "3D printing facility", "organs-on-chip"].map((x) => `<button class="chip" type="button" data-q="${esc(x)}">${esc(x)}</button>`).join("")}</div>`;
 
   async function viewHome() {
     await loadGlossary();
@@ -521,7 +469,7 @@
         <h3>${esc(L(th.title))}</h3><p>${esc(L(th.blurb))}</p>
         <div class="nums"><span><b>${th.counts.person}</b> ${esc(t("people"))}</span><span><b>${th.counts.unit}</b> ${esc(t("labsN"))}</span><span><b>${th.counts.project}</b> ${esc(t("projects"))}</span></div>
         ${th.labs.length ? `<div class="labs">${th.labs.map((l) => esc(l.name)).join(" · ")}</div>` : ""}</a>`).join("")}</div>
-      <div class="actions" style="margin-top:22px;justify-content:center"><a class="btn" href="#/directory">${esc(t("home.more"))}</a><a class="btn" href="#/about">${esc(t("home.how"))}</a></div>`;
+      <div class="actions" style="margin-top:22px;justify-content:center"><a class="btn" href="#/directory">${esc(t("home.more"))}</a></div>`;
   }
 
   /* ======================= search (public and staff) ======================= */
@@ -601,7 +549,7 @@
   function renderResults(ctx) {
     const d = S.data, terms = termsFor(d.query, d.expanded_terms);
     $(".results-view").classList.toggle("solo", !!d.abstained);
-    $("#rHead").innerHTML = d.abstained ? "" : `<span class="cnt">${d.results.length} ${esc(t("res.n"))}</span><span>${(d.took_ms / 1000).toFixed(2)} s</span>
+    $("#rHead").innerHTML = d.abstained ? "" : `<span class="cnt">${d.results.length} ${esc(t("res.n"))}</span>
       ${d.expanded_terms.length ? `<span>${esc(t("res.also"))}</span>${d.expanded_terms.slice(0, 7).map((x) => `<span class="term">${esc(x)}</span>`).join("")}` : ""}`;
     if (d.abstained) {
       $("#rList").innerHTML = `<div class="abstain"><div class="empty-ico" style="color:var(--warn);background:var(--warn-bg)">${ICON.shield}</div>
@@ -687,35 +635,6 @@
       $$("[data-inst]").forEach((b) => b.addEventListener("click", () => { inst = b.dataset.inst; draw(); }));
     };
     draw();
-  }
-
-  /* ======================= PUBLIC: about ======================= */
-  async function viewAbout() {
-    const st = await stats(), ev = st.eval || {};
-    const pct = (v) => parseInt(v, 10);
-    const covered = st.sources.filter((s) => (st.pages_per_source[s.name] ?? 0) > 0).length;
-    const rows = [
-      ["1", "Finds the right people", "≥ 80% in top 10", ev.recall_at_k, (v) => pct(v) >= 80, "Hybrid keyword + multilingual vector search; labs surface their heads"],
-      ["2", "Handles different wording", "same experts", ev.synonym_twins_consistent, (v) => pct(v) >= 70, "Reviewed glossary + Apertus expansion + multilingual embeddings"],
-      ["3", "Every result traceable", "100%", ev.traceability, (v) => pct(v) === 100, "Every value quotes the page verbatim, re-checked; unsupported claims dropped"],
-      ["—", "Honest when unsure", "abstain", ev.abstention_correct, (v) => pct(v) === 100, "Out-of-scope or unknown-person queries → “no verifiable source”"],
-      ["4", "Structured results", "all fields", "✓", () => true, "Person, role, affiliation, expertise, projects, infrastructure, why, source"],
-      ["5", "Covers all three sources", "UniBE · ARTORG · DCB", `${covered}/${st.sources.length}`, () => covered === st.sources.length, "UniBE waits for the supplied subdomain inventory"],
-      ["6", "Easy to extend", "config only", "✓", () => true, "One YAML block + one command; no code changes"],
-    ];
-    view().innerHTML = `<div class="page-h"><div><h1>${esc(t("about.title"))}</h1><p>${esc(t("about.lead"))}</p></div></div>
-      <div class="section-h" style="margin-top:6px"><h2>${esc(t("about.pipe"))}</h2></div>
-      <ol class="pipeline">${[1, 2, 3, 4, 5].map((n) => `<li class="${n === 3 || n === 5 ? "ai" : ""}"><span class="n">${n}</span><b>${esc(t("p." + n))}</b>${esc(t("p." + n + "d"))}</li>`).join("")}</ol>
-      <div class="section-h"><h2>${esc(t("about.crit"))}</h2><span class="muted">${ev.queries ? `${ev.queries} test queries · make eval` : "make eval"}</span></div>
-      <div class="panel" style="padding:4px 8px;overflow-x:auto"><table class="criteria"><thead><tr><th>#</th><th>${esc(t("crit.c"))}</th><th>${esc(t("crit.t"))}</th><th>${esc(t("crit.m"))}</th><th>${esc(t("crit.how"))}</th></tr></thead>
-        <tbody>${rows.map(([n, c, tg, v, ok, how]) => `<tr><td>${n}</td><td><b>${esc(c)}</b></td><td>${esc(tg)}</td>
-          <td class="val ${v && ok(v) ? "ok" : "mid"}">${esc(v ?? "n/a")}</td><td class="muted">${esc(how)}</td></tr>`).join("")}</tbody></table></div>
-      <div class="section-h"><h2>${esc(t("about.cov"))}</h2></div>
-      <div class="cov">${st.sources.map((s) => { const pg = st.pages_per_source[s.name] ?? 0, en = st.entities_per_source[s.name] ?? 0;
-        return `<div class="cov-card ${pg ? "" : "pending"}"><h3>${esc(s.label)}</h3>${pg ? `<div class="v">${en}</div><div class="muted">${esc(t("cov.ents"))} · ${pg} ${esc(t("cov.pages"))}</div>`
-          : `<div class="muted" style="margin-top:6px">${esc(t("cov.pending"))}</div>`}</div>`; }).join("")}</div>
-      <div class="section-h"><h2>${esc(t("about.ext"))}</h2></div>
-      <div class="panel"><ol class="timeline">${[1, 2, 3].map((n) => `<li>${esc(t("about.ext" + n))}</li>`).join("")}</ol></div>`;
   }
 
   /* ======================= STAFF: identity ======================= */
@@ -1124,11 +1043,6 @@
   }
 
   /* ======================= boot ======================= */
-  async function pollStatus() {
-    try { const h = await api("/health"); LLM = { on: !!h.llm_available, m: (h.model || "Apertus").split("/").pop() }; } catch {}
-    const el = $(".status"); if (el) el.outerHTML = statusPill();
-  }
-
   function boot() {
     const theme = store.get("nav-theme", null);
     if (theme) document.documentElement.dataset.theme = theme;
@@ -1142,8 +1056,7 @@
       }
     });
     window.addEventListener("hashchange", route);
-    pollStatus(); route();
-    setInterval(pollStatus, 60000);
+    route();
   }
   boot();
 })();
