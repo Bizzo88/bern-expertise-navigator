@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import secrets
 import threading
 import time
 from collections import Counter
@@ -16,7 +17,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import cases, crawl, index, llm, plain, search as search_mod, showcase
+from . import brief, cases, crawl, index, llm, plain, search as search_mod, showcase
 from .config import DATA_DIR, load_sources, settings
 from .schema import EntityDetail, RelatedRef, SearchResponse
 
@@ -129,6 +130,18 @@ def examples():
 
 
 # ---------------- company requests (cases) ----------------------------------------
+# Staff workspace. Two roles with different rights (prototype: identity is self-declared, no passwords):
+#   officer  — business development: creates requests, picks partners, asks for review, invites the company
+#   reviewer — technical colleague: approves or rejects the proposed partners
+class StaffAction(BaseModel):
+    actor: str = Field(..., min_length=1, max_length=120)
+    role: cases.Role
+
+
+def _require(body: StaffAction, role: str) -> None:
+    if body.role != role:
+        who = "a business-development officer" if role == "officer" else "a technical reviewer"
+        raise HTTPException(403, f"Only {who} can do this")
 def _case_or_404(cid: str) -> cases.Case:
     c = cases.get(cid)
     if not c:
@@ -145,6 +158,7 @@ def list_cases():
 
 @app.post("/cases", response_model=cases.Case)
 def create_case(req: cases.NewCase):
+    _require(req, "officer")
     return cases.create(req)
 
 
@@ -160,28 +174,32 @@ def delete_case(cid: str):
     return {"ok": True}
 
 
-class Selection(BaseModel):
+class Selection(StaffAction):
     selected: list[str]
-    actor: str = "Officer"
 
 
 @app.post("/cases/{cid}/selection", response_model=cases.Case)
 def select_matches(cid: str, body: Selection):
+    _require(body, "officer")
     c = _case_or_404(cid)
+    if c.status not in ("new", "changes_requested"):
+        raise HTTPException(409, "Partners can only be changed before the review")
     for m in c.matches:
         m.selected = m.id in body.selected
     return cases.save(c)
 
 
-class AddMatch(BaseModel):
+class AddMatch(StaffAction):
     entity_id: str
-    actor: str = "Officer"
 
 
 @app.post("/cases/{cid}/matches", response_model=cases.Case)
 def add_match(cid: str, body: AddMatch):
-    """Add a result found in Explore to the request."""
+    """Add a result found in search to the request."""
+    _require(body, "officer")
     c = _case_or_404(cid)
+    if c.status not in ("new", "changes_requested"):
+        raise HTTPException(409, "Partners can only be changed before the review")
     e = index.load_entities().get(body.entity_id)
     if not e:
         raise HTTPException(404, "unknown entity")
@@ -190,28 +208,28 @@ def add_match(cid: str, body: AddMatch):
                                         institution=e.source_label, why="Added by hand from Explore",
                                         plain=e.description[0] if e.description else None, url=e.source_urls[0],
                                         contact=e.email, selected=True))
-        cases.log(c, body.actor, "added", f"Added {e.name}")
+        cases.log(c, body.actor, "added", f"Added {e.name}", body.role)
     return cases.save(c)
 
 
-class Rematch(BaseModel):
+class Rematch(StaffAction):
     query: str = Field(..., min_length=2, max_length=300)
-    actor: str = "Officer"
 
 
 @app.post("/cases/{cid}/rematch", response_model=cases.Case)
 def rematch(cid: str, body: Rematch):
-    return cases.rematch(_case_or_404(cid), body.query, body.actor)
+    _require(body, "officer")
+    return cases.rematch(_case_or_404(cid), body.query, body.actor, body.role)
 
 
-class ReviewRequest(BaseModel):
+class ReviewRequest(StaffAction):
     reviewer: str = Field(..., min_length=1, max_length=120)
     note: str = Field("", max_length=2000)
-    actor: str = "Officer"
 
 
 @app.post("/cases/{cid}/review-request", response_model=cases.Case)
 def request_review(cid: str, body: ReviewRequest):
+    _require(body, "officer")
     c = _case_or_404(cid)
     if not any(m.selected for m in c.matches):
         raise HTTPException(400, "Select at least one partner before asking for a review")
@@ -219,7 +237,7 @@ def request_review(cid: str, body: ReviewRequest):
     for m in c.matches:
         m.review, m.review_note = None, ""
     cases.log(c, body.actor, "review_requested", f"Sent to {c.reviewer} for technical review" +
-              (f": “{c.review_note}”" if c.review_note else ""))
+              (f": “{c.review_note}”" if c.review_note else ""), body.role)
     return cases.save(c)
 
 
@@ -229,16 +247,18 @@ class MatchVerdict(BaseModel):
     note: str = ""
 
 
-class Review(BaseModel):
+class Review(StaffAction):
     decision: Literal["approved", "changes_requested"]
     comment: str = Field("", max_length=4000)
     verdicts: list[MatchVerdict] = []
-    actor: str = "Reviewer"
 
 
 @app.post("/cases/{cid}/review", response_model=cases.Case)
 def submit_review(cid: str, body: Review):
+    _require(body, "reviewer")
     c = _case_or_404(cid)
+    if c.status != "in_review":
+        raise HTTPException(409, "This request is not waiting for a review")
     v = {x.id: x for x in body.verdicts}
     for m in c.matches:
         if m.id in v:
@@ -249,47 +269,85 @@ def submit_review(cid: str, body: Review):
     ok = sum(m.selected and m.review == "ok" for m in c.matches)
     cases.log(c, body.actor, body.decision,
               (f"Approved {ok} partner(s)" if body.decision == "approved" else "Asked for changes") +
-              (f": “{c.review_comment}”" if c.review_comment else ""))
+              (f": “{c.review_comment}”" if c.review_comment else ""), body.role)
     return cases.save(c)
 
 
-class DraftReq(BaseModel):
+class DraftReq(StaffAction):
     lang: Literal["en", "de", "fr"] = "en"
     slots: list[str] = []
     sender: str = ""
     team: str = ""
+    link: str = Field("", max_length=500)
 
 
 @app.post("/cases/{cid}/draft")
 def draft(cid: str, body: DraftReq):
+    _require(body, "officer")
     c = _case_or_404(cid)
     if c.status not in ("approved", "contacted", "call_scheduled", "closed"):
         raise HTTPException(400, "The technical review must approve the partners first")
-    return cases.draft_email(c, body.lang, body.slots, body.sender, body.team)
+    return cases.draft_email(c, body.lang, body.slots, body.sender, body.team, body.link)
 
 
-class Outcome(BaseModel):
+class BriefReq(StaffAction):
+    lang: Literal["en", "de", "fr"] = "en"
+    email: str = ""
+    team: str = ""
+
+
+@app.post("/cases/{cid}/brief")
+def prepare_brief(cid: str, body: BriefReq):
+    """Output 1 (plain explanation for the officer) + Output 2 (executive brief, published under a private link)."""
+    _require(body, "officer")
+    c = _case_or_404(cid)
+    if c.status not in ("approved", "contacted", "call_scheduled", "closed"):
+        raise HTTPException(400, "The technical review must approve the partners first")
+    out = brief.build(c, body.lang, {"name": body.actor, "email": body.email, "team": body.team})
+    token = (c.outreach.get("brief") or {}).get("token") or secrets.token_urlsafe(12)
+    c.outreach = {**c.outreach, "brief": {"token": token, "lang": body.lang, "at": cases._now(), "data": out["brief"],
+                                          "explainer": out["explainer"], "stats": out["stats"]}}
+    cases.log(c, body.actor, "brief_prepared",
+              f"Executive brief prepared ({body.lang.upper()}): {out['stats']['claims']} sourced statements, "
+              f"{out['stats']['publications']} publications", body.role)
+    cases.save(c)
+    return {"token": token, **out}
+
+
+@app.get("/briefs/{token}")
+def get_brief(token: str):
+    """Public, read-only executive brief (the private link is the only key)."""
+    for c in cases.list_cases():
+        b = (c.outreach or {}).get("brief")
+        if b and secrets.compare_digest(b["token"], token):
+            return {**b["data"], "prepared_at": b["at"]}
+    raise HTTPException(404, "unknown brief")
+
+
+class Outcome(StaffAction):
     kind: Literal["email", "call", "closed"]
     detail: str = ""
     subject: str = ""
     body: str = ""
-    actor: str = "Officer"
 
 
 @app.post("/cases/{cid}/outcome", response_model=cases.Case)
 def outcome(cid: str, body: Outcome):
+    _require(body, "officer")
     c = _case_or_404(cid)
+    if c.status not in ("approved", "contacted", "call_scheduled"):
+        raise HTTPException(409, "The technical review must approve the partners first")
     if body.kind == "email":
         c.status = "contacted"
         c.outreach = {"subject": body.subject, "body": body.body, "sent_at": cases._now()}
-        cases.log(c, body.actor, "emailed", f"Invitation email to {c.contact_email or c.company}")
+        cases.log(c, body.actor, "emailed", f"Invitation email to {c.contact_email or c.company}", body.role)
     elif body.kind == "call":
         c.status = "call_scheduled"
         c.outreach = {**c.outreach, "call": body.detail}
-        cases.log(c, body.actor, "call_scheduled", f"Call planned: {body.detail}")
+        cases.log(c, body.actor, "call_scheduled", f"Call planned: {body.detail}", body.role)
     else:
         c.status = "closed"
-        cases.log(c, body.actor, "closed", body.detail)
+        cases.log(c, body.actor, "closed", body.detail, body.role)
     return cases.save(c)
 
 

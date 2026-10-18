@@ -1,4 +1,13 @@
-/* Bern Expertise Navigator — vanilla JS, no dependencies (runs air-gapped). */
+/* Bern Expertise Navigator — vanilla JS, no dependencies (runs air-gapped).
+ *
+ * Three clearly separated areas:
+ *   PUBLIC  #/ , #/search, #/directory, #/about  — the navigator from the brief, for anyone
+ *   STAFF   #/staff/...                          — canton workspace; staff say who they are on entry:
+ *           officer  (business development): requests → partners → technical review → pitch & invite
+ *           reviewer (technical colleague):  review queue → approve / request changes
+ *   BRIEF   #/b/<token>                          — the executive brief a CEO receives (read-only, printable)
+ * The server enforces the roles (403 otherwise); the UI only shows what the current role may do.
+ */
 (() => {
   "use strict";
 
@@ -12,8 +21,10 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
   const isNarrow = () => matchMedia("(max-width: 1100px)").matches;
-  function hostPath(u) { try { const x = new URL(u); return x.hostname.replace(/^www\./, "") + x.pathname.replace(/\/index_\w+\.html$|\/$/, ""); } catch { return u; } }
-  function toast(msg) { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2200); }
+  const hostPath = (u) => { try { const x = new URL(u); return x.hostname.replace(/^www\./, "") + x.pathname.replace(/\/index_\w+\.html$|\/$/, ""); } catch { return u; } };
+  function toast(msg) { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2400); }
+  const go = (h) => { if (location.hash !== h) location.hash = h; else route(); };
+  const briefUrl = (token) => `${location.origin}${location.pathname}#/b/${token}`;
 
   const ICON = {
     plus: '<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
@@ -29,266 +40,323 @@
     cal: '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
     copy: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
     info: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>',
-    shield: '<svg class="i" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="M12 8v5M12 16h.01"/></svg>',
+    shield: '<svg class="i" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
     close: '<svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>',
     send: '<svg class="i" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>',
     inbox: '<svg class="i" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13l3.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/></svg>',
-    sparkle: '<svg class="i" viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
+    sparkle: '<svg class="i" viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg>',
     trash: '<svg class="i" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg>',
+    briefcase: '<svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>',
+    microscope: '<svg viewBox="0 0 24 24"><path d="M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1M9 14h2M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2zM12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>',
+    lock: '<svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+    moon: '<svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    doc: '<svg class="i" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>',
+    printer: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>',
   };
 
   /* ======================= i18n ======================= */
   const I18N = {
     en: {
-      tagline: "Bring companies to Bern", "nav.requests": "Requests", "nav.review": "Review", "nav.explore": "Explore Bern",
-      "foot.data": "Facts come only from the institutions' public websites; every claim links to its source.",
-      "me.title": "Who is using the navigator?", "me.hint": "Stored only in this browser. Switch role to try the technical review.",
-      "me.name": "Your name", "me.email": "Your email", "me.team": "Team / signature", "me.role": "Role",
-      "role.officer": "Business development", "role.reviewer": "Technical reviewer", cancel: "Cancel", save: "Save",
-      "st.new": "New", "st.in_review": "In technical review", "st.changes_requested": "Changes requested", "st.approved": "Ready to invite",
-      "st.contacted": "Invited", "st.call_scheduled": "Call scheduled", "st.closed": "Closed",
-      "req.title": "Turn company requests into investments in Bern",
-      "req.lead": "Paste what a company is asking for. The navigator explains it in plain words, finds the right researchers, labs and facilities in Bern, gets your technical colleague's OK, and drafts the invitation.",
-      "req.new": "New request", "req.explore": "Explore Bern",
-      "flow.1": "Understand", "flow.1d": "Plain-language summary and jargon explained",
-      "flow.2": "Match", "flow.2d": "Experts, labs and facilities in Bern, with sources",
-      "flow.3": "Review", "flow.3d": "A technical colleague checks the fit",
-      "flow.4": "Invite", "flow.4d": "Email or call to bring them to Bern",
-      "kpi.open": "open requests", "kpi.review": "waiting for review", "kpi.ready": "ready to invite", "kpi.invited": "companies invited",
-      "col.todo": "To do", "col.review": "In review", "col.ready": "Ready to invite", "col.done": "Invited",
-      "col.empty": "Nothing here yet", "board.emptyTitle": "No requests yet",
-      "board.emptyText": "Start with a real request, or try one of the fictional examples.", "partners": "partners",
-      "new.title": "New company request", "new.lead": "Paste the email or message from the company. Technical words are fine — the navigator explains them.",
-      "f.company": "Company", "f.contact": "Contact person", "f.email": "Contact email", "f.country": "Country",
-      "f.request": "What is the company asking for?", "f.requestHint": "Any language: English, German, French…",
-      "new.submit": "Understand & find partners", "new.examples": "Try a fictional example",
-      "new.next": "What happens next", "new.next1": "A plain-language summary with every technical word explained",
-      "new.next2": "Matching experts, labs and facilities in Bern — each linked to its public source",
-      "new.next3": "You pick partners and send them to a technical colleague for review",
-      "new.working": "Reading the request and searching Bern's research landscape…",
-      "case.back": "All requests", "case.received": "Received", "case.contact": "Contact",
-      "step.1": "Understand", "step.2": "Choose partners", "step.3": "Technical review", "step.4": "Invite to Bern",
-      "p1.title": "In plain words", "p1.ai": "Summary by Apertus", "p1.rules": "Glossary-based (Apertus offline)",
-      "p1.does": "What the company does", "p1.needs": "What they need", "p1.words": "Words explained",
-      "p1.glossary": "reviewed glossary", "p1.aiterm": "AI explanation – check", "p1.orig": "Show the original request",
-      "p1.noterms": "No technical terms from the glossary found.",
-      "p2.title": "Possible partners in Bern", "p2.lead": "Tick the partners you want to propose. Each one is backed by a public web page.",
-      "p2.rematch": "Search again", "p2.more": "Find more in Explore", "p2.selected": "selected", "p2.none": "No matching partners found in the indexed sources.",
-      "p2.source": "source", "p2.via": "via", "p2.ok": "Reviewer: OK", "p2.no": "Reviewer: not suitable",
-      "p3.title": "Technical review", "p3.lead": "Ask a colleague who knows the field to check the selected partners.",
-      "p3.reviewer": "Reviewer", "p3.note": "Note for the reviewer", "p3.send": "Send for review",
-      "p3.needSel": "Select at least one partner first.",
-      "p3.waiting": "Waiting for {who} to review {n} partner(s).", "p3.switch": "Open as reviewer (demo)",
-      "p3.changes": "{who} asked for changes", "p3.approved": "{who} approved {n} partner(s)",
-      "p3.rv.lead": "Check each proposed partner. Technical details and the original sources are one click away.",
-      "p3.rv.ok": "Suitable", "p3.rv.no": "Not suitable", "p3.rv.note": "Comment (optional)", "p3.rv.details": "Technical details",
-      "p3.rv.comment": "Overall comment to the business developer", "p3.rv.approve": "Approve", "p3.rv.changes": "Request changes",
-      "p4.title": "Invite to Bern", "p4.locked": "Available once the technical review has approved the partners.",
-      "p4.lang": "Email language", "p4.slots": "Propose call times", "p4.duration": "Call length (min)",
-      "p4.prepare": "Prepare invitation email", "p4.subject": "Subject", "p4.body": "Email (you can edit it)",
-      "p4.open": "Open in email app", "p4.copy": "Copy text", "p4.sent": "Mark as sent",
-      "p4.ics": "Calendar invite (.ics)",
-      "p4.doneEmail": "Invitation sent on {d}.", "p4.doneCall": "Call scheduled: {d}.",
-      "side.activity": "Activity", "side.delete": "Delete request", "side.confirmDelete": "Delete this request permanently?",
-      "rv.title": "Technical review queue", "rv.lead": "Requests waiting for a technical check of the proposed Bern partners.",
-      "rv.empty": "Nothing to review right now.", "rv.mine": "assigned to you",
-      "ex.title": "Find the expertise behind Bern's <em>innovation</em>",
-      "ex.lead": "Researchers, labs, projects and facilities from the public websites of UniBE, ARTORG and Diabetes Center Berne — every result linked to its source.",
-      "ex.ph": "e.g. glucose sensors, robots for neurosurgery, 3D printing service…", "ex.search": "Search",
-      "ex.ctx": "Adding partners to the request from {c}", "ex.ctxBack": "Back to the request",
-      "ex.proof": "Bern in numbers", "ex.proofNote": "quoted from the institutions' own pages",
-      "ex.themes": "Research strengths", "ex.themesNote": "live from the index — click to explore",
-      "ex.fac": "Facilities companies can use", "ex.labs": "Labs and research groups", "ex.engage": "Ways to engage",
-      "ex.people": "people", "ex.labsN": "labs", "ex.projects": "projects",
-      "ex.lead_": "Lead", "ex.results": "results", "ex.also": "also searched", "ex.why": "Why",
-      "ex.verified": "Source-verified", "ex.cites": "citations", "ex.found": "Found through",
-      "ex.none": "No answer without a source", "ex.noneHint": "The navigator only answers from pages it has indexed, and never guesses names or expertise.",
-      "ex.add": "Add to request", "ex.added": "Added to the request", "ex.open": "Open source page",
-      "ex.about": "About", "ex.evidence": "Evidence", "ex.linked": "People & linked entities", "ex.expertise": "Expertise",
-      "ex.select": "Select a result to see every cited source.", "ex.abstainChip": "pizza delivery? (honest “no source”)",
+      "brand.sub": "Research & expertise in Bern", "brand.staffSub": "Staff workspace", "brand.briefSub": "Executive brief",
+      "nav.search": "Search", "nav.dir": "Labs & facilities", "nav.about": "How it works", "nav.staff": "Staff workspace",
+      "nav.requests": "Requests", "nav.new": "New request", "nav.queue": "Review queue", "nav.public": "Public site",
+      "staff.tag": "Staff", "who.switch": "Switch user", "role.officer": "Business development", "role.reviewer": "Technical reviewer",
+      "foot.public": "Prototype · built on Apertus, the Swiss open LLM · self-hosted, no data leaves Switzerland · facts only from the institutions' public websites, each linked to its source.",
+      "foot.staff": "Staff workspace (prototype): identities are self-declared, no passwords. Requests are stored locally and never sent anywhere by the server.",
+      "foot.brief": "Prepared with the Bern Expertise Navigator. Every statement links to its public source.",
+      "home.title": "Find the people, labs and facilities behind Bern's research",
+      "home.lead": "One search across the University of Bern, the ARTORG Center and Diabetes Center Berne. Use your own words — every result is structured and linked to the public page that supports it.",
+      "ph": "e.g. glucose sensors, robots for neurosurgery, 3D printing service…", "go": "Search",
+      "try": "Try", "abstainChip": "best pizza in Bern (shows an honest “no source”)",
+      "proof": "Bern in numbers", "proofNote": "quoted verbatim from the institutions' pages",
+      "themes": "Research strengths", "themesNote": "live counts from the index",
+      "people": "people", "labsN": "labs", "projects": "projects", "lead": "Lead",
+      "home.more": "Browse all labs & facilities", "home.how": "How it works and how well",
+      "res.n": "results", "res.also": "also searched for", "res.why": "Why it matches", "res.found": "Found through",
+      "f.role": "Role", "f.aff": "Affiliation", "f.exp": "Expertise", "f.proj": "Projects", "f.infra": "Infrastructure & services",
+      "f.contact": "Contact", "res.verified": "Source-verified", "res.sources": "sources",
+      "res.none": "No answer without a source", "res.noneHint": "The navigator only answers from pages it has indexed, and never guesses names or expertise.",
+      "res.select": "Select a result to see every cited source.", "res.open": "Open source page", "res.about": "About",
+      "res.linked": "People & linked entities", "res.evidence": "Evidence (verbatim from the source pages)",
+      "res.add": "Add to request", "res.added": "Added to the request",
+      "flt.sources": "Sources", "flt.types": "Show",
       "type.person": "Person", "type.unit": "Lab / unit", "type.project": "Project", "type.infrastructure": "Facility",
-      "f.people": "People", "f.labs": "Labs", "f.projects": "Projects", "f.facilities": "Facilities",
+      "t.people": "People", "t.labs": "Labs", "t.projects": "Projects", "t.facilities": "Facilities",
+      "dir.title": "Labs & facilities", "dir.lead": "Every research group and every facility found on the indexed websites, with its lead and a link to its page.",
+      "dir.labs": "Labs & groups", "dir.fac": "Facilities & services", "dir.all": "All institutions",
+      "about.title": "How it works — and how well", "about.lead": "From public web pages to structured, verifiable answers. Measured against the challenge's success criteria.",
+      "about.pipe": "Pipeline", "about.crit": "Success criteria", "about.cov": "Sources covered", "about.ext": "Adding an institution",
+      "about.ext1": "Add one block to config/sources.yaml (name, domains, start pages).", "about.ext2": "Run: make crawl SOURCE=<name>, then make pipeline.",
+      "about.ext3": "Done — no code changes. The new source appears in search and in the filters.",
+      "crit.c": "Criterion", "crit.t": "Target", "crit.m": "Measured", "crit.how": "How",
+      "cov.pending": "waiting for the subdomain inventory", "cov.pages": "pages", "cov.ents": "entities",
+      "p.1": "Crawl", "p.1d": "Public pages only, robots.txt respected, bounded and polite.",
+      "p.2": "Classify", "p.2d": "URL rules first; Apertus only for unclear pages.",
+      "p.3": "Extract", "p.3d": "Apertus turns pages into people, labs, projects and facilities. Every value must quote the page verbatim — or it is dropped.",
+      "p.4": "Index", "p.4d": "Keywords (BM25) + multilingual vectors, all local.",
+      "p.5": "Search", "p.5d": "Lay terms → expert terms, fair ranking, cited “why”, honest “no source found”.",
+      "id.title": "Staff workspace", "id.lead": "Who are you? Your role decides what you see and what you can do. Stored only in this browser.",
+      "id.officerT": "Business development", "id.officerD": "You handle company requests and invite companies to Bern.",
+      "id.officer1": "Understand requests in plain language", "id.officer2": "Pick research partners in Bern", "id.officer3": "Send a sourced pitch and invite the CEO",
+      "id.reviewerT": "Technical reviewer", "id.reviewerD": "You check the proposed research partners before a company is contacted.",
+      "id.reviewer1": "See the technical evidence", "id.reviewer2": "Mark each partner suitable or not", "id.reviewer3": "Approve or ask for changes",
+      "id.name": "Your name", "id.email": "Your email", "id.team": "Team / email signature", "id.enter": "Enter workspace", "id.recent": "Recently used",
+      "id.pick": "Choose a role first.",
+      "st.new": "New", "st.in_review": "In technical review", "st.changes_requested": "Changes requested", "st.approved": "Approved — ready to pitch",
+      "st.contacted": "Invited", "st.call_scheduled": "Call scheduled", "st.closed": "Closed",
+      "rq.title": "Company requests", "rq.lead": "Each request goes through four steps: understand → choose partners → technical review → pitch & invite to Bern.",
+      "kpi.open": "open", "kpi.review": "in review", "kpi.ready": "ready to pitch", "kpi.invited": "invited",
+      "col.todo": "To do", "col.review": "In technical review", "col.ready": "Ready to pitch", "col.done": "Invited",
+      "col.empty": "Nothing here", "rq.empty": "No requests yet", "rq.emptyD": "Paste a company's request, or try one of the fictional examples.",
+      "partners": "partners",
+      "nw.title": "New company request", "nw.lead": "Paste the company's email or message. Technical words are fine — they will be explained.",
+      "nw.company": "Company", "nw.country": "Country", "nw.contact": "Contact person", "nw.email": "Contact email",
+      "nw.text": "What is the company asking for?", "nw.textHint": "any language", "nw.submit": "Understand & find partners",
+      "nw.examples": "Fictional examples", "nw.working": "Reading the request and searching Bern's research landscape…",
+      "cs.back": "All requests", "cs.backQ": "Review queue", "cs.received": "Received", "cs.contact": "Company contact", "cs.activity": "Activity",
+      "cs.delete": "Delete request", "cs.confirmDelete": "Delete this request permanently?",
+      "step.1": "Understand", "step.2": "Choose partners", "step.3": "Technical review", "step.4": "Pitch & invite",
+      "u.title": "In plain words", "u.ai": "Summary by Apertus", "u.rules": "Glossary-based (Apertus offline)",
+      "u.does": "What the company does", "u.needs": "What they need", "u.words": "Words explained",
+      "u.gloss": "reviewed glossary", "u.aiterm": "AI explanation – check", "u.orig": "Original request", "u.none": "No technical terms from the glossary found.",
+      "m.title": "Possible partners in Bern", "m.lead": "Tick the partners to propose. Each is backed by a public web page.",
+      "m.again": "Search again", "m.more": "Find more in search", "m.sel": "selected", "m.none": "No matching partners found in the indexed sources.",
+      "m.src": "source", "m.ok": "Reviewer: suitable", "m.no": "Reviewer: not suitable", "m.locked": "locked while in review",
+      "r.title": "Technical review", "r.lead": "Ask a colleague who knows the field to check the selected partners.",
+      "r.reviewer": "Reviewer", "r.note": "Note for the reviewer", "r.send": "Send for review", "r.needSel": "Select at least one partner first.",
+      "r.waiting": "Waiting for {who} to check {n} partner(s).", "r.waitHint": "{who} sees this request in the review queue of the staff workspace.",
+      "r.changes": "{who} asked for changes", "r.approved": "{who} approved {n} partner(s)",
+      "i.title": "Pitch & invite", "i.locked": "Unlocks when the technical review approves the partners.",
+      "i.lead": "Two outputs: a plain explanation for you, and a short, fully sourced brief for the company's CEO. Goal: a visit to Bern.",
+      "i.lang": "Language of the pitch", "i.prep": "Prepare the pitch", "i.regen": "Update the pitch",
+      "i.forYou": "For you", "i.forYouT": "What you are sending — in plain words", "i.forCeo": "For the CEO", "i.forCeoT": "Executive brief",
+      "i.open": "Open the brief", "i.pdf": "Save as PDF", "i.copyLink": "Copy link", "i.copied": "Link copied",
+      "i.teams": "research teams", "i.stmt": "sourced statements", "i.pubs": "publications", "i.srcs": "sources",
+      "i.mail": "Send it", "i.slots": "Propose call times", "i.dur": "Call length (min)", "i.prepMail": "Prepare the email",
+      "i.subj": "Subject", "i.body": "Email (editable)", "i.openMail": "Open in email app", "i.copy": "Copy text", "i.sent": "Mark as sent",
+      "i.ics": "Calendar invite (.ics)", "i.doneEmail": "Invitation sent on {d}.", "i.doneCall": "Call scheduled: {d}.",
+      "q.title": "Review queue", "q.lead": "Company requests where a business developer wants your technical opinion on the proposed Bern partners.",
+      "q.mine": "Assigned to you", "q.others": "Other open reviews", "q.done": "Recently decided", "q.empty": "Nothing waiting for review.",
+      "rv.banner": "Technical review requested by {who}", "rv.note": "Their question", "rv.request": "The company's request",
+      "rv.check": "Partners to check", "rv.ok": "Suitable", "rv.no": "Not suitable", "rv.comment1": "Comment (optional)",
+      "rv.evidence": "Evidence on the source pages", "rv.comment": "Your overall comment for {who}",
+      "rv.approve": "Approve", "rv.changes": "Request changes", "rv.need": "Mark at least one partner as suitable to approve.",
+      "rv.notOpen": "This request is not waiting for a review.", "rv.assigned": "Assigned to {who}",
+      "ctx": "Adding partners to the request from {c}", "ctxBack": "Back to the request",
+      "bf.prepared": "prepared {d}", "bf.missing": "This brief does not exist or has been withdrawn.", "bf.teams": "research teams",
       "llm.on": "{m} online", "llm.off": "{m} offline · rules mode",
       "llm.onT": "Apertus is on: plain-language summaries, query expansion and explanations.",
-      "llm.offT": "Apertus endpoint not reachable: the reviewed glossary and deterministic rules are used. Nothing is invented either way.",
-      "err": "Something went wrong", "saved": "Saved",
+      "llm.offT": "Apertus not reachable: reviewed glossary and deterministic rules are used. Nothing is invented either way.",
+      "err": "Something went wrong", "forbidden": "Your role can't do this.",
     },
     de: {
-      tagline: "Firmen nach Bern holen", "nav.requests": "Anfragen", "nav.review": "Prüfung", "nav.explore": "Bern entdecken",
-      "foot.data": "Fakten stammen nur von den öffentlichen Websites der Institutionen; jede Aussage ist mit ihrer Quelle verlinkt.",
-      "me.title": "Wer nutzt den Navigator?", "me.hint": "Nur in diesem Browser gespeichert. Rolle wechseln, um die technische Prüfung auszuprobieren.",
-      "me.name": "Ihr Name", "me.email": "Ihre E-Mail", "me.team": "Team / Signatur", "me.role": "Rolle",
-      "role.officer": "Wirtschaftsförderung", "role.reviewer": "Technische Prüfung", cancel: "Abbrechen", save: "Speichern",
-      "st.new": "Neu", "st.in_review": "In technischer Prüfung", "st.changes_requested": "Änderungen gewünscht", "st.approved": "Bereit zur Einladung",
-      "st.contacted": "Eingeladen", "st.call_scheduled": "Gespräch geplant", "st.closed": "Abgeschlossen",
-      "req.title": "Aus Firmenanfragen werden Investitionen in Bern",
-      "req.lead": "Fügen Sie ein, was eine Firma sucht. Der Navigator erklärt es in einfachen Worten, findet passende Forschende, Labore und Infrastruktur in Bern, holt das OK Ihrer Fachkollegin ein und entwirft die Einladung.",
-      "req.new": "Neue Anfrage", "req.explore": "Bern entdecken",
-      "flow.1": "Verstehen", "flow.1d": "Zusammenfassung in einfacher Sprache, Fachbegriffe erklärt",
-      "flow.2": "Zuordnen", "flow.2d": "Fachleute, Labore und Infrastruktur in Bern, mit Quellen",
-      "flow.3": "Prüfen", "flow.3d": "Eine Fachperson prüft die Passung",
-      "flow.4": "Einladen", "flow.4d": "E-Mail oder Gespräch, um sie nach Bern zu holen",
-      "kpi.open": "offene Anfragen", "kpi.review": "warten auf Prüfung", "kpi.ready": "bereit zur Einladung", "kpi.invited": "Firmen eingeladen",
-      "col.todo": "Zu erledigen", "col.review": "In Prüfung", "col.ready": "Bereit zur Einladung", "col.done": "Eingeladen",
-      "col.empty": "Noch nichts", "board.emptyTitle": "Noch keine Anfragen",
-      "board.emptyText": "Beginnen Sie mit einer echten Anfrage oder probieren Sie ein fiktives Beispiel.", "partners": "Partner",
-      "new.title": "Neue Firmenanfrage", "new.lead": "Fügen Sie die E-Mail oder Nachricht der Firma ein. Fachbegriffe sind kein Problem — der Navigator erklärt sie.",
-      "f.company": "Firma", "f.contact": "Kontaktperson", "f.email": "E-Mail der Kontaktperson", "f.country": "Land",
-      "f.request": "Was sucht die Firma?", "f.requestHint": "Jede Sprache: Deutsch, Englisch, Französisch…",
-      "new.submit": "Verstehen & Partner finden", "new.examples": "Fiktives Beispiel ausprobieren",
-      "new.next": "Was als Nächstes passiert", "new.next1": "Eine Zusammenfassung in einfacher Sprache, jeder Fachbegriff erklärt",
-      "new.next2": "Passende Fachleute, Labore und Infrastruktur in Bern — jeweils mit öffentlicher Quelle",
-      "new.next3": "Sie wählen Partner aus und senden sie einer Fachperson zur Prüfung",
-      "new.working": "Die Anfrage wird gelesen und die Berner Forschungslandschaft durchsucht…",
-      "case.back": "Alle Anfragen", "case.received": "Eingegangen", "case.contact": "Kontakt",
-      "step.1": "Verstehen", "step.2": "Partner wählen", "step.3": "Technische Prüfung", "step.4": "Nach Bern einladen",
-      "p1.title": "In einfachen Worten", "p1.ai": "Zusammenfassung von Apertus", "p1.rules": "Glossar-basiert (Apertus offline)",
-      "p1.does": "Was die Firma macht", "p1.needs": "Was sie braucht", "p1.words": "Fachbegriffe erklärt",
-      "p1.glossary": "geprüftes Glossar", "p1.aiterm": "KI-Erklärung – prüfen", "p1.orig": "Originalanfrage anzeigen",
-      "p1.noterms": "Keine Fachbegriffe aus dem Glossar gefunden.",
-      "p2.title": "Mögliche Partner in Bern", "p2.lead": "Wählen Sie die Partner, die Sie vorschlagen möchten. Jeder ist durch eine öffentliche Webseite belegt.",
-      "p2.rematch": "Neu suchen", "p2.more": "Mehr in «Bern entdecken»", "p2.selected": "ausgewählt", "p2.none": "Keine passenden Partner in den indexierten Quellen gefunden.",
-      "p2.source": "Quelle", "p2.via": "über", "p2.ok": "Prüfung: OK", "p2.no": "Prüfung: nicht passend",
-      "p3.title": "Technische Prüfung", "p3.lead": "Bitten Sie eine Fachperson, die ausgewählten Partner zu prüfen.",
-      "p3.reviewer": "Prüfperson", "p3.note": "Notiz für die Prüfperson", "p3.send": "Zur Prüfung senden",
-      "p3.needSel": "Bitte zuerst mindestens einen Partner auswählen.",
-      "p3.waiting": "Wartet auf die Prüfung von {n} Partner(n) durch {who}.", "p3.switch": "Als Prüfperson öffnen (Demo)",
-      "p3.changes": "{who} wünscht Änderungen", "p3.approved": "{who} hat {n} Partner freigegeben",
-      "p3.rv.lead": "Prüfen Sie jeden vorgeschlagenen Partner. Technische Details und die Originalquellen sind einen Klick entfernt.",
-      "p3.rv.ok": "Passend", "p3.rv.no": "Nicht passend", "p3.rv.note": "Kommentar (optional)", "p3.rv.details": "Technische Details",
-      "p3.rv.comment": "Gesamtkommentar an die Wirtschaftsförderung", "p3.rv.approve": "Freigeben", "p3.rv.changes": "Änderungen anfordern",
-      "p4.title": "Nach Bern einladen", "p4.locked": "Verfügbar, sobald die technische Prüfung die Partner freigegeben hat.",
-      "p4.lang": "Sprache der E-Mail", "p4.slots": "Gesprächstermine vorschlagen", "p4.duration": "Dauer (Min.)",
-      "p4.prepare": "Einladung vorbereiten", "p4.subject": "Betreff", "p4.body": "E-Mail (bearbeitbar)",
-      "p4.open": "Im E-Mail-Programm öffnen", "p4.copy": "Text kopieren", "p4.sent": "Als gesendet markieren",
-      "p4.ics": "Kalendereinladung (.ics)",
-      "p4.doneEmail": "Einladung gesendet am {d}.", "p4.doneCall": "Gespräch geplant: {d}.",
-      "side.activity": "Verlauf", "side.delete": "Anfrage löschen", "side.confirmDelete": "Diese Anfrage endgültig löschen?",
-      "rv.title": "Technische Prüfungen", "rv.lead": "Anfragen, deren vorgeschlagene Berner Partner fachlich geprüft werden müssen.",
-      "rv.empty": "Zurzeit nichts zu prüfen.", "rv.mine": "Ihnen zugewiesen",
-      "ex.title": "Die Expertise hinter Berns <em>Innovation</em> finden",
-      "ex.lead": "Forschende, Labore, Projekte und Infrastruktur von den öffentlichen Websites der UniBE, des ARTORG und des Diabetes Center Berne — jedes Ergebnis mit Quelle.",
-      "ex.ph": "z. B. Glukosesensoren, Roboter für die Neurochirurgie, 3D-Druck…", "ex.search": "Suchen",
-      "ex.ctx": "Partner für die Anfrage von {c} hinzufügen", "ex.ctxBack": "Zurück zur Anfrage",
-      "ex.proof": "Bern in Zahlen", "ex.proofNote": "zitiert von den Seiten der Institutionen",
-      "ex.themes": "Forschungsstärken", "ex.themesNote": "live aus dem Index — zum Entdecken klicken",
-      "ex.fac": "Infrastruktur für Firmen", "ex.labs": "Labore und Forschungsgruppen", "ex.engage": "Wege zur Zusammenarbeit",
-      "ex.people": "Personen", "ex.labsN": "Labore", "ex.projects": "Projekte",
-      "ex.lead_": "Leitung", "ex.results": "Ergebnisse", "ex.also": "auch gesucht", "ex.why": "Warum",
-      "ex.verified": "Quelle geprüft", "ex.cites": "Belege", "ex.found": "Gefunden über",
-      "ex.none": "Keine Antwort ohne Quelle", "ex.noneHint": "Der Navigator antwortet nur aus indexierten Seiten und rät nie Namen oder Fachgebiete.",
-      "ex.add": "Zur Anfrage hinzufügen", "ex.added": "Zur Anfrage hinzugefügt", "ex.open": "Quellseite öffnen",
-      "ex.about": "Über", "ex.evidence": "Belege", "ex.linked": "Personen & verknüpfte Einträge", "ex.expertise": "Fachgebiete",
-      "ex.select": "Ergebnis wählen, um alle Belege zu sehen.", "ex.abstainChip": "Pizzakurier? (ehrlich: «keine Quelle»)",
+      "brand.sub": "Forschung & Expertise in Bern", "brand.staffSub": "Arbeitsbereich", "brand.briefSub": "Executive Brief",
+      "nav.search": "Suche", "nav.dir": "Labore & Infrastruktur", "nav.about": "So funktioniert's", "nav.staff": "Arbeitsbereich",
+      "nav.requests": "Anfragen", "nav.new": "Neue Anfrage", "nav.queue": "Prüfungen", "nav.public": "Öffentliche Seite",
+      "staff.tag": "Intern", "who.switch": "Person wechseln", "role.officer": "Wirtschaftsförderung", "role.reviewer": "Technische Prüfung",
+      "foot.public": "Prototyp · basiert auf Apertus, dem offenen Schweizer Sprachmodell · selbst gehostet, keine Daten verlassen die Schweiz · Fakten nur von den öffentlichen Websites der Institutionen, jeweils mit Quelle.",
+      "foot.staff": "Arbeitsbereich (Prototyp): Identität selbst angegeben, keine Passwörter. Anfragen werden lokal gespeichert und vom Server nirgends hin gesendet.",
+      "foot.brief": "Erstellt mit dem Bern Expertise Navigator. Jede Aussage ist mit ihrer öffentlichen Quelle verlinkt.",
+      "home.title": "Die Menschen, Labore und Infrastruktur hinter Berns Forschung finden",
+      "home.lead": "Eine Suche über die Universität Bern, das ARTORG Center und das Diabetes Center Berne. In eigenen Worten — jedes Ergebnis ist strukturiert und mit der öffentlichen Quellseite verlinkt.",
+      "ph": "z. B. Glukosesensoren, Roboter für die Neurochirurgie, 3D-Druck…", "go": "Suchen",
+      "try": "Beispiele", "abstainChip": "beste Pizza in Bern (zeigt ehrlich «keine Quelle»)",
+      "proof": "Bern in Zahlen", "proofNote": "wörtlich zitiert von den Seiten der Institutionen",
+      "themes": "Forschungsstärken", "themesNote": "live aus dem Index",
+      "people": "Personen", "labsN": "Labore", "projects": "Projekte", "lead": "Leitung",
+      "home.more": "Alle Labore & Infrastruktur", "home.how": "So funktioniert's — und wie gut",
+      "res.n": "Ergebnisse", "res.also": "auch gesucht nach", "res.why": "Warum es passt", "res.found": "Gefunden über",
+      "f.role": "Funktion", "f.aff": "Zugehörigkeit", "f.exp": "Fachgebiete", "f.proj": "Projekte", "f.infra": "Infrastruktur & Dienste",
+      "f.contact": "Kontakt", "res.verified": "Quelle geprüft", "res.sources": "Quellen",
+      "res.none": "Keine Antwort ohne Quelle", "res.noneHint": "Der Navigator antwortet nur aus indexierten Seiten und rät nie Namen oder Fachgebiete.",
+      "res.select": "Ergebnis wählen, um alle Belege zu sehen.", "res.open": "Quellseite öffnen", "res.about": "Über",
+      "res.linked": "Personen & verknüpfte Einträge", "res.evidence": "Belege (wörtlich von den Quellseiten)",
+      "res.add": "Zur Anfrage hinzufügen", "res.added": "Zur Anfrage hinzugefügt",
+      "flt.sources": "Quellen", "flt.types": "Zeigen",
       "type.person": "Person", "type.unit": "Labor / Gruppe", "type.project": "Projekt", "type.infrastructure": "Infrastruktur",
-      "f.people": "Personen", "f.labs": "Labore", "f.projects": "Projekte", "f.facilities": "Infrastruktur",
+      "t.people": "Personen", "t.labs": "Labore", "t.projects": "Projekte", "t.facilities": "Infrastruktur",
+      "dir.title": "Labore & Infrastruktur", "dir.lead": "Alle Forschungsgruppen und Infrastrukturen der indexierten Websites, mit Leitung und Link zur Seite.",
+      "dir.labs": "Labore & Gruppen", "dir.fac": "Infrastruktur & Dienste", "dir.all": "Alle Institutionen",
+      "about.title": "So funktioniert's — und wie gut", "about.lead": "Von öffentlichen Webseiten zu strukturierten, überprüfbaren Antworten. Gemessen an den Erfolgskriterien der Challenge.",
+      "about.pipe": "Ablauf", "about.crit": "Erfolgskriterien", "about.cov": "Abgedeckte Quellen", "about.ext": "Institution hinzufügen",
+      "about.ext1": "Einen Block in config/sources.yaml ergänzen (Name, Domains, Startseiten).", "about.ext2": "Ausführen: make crawl SOURCE=<name>, dann make pipeline.",
+      "about.ext3": "Fertig — ohne Code-Änderung. Die neue Quelle erscheint in Suche und Filtern.",
+      "crit.c": "Kriterium", "crit.t": "Ziel", "crit.m": "Gemessen", "crit.how": "Wie",
+      "cov.pending": "wartet auf das Subdomain-Inventar", "cov.pages": "Seiten", "cov.ents": "Einträge",
+      "p.1": "Crawlen", "p.1d": "Nur öffentliche Seiten, robots.txt beachtet, begrenzt und rücksichtsvoll.",
+      "p.2": "Einordnen", "p.2d": "Zuerst URL-Regeln; Apertus nur bei unklaren Seiten.",
+      "p.3": "Extrahieren", "p.3d": "Apertus macht aus Seiten Personen, Labore, Projekte und Infrastruktur. Jeder Wert muss wörtlich belegt sein — sonst wird er verworfen.",
+      "p.4": "Indexieren", "p.4d": "Stichworte (BM25) + mehrsprachige Vektoren, alles lokal.",
+      "p.5": "Suchen", "p.5d": "Laienbegriffe → Fachbegriffe, faire Rangfolge, belegtes «Warum», ehrlich «keine Quelle».",
+      "id.title": "Arbeitsbereich", "id.lead": "Wer sind Sie? Ihre Rolle bestimmt, was Sie sehen und tun können. Nur in diesem Browser gespeichert.",
+      "id.officerT": "Wirtschaftsförderung", "id.officerD": "Sie bearbeiten Firmenanfragen und laden Firmen nach Bern ein.",
+      "id.officer1": "Anfragen in einfacher Sprache verstehen", "id.officer2": "Forschungspartner in Bern auswählen", "id.officer3": "Belegten Pitch senden und die Geschäftsleitung einladen",
+      "id.reviewerT": "Technische Prüfung", "id.reviewerD": "Sie prüfen die vorgeschlagenen Forschungspartner, bevor eine Firma kontaktiert wird.",
+      "id.reviewer1": "Technische Belege sehen", "id.reviewer2": "Jeden Partner als passend oder nicht markieren", "id.reviewer3": "Freigeben oder Änderungen anfordern",
+      "id.name": "Ihr Name", "id.email": "Ihre E-Mail", "id.team": "Team / E-Mail-Signatur", "id.enter": "Arbeitsbereich öffnen", "id.recent": "Zuletzt verwendet",
+      "id.pick": "Bitte zuerst eine Rolle wählen.",
+      "st.new": "Neu", "st.in_review": "In technischer Prüfung", "st.changes_requested": "Änderungen gewünscht", "st.approved": "Freigegeben — bereit für den Pitch",
+      "st.contacted": "Eingeladen", "st.call_scheduled": "Gespräch geplant", "st.closed": "Abgeschlossen",
+      "rq.title": "Firmenanfragen", "rq.lead": "Jede Anfrage durchläuft vier Schritte: verstehen → Partner wählen → technische Prüfung → Pitch & Einladung nach Bern.",
+      "kpi.open": "offen", "kpi.review": "in Prüfung", "kpi.ready": "bereit für Pitch", "kpi.invited": "eingeladen",
+      "col.todo": "Zu erledigen", "col.review": "In technischer Prüfung", "col.ready": "Bereit für Pitch", "col.done": "Eingeladen",
+      "col.empty": "Nichts", "rq.empty": "Noch keine Anfragen", "rq.emptyD": "Fügen Sie eine Firmenanfrage ein oder probieren Sie ein fiktives Beispiel.",
+      "partners": "Partner",
+      "nw.title": "Neue Firmenanfrage", "nw.lead": "E-Mail oder Nachricht der Firma einfügen. Fachbegriffe sind kein Problem — sie werden erklärt.",
+      "nw.company": "Firma", "nw.country": "Land", "nw.contact": "Kontaktperson", "nw.email": "E-Mail der Kontaktperson",
+      "nw.text": "Was sucht die Firma?", "nw.textHint": "jede Sprache", "nw.submit": "Verstehen & Partner finden",
+      "nw.examples": "Fiktive Beispiele", "nw.working": "Die Anfrage wird gelesen und die Berner Forschungslandschaft durchsucht…",
+      "cs.back": "Alle Anfragen", "cs.backQ": "Prüfungen", "cs.received": "Eingegangen", "cs.contact": "Kontakt der Firma", "cs.activity": "Verlauf",
+      "cs.delete": "Anfrage löschen", "cs.confirmDelete": "Diese Anfrage endgültig löschen?",
+      "step.1": "Verstehen", "step.2": "Partner wählen", "step.3": "Technische Prüfung", "step.4": "Pitch & Einladung",
+      "u.title": "In einfachen Worten", "u.ai": "Zusammenfassung von Apertus", "u.rules": "Glossar-basiert (Apertus offline)",
+      "u.does": "Was die Firma macht", "u.needs": "Was sie braucht", "u.words": "Fachbegriffe erklärt",
+      "u.gloss": "geprüftes Glossar", "u.aiterm": "KI-Erklärung – prüfen", "u.orig": "Originalanfrage", "u.none": "Keine Fachbegriffe aus dem Glossar gefunden.",
+      "m.title": "Mögliche Partner in Bern", "m.lead": "Partner zum Vorschlagen ankreuzen. Jeder ist durch eine öffentliche Webseite belegt.",
+      "m.again": "Neu suchen", "m.more": "Mehr in der Suche finden", "m.sel": "ausgewählt", "m.none": "Keine passenden Partner in den indexierten Quellen gefunden.",
+      "m.src": "Quelle", "m.ok": "Prüfung: passend", "m.no": "Prüfung: nicht passend", "m.locked": "während der Prüfung gesperrt",
+      "r.title": "Technische Prüfung", "r.lead": "Eine Fachperson prüft die ausgewählten Partner.",
+      "r.reviewer": "Prüfperson", "r.note": "Notiz für die Prüfperson", "r.send": "Zur Prüfung senden", "r.needSel": "Bitte zuerst mindestens einen Partner auswählen.",
+      "r.waiting": "Wartet auf {who} ({n} Partner).", "r.waitHint": "{who} sieht die Anfrage in den Prüfungen des Arbeitsbereichs.",
+      "r.changes": "{who} wünscht Änderungen", "r.approved": "{who} hat {n} Partner freigegeben",
+      "i.title": "Pitch & Einladung", "i.locked": "Wird freigeschaltet, sobald die technische Prüfung die Partner freigibt.",
+      "i.lead": "Zwei Ergebnisse: eine einfache Erklärung für Sie und ein kurzes, vollständig belegtes Dokument für die Geschäftsleitung der Firma. Ziel: ein Besuch in Bern.",
+      "i.lang": "Sprache des Pitch", "i.prep": "Pitch vorbereiten", "i.regen": "Pitch aktualisieren",
+      "i.forYou": "Für Sie", "i.forYouT": "Was Sie versenden — in einfachen Worten", "i.forCeo": "Für die Geschäftsleitung", "i.forCeoT": "Executive Brief",
+      "i.open": "Brief öffnen", "i.pdf": "Als PDF speichern", "i.copyLink": "Link kopieren", "i.copied": "Link kopiert",
+      "i.teams": "Forschungsteams", "i.stmt": "belegte Aussagen", "i.pubs": "Publikationen", "i.srcs": "Quellen",
+      "i.mail": "Versenden", "i.slots": "Gesprächstermine vorschlagen", "i.dur": "Dauer (Min.)", "i.prepMail": "E-Mail vorbereiten",
+      "i.subj": "Betreff", "i.body": "E-Mail (bearbeitbar)", "i.openMail": "Im E-Mail-Programm öffnen", "i.copy": "Text kopieren", "i.sent": "Als gesendet markieren",
+      "i.ics": "Kalendereinladung (.ics)", "i.doneEmail": "Einladung gesendet am {d}.", "i.doneCall": "Gespräch geplant: {d}.",
+      "q.title": "Prüfungen", "q.lead": "Firmenanfragen, bei denen die Wirtschaftsförderung Ihre fachliche Einschätzung der vorgeschlagenen Berner Partner möchte.",
+      "q.mine": "Ihnen zugewiesen", "q.others": "Weitere offene Prüfungen", "q.done": "Kürzlich entschieden", "q.empty": "Nichts zu prüfen.",
+      "rv.banner": "Technische Prüfung angefragt von {who}", "rv.note": "Ihre Frage", "rv.request": "Anfrage der Firma",
+      "rv.check": "Zu prüfende Partner", "rv.ok": "Passend", "rv.no": "Nicht passend", "rv.comment1": "Kommentar (optional)",
+      "rv.evidence": "Belege auf den Quellseiten", "rv.comment": "Ihr Gesamtkommentar an {who}",
+      "rv.approve": "Freigeben", "rv.changes": "Änderungen anfordern", "rv.need": "Mindestens einen Partner als passend markieren, um freizugeben.",
+      "rv.notOpen": "Diese Anfrage wartet nicht auf eine Prüfung.", "rv.assigned": "Zugewiesen an {who}",
+      "ctx": "Partner für die Anfrage von {c} hinzufügen", "ctxBack": "Zurück zur Anfrage",
+      "bf.prepared": "erstellt {d}", "bf.missing": "Dieses Dokument existiert nicht oder wurde zurückgezogen.", "bf.teams": "Forschungsteams",
       "llm.on": "{m} online", "llm.off": "{m} offline · Regelmodus",
-      "llm.onT": "Apertus ist aktiv: Zusammenfassungen in einfacher Sprache, Suchbegriffe und Erklärungen.",
-      "llm.offT": "Apertus nicht erreichbar: geprüftes Glossar und feste Regeln werden verwendet. Erfunden wird so oder so nichts.",
-      "err": "Etwas ist schiefgelaufen", "saved": "Gespeichert",
+      "llm.onT": "Apertus ist aktiv: Zusammenfassungen, Suchbegriffe und Erklärungen.",
+      "llm.offT": "Apertus nicht erreichbar: geprüftes Glossar und feste Regeln. Erfunden wird so oder so nichts.",
+      "err": "Etwas ist schiefgelaufen", "forbidden": "Ihre Rolle darf das nicht.",
     },
     fr: {
-      tagline: "Attirer les entreprises à Berne", "nav.requests": "Demandes", "nav.review": "Validation", "nav.explore": "Explorer Berne",
-      "foot.data": "Les faits proviennent uniquement des sites publics des institutions ; chaque affirmation renvoie à sa source.",
-      "me.title": "Qui utilise le navigateur ?", "me.hint": "Enregistré uniquement dans ce navigateur. Changez de rôle pour essayer la validation technique.",
-      "me.name": "Votre nom", "me.email": "Votre e-mail", "me.team": "Équipe / signature", "me.role": "Rôle",
-      "role.officer": "Promotion économique", "role.reviewer": "Validation technique", cancel: "Annuler", save: "Enregistrer",
-      "st.new": "Nouvelle", "st.in_review": "En validation technique", "st.changes_requested": "Modifications demandées", "st.approved": "Prête à inviter",
-      "st.contacted": "Invitée", "st.call_scheduled": "Appel planifié", "st.closed": "Close",
-      "req.title": "Transformer les demandes d'entreprises en investissements à Berne",
-      "req.lead": "Collez la demande d'une entreprise. Le navigateur l'explique simplement, trouve les chercheurs, laboratoires et infrastructures à Berne, obtient l'accord d'un collègue technique et rédige l'invitation.",
-      "req.new": "Nouvelle demande", "req.explore": "Explorer Berne",
-      "flow.1": "Comprendre", "flow.1d": "Résumé simple, jargon expliqué",
-      "flow.2": "Associer", "flow.2d": "Experts, laboratoires et infrastructures à Berne, avec sources",
-      "flow.3": "Valider", "flow.3d": "Un collègue technique vérifie l'adéquation",
-      "flow.4": "Inviter", "flow.4d": "E-mail ou appel pour les attirer à Berne",
-      "kpi.open": "demandes ouvertes", "kpi.review": "en attente de validation", "kpi.ready": "prêtes à inviter", "kpi.invited": "entreprises invitées",
-      "col.todo": "À traiter", "col.review": "En validation", "col.ready": "Prêtes à inviter", "col.done": "Invitées",
-      "col.empty": "Rien pour l'instant", "board.emptyTitle": "Aucune demande",
-      "board.emptyText": "Commencez avec une vraie demande ou essayez un exemple fictif.", "partners": "partenaires",
-      "new.title": "Nouvelle demande d'entreprise", "new.lead": "Collez l'e-mail ou le message de l'entreprise. Les termes techniques ne posent pas de problème — le navigateur les explique.",
-      "f.company": "Entreprise", "f.contact": "Personne de contact", "f.email": "E-mail de contact", "f.country": "Pays",
-      "f.request": "Que cherche l'entreprise ?", "f.requestHint": "Toute langue : français, allemand, anglais…",
-      "new.submit": "Comprendre et trouver des partenaires", "new.examples": "Essayer un exemple fictif",
-      "new.next": "Étapes suivantes", "new.next1": "Un résumé simple, chaque terme technique expliqué",
-      "new.next2": "Experts, laboratoires et infrastructures à Berne — chacun avec sa source publique",
-      "new.next3": "Vous choisissez les partenaires et les soumettez à un collègue technique",
-      "new.working": "Lecture de la demande et recherche dans le paysage bernois de la recherche…",
-      "case.back": "Toutes les demandes", "case.received": "Reçue", "case.contact": "Contact",
-      "step.1": "Comprendre", "step.2": "Choisir les partenaires", "step.3": "Validation technique", "step.4": "Inviter à Berne",
-      "p1.title": "En termes simples", "p1.ai": "Résumé par Apertus", "p1.rules": "Basé sur le glossaire (Apertus hors ligne)",
-      "p1.does": "Ce que fait l'entreprise", "p1.needs": "Ce dont elle a besoin", "p1.words": "Termes expliqués",
-      "p1.glossary": "glossaire validé", "p1.aiterm": "Explication IA – à vérifier", "p1.orig": "Afficher la demande originale",
-      "p1.noterms": "Aucun terme du glossaire trouvé.",
-      "p2.title": "Partenaires possibles à Berne", "p2.lead": "Cochez les partenaires à proposer. Chacun est appuyé par une page web publique.",
-      "p2.rematch": "Relancer", "p2.more": "Chercher dans Explorer", "p2.selected": "sélectionné(s)", "p2.none": "Aucun partenaire trouvé dans les sources indexées.",
-      "p2.source": "source", "p2.via": "via", "p2.ok": "Validation : OK", "p2.no": "Validation : non adapté",
-      "p3.title": "Validation technique", "p3.lead": "Demandez à un collègue du domaine de vérifier les partenaires choisis.",
-      "p3.reviewer": "Validateur", "p3.note": "Note pour le validateur", "p3.send": "Envoyer en validation",
-      "p3.needSel": "Sélectionnez d'abord au moins un partenaire.",
-      "p3.waiting": "En attente de {who} pour {n} partenaire(s).", "p3.switch": "Ouvrir comme validateur (démo)",
-      "p3.changes": "{who} demande des modifications", "p3.approved": "{who} a validé {n} partenaire(s)",
-      "p3.rv.lead": "Vérifiez chaque partenaire proposé. Les détails techniques et les sources sont à un clic.",
-      "p3.rv.ok": "Adapté", "p3.rv.no": "Non adapté", "p3.rv.note": "Commentaire (facultatif)", "p3.rv.details": "Détails techniques",
-      "p3.rv.comment": "Commentaire général pour la promotion économique", "p3.rv.approve": "Valider", "p3.rv.changes": "Demander des modifications",
-      "p4.title": "Inviter à Berne", "p4.locked": "Disponible une fois les partenaires validés techniquement.",
-      "p4.lang": "Langue de l'e-mail", "p4.slots": "Proposer des créneaux d'appel", "p4.duration": "Durée (min)",
-      "p4.prepare": "Préparer l'invitation", "p4.subject": "Objet", "p4.body": "E-mail (modifiable)",
-      "p4.open": "Ouvrir dans la messagerie", "p4.copy": "Copier le texte", "p4.sent": "Marquer comme envoyé",
-      "p4.ics": "Invitation calendrier (.ics)",
-      "p4.doneEmail": "Invitation envoyée le {d}.", "p4.doneCall": "Appel planifié : {d}.",
-      "side.activity": "Historique", "side.delete": "Supprimer la demande", "side.confirmDelete": "Supprimer définitivement cette demande ?",
-      "rv.title": "Validations techniques", "rv.lead": "Demandes dont les partenaires bernois proposés doivent être vérifiés.",
-      "rv.empty": "Rien à valider pour le moment.", "rv.mine": "qui vous est attribuée",
-      "ex.title": "Trouver l'expertise derrière l'<em>innovation</em> bernoise",
-      "ex.lead": "Chercheurs, laboratoires, projets et infrastructures issus des sites publics de l'UniBE, de l'ARTORG et du Diabetes Center Berne — chaque résultat avec sa source.",
-      "ex.ph": "p. ex. capteurs de glucose, robots pour la neurochirurgie, impression 3D…", "ex.search": "Rechercher",
-      "ex.ctx": "Ajout de partenaires à la demande de {c}", "ex.ctxBack": "Retour à la demande",
-      "ex.proof": "Berne en chiffres", "ex.proofNote": "cités depuis les pages des institutions",
-      "ex.themes": "Points forts de la recherche", "ex.themesNote": "en direct depuis l'index — cliquez pour explorer",
-      "ex.fac": "Infrastructures ouvertes aux entreprises", "ex.labs": "Laboratoires et groupes", "ex.engage": "Comment collaborer",
-      "ex.people": "personnes", "ex.labsN": "laboratoires", "ex.projects": "projets",
-      "ex.lead_": "Direction", "ex.results": "résultats", "ex.also": "également cherché", "ex.why": "Pourquoi",
-      "ex.verified": "Source vérifiée", "ex.cites": "citations", "ex.found": "Trouvé via",
-      "ex.none": "Pas de réponse sans source", "ex.noneHint": "Le navigateur ne répond qu'à partir des pages indexées et ne devine jamais de noms ni d'expertises.",
-      "ex.add": "Ajouter à la demande", "ex.added": "Ajouté à la demande", "ex.open": "Ouvrir la page source",
-      "ex.about": "À propos", "ex.evidence": "Preuves", "ex.linked": "Personnes et entités liées", "ex.expertise": "Expertise",
-      "ex.select": "Sélectionnez un résultat pour voir toutes les sources.", "ex.abstainChip": "livraison de pizza ? (« pas de source »)",
+      "brand.sub": "Recherche & expertise à Berne", "brand.staffSub": "Espace collaborateurs", "brand.briefSub": "Note de direction",
+      "nav.search": "Recherche", "nav.dir": "Laboratoires & infrastructures", "nav.about": "Fonctionnement", "nav.staff": "Espace collaborateurs",
+      "nav.requests": "Demandes", "nav.new": "Nouvelle demande", "nav.queue": "Validations", "nav.public": "Site public",
+      "staff.tag": "Interne", "who.switch": "Changer de personne", "role.officer": "Promotion économique", "role.reviewer": "Validation technique",
+      "foot.public": "Prototype · basé sur Apertus, le LLM ouvert suisse · auto-hébergé, aucune donnée ne quitte la Suisse · faits issus uniquement des sites publics des institutions, chacun avec sa source.",
+      "foot.staff": "Espace collaborateurs (prototype) : identité déclarée, sans mot de passe. Les demandes sont stockées localement et jamais envoyées par le serveur.",
+      "foot.brief": "Préparé avec le Bern Expertise Navigator. Chaque affirmation renvoie à sa source publique.",
+      "home.title": "Trouver les personnes, laboratoires et infrastructures de la recherche bernoise",
+      "home.lead": "Une seule recherche sur l'Université de Berne, l'ARTORG Center et le Diabetes Center Berne. Avec vos propres mots — chaque résultat est structuré et lié à la page publique qui le justifie.",
+      "ph": "p. ex. capteurs de glucose, robots pour la neurochirurgie, impression 3D…", "go": "Rechercher",
+      "try": "Essayer", "abstainChip": "meilleure pizza à Berne (montre un « pas de source » honnête)",
+      "proof": "Berne en chiffres", "proofNote": "cités mot pour mot depuis les pages des institutions",
+      "themes": "Points forts de la recherche", "themesNote": "chiffres en direct depuis l'index",
+      "people": "personnes", "labsN": "laboratoires", "projects": "projets", "lead": "Direction",
+      "home.more": "Tous les laboratoires & infrastructures", "home.how": "Fonctionnement et qualité",
+      "res.n": "résultats", "res.also": "également cherché", "res.why": "Pourquoi ce résultat", "res.found": "Trouvé via",
+      "f.role": "Fonction", "f.aff": "Rattachement", "f.exp": "Expertise", "f.proj": "Projets", "f.infra": "Infrastructures & services",
+      "f.contact": "Contact", "res.verified": "Source vérifiée", "res.sources": "sources",
+      "res.none": "Pas de réponse sans source", "res.noneHint": "Le navigateur ne répond qu'à partir des pages indexées et ne devine jamais de noms ni d'expertises.",
+      "res.select": "Sélectionnez un résultat pour voir toutes les sources.", "res.open": "Ouvrir la page source", "res.about": "À propos",
+      "res.linked": "Personnes et entités liées", "res.evidence": "Preuves (mot pour mot depuis les pages sources)",
+      "res.add": "Ajouter à la demande", "res.added": "Ajouté à la demande",
+      "flt.sources": "Sources", "flt.types": "Afficher",
       "type.person": "Personne", "type.unit": "Laboratoire", "type.project": "Projet", "type.infrastructure": "Infrastructure",
-      "f.people": "Personnes", "f.labs": "Laboratoires", "f.projects": "Projets", "f.facilities": "Infrastructures",
+      "t.people": "Personnes", "t.labs": "Laboratoires", "t.projects": "Projets", "t.facilities": "Infrastructures",
+      "dir.title": "Laboratoires & infrastructures", "dir.lead": "Tous les groupes de recherche et infrastructures des sites indexés, avec leur direction et un lien vers leur page.",
+      "dir.labs": "Laboratoires & groupes", "dir.fac": "Infrastructures & services", "dir.all": "Toutes les institutions",
+      "about.title": "Fonctionnement — et qualité", "about.lead": "Des pages web publiques à des réponses structurées et vérifiables. Mesuré selon les critères de réussite du challenge.",
+      "about.pipe": "Chaîne de traitement", "about.crit": "Critères de réussite", "about.cov": "Sources couvertes", "about.ext": "Ajouter une institution",
+      "about.ext1": "Ajouter un bloc dans config/sources.yaml (nom, domaines, pages de départ).", "about.ext2": "Lancer : make crawl SOURCE=<nom>, puis make pipeline.",
+      "about.ext3": "Terminé — sans modifier le code. La nouvelle source apparaît dans la recherche et les filtres.",
+      "crit.c": "Critère", "crit.t": "Objectif", "crit.m": "Mesuré", "crit.how": "Comment",
+      "cov.pending": "en attente de l'inventaire des sous-domaines", "cov.pages": "pages", "cov.ents": "entités",
+      "p.1": "Collecter", "p.1d": "Pages publiques uniquement, robots.txt respecté, limité et courtois.",
+      "p.2": "Classer", "p.2d": "Règles d'URL d'abord ; Apertus seulement si nécessaire.",
+      "p.3": "Extraire", "p.3d": "Apertus transforme les pages en personnes, laboratoires, projets et infrastructures. Chaque valeur doit citer la page mot pour mot — sinon elle est écartée.",
+      "p.4": "Indexer", "p.4d": "Mots-clés (BM25) + vecteurs multilingues, tout en local.",
+      "p.5": "Rechercher", "p.5d": "Termes courants → termes experts, classement équitable, « pourquoi » sourcé, « pas de source » honnête.",
+      "id.title": "Espace collaborateurs", "id.lead": "Qui êtes-vous ? Votre rôle détermine ce que vous voyez et pouvez faire. Enregistré uniquement dans ce navigateur.",
+      "id.officerT": "Promotion économique", "id.officerD": "Vous traitez les demandes d'entreprises et les invitez à Berne.",
+      "id.officer1": "Comprendre les demandes simplement", "id.officer2": "Choisir des partenaires de recherche à Berne", "id.officer3": "Envoyer un pitch sourcé et inviter la direction",
+      "id.reviewerT": "Validation technique", "id.reviewerD": "Vous vérifiez les partenaires proposés avant tout contact avec l'entreprise.",
+      "id.reviewer1": "Voir les preuves techniques", "id.reviewer2": "Marquer chaque partenaire adapté ou non", "id.reviewer3": "Valider ou demander des modifications",
+      "id.name": "Votre nom", "id.email": "Votre e-mail", "id.team": "Équipe / signature", "id.enter": "Entrer dans l'espace", "id.recent": "Utilisés récemment",
+      "id.pick": "Choisissez d'abord un rôle.",
+      "st.new": "Nouvelle", "st.in_review": "En validation technique", "st.changes_requested": "Modifications demandées", "st.approved": "Validée — prête pour le pitch",
+      "st.contacted": "Invitée", "st.call_scheduled": "Appel planifié", "st.closed": "Close",
+      "rq.title": "Demandes d'entreprises", "rq.lead": "Chaque demande suit quatre étapes : comprendre → choisir les partenaires → validation technique → pitch et invitation à Berne.",
+      "kpi.open": "ouvertes", "kpi.review": "en validation", "kpi.ready": "prêtes pour le pitch", "kpi.invited": "invitées",
+      "col.todo": "À traiter", "col.review": "En validation technique", "col.ready": "Prêtes pour le pitch", "col.done": "Invitées",
+      "col.empty": "Rien", "rq.empty": "Aucune demande", "rq.emptyD": "Collez la demande d'une entreprise ou essayez un exemple fictif.",
+      "partners": "partenaires",
+      "nw.title": "Nouvelle demande d'entreprise", "nw.lead": "Collez l'e-mail ou le message de l'entreprise. Les termes techniques seront expliqués.",
+      "nw.company": "Entreprise", "nw.country": "Pays", "nw.contact": "Personne de contact", "nw.email": "E-mail de contact",
+      "nw.text": "Que cherche l'entreprise ?", "nw.textHint": "toute langue", "nw.submit": "Comprendre et trouver des partenaires",
+      "nw.examples": "Exemples fictifs", "nw.working": "Lecture de la demande et recherche dans le paysage bernois de la recherche…",
+      "cs.back": "Toutes les demandes", "cs.backQ": "Validations", "cs.received": "Reçue", "cs.contact": "Contact de l'entreprise", "cs.activity": "Historique",
+      "cs.delete": "Supprimer la demande", "cs.confirmDelete": "Supprimer définitivement cette demande ?",
+      "step.1": "Comprendre", "step.2": "Choisir les partenaires", "step.3": "Validation technique", "step.4": "Pitch & invitation",
+      "u.title": "En termes simples", "u.ai": "Résumé par Apertus", "u.rules": "Basé sur le glossaire (Apertus hors ligne)",
+      "u.does": "Ce que fait l'entreprise", "u.needs": "Ce dont elle a besoin", "u.words": "Termes expliqués",
+      "u.gloss": "glossaire validé", "u.aiterm": "Explication IA – à vérifier", "u.orig": "Demande originale", "u.none": "Aucun terme du glossaire trouvé.",
+      "m.title": "Partenaires possibles à Berne", "m.lead": "Cochez les partenaires à proposer. Chacun est appuyé par une page web publique.",
+      "m.again": "Relancer", "m.more": "Chercher davantage", "m.sel": "sélectionné(s)", "m.none": "Aucun partenaire trouvé dans les sources indexées.",
+      "m.src": "source", "m.ok": "Validation : adapté", "m.no": "Validation : non adapté", "m.locked": "verrouillé pendant la validation",
+      "r.title": "Validation technique", "r.lead": "Un collègue du domaine vérifie les partenaires choisis.",
+      "r.reviewer": "Validateur", "r.note": "Note pour le validateur", "r.send": "Envoyer en validation", "r.needSel": "Sélectionnez d'abord au moins un partenaire.",
+      "r.waiting": "En attente de {who} ({n} partenaire(s)).", "r.waitHint": "{who} voit la demande dans les validations de l'espace collaborateurs.",
+      "r.changes": "{who} demande des modifications", "r.approved": "{who} a validé {n} partenaire(s)",
+      "i.title": "Pitch & invitation", "i.locked": "Débloqué dès que la validation technique approuve les partenaires.",
+      "i.lead": "Deux résultats : une explication simple pour vous, et une note courte et entièrement sourcée pour la direction de l'entreprise. Objectif : une visite à Berne.",
+      "i.lang": "Langue du pitch", "i.prep": "Préparer le pitch", "i.regen": "Mettre à jour le pitch",
+      "i.forYou": "Pour vous", "i.forYouT": "Ce que vous envoyez — en termes simples", "i.forCeo": "Pour la direction", "i.forCeoT": "Note de direction",
+      "i.open": "Ouvrir la note", "i.pdf": "Enregistrer en PDF", "i.copyLink": "Copier le lien", "i.copied": "Lien copié",
+      "i.teams": "équipes de recherche", "i.stmt": "affirmations sourcées", "i.pubs": "publications", "i.srcs": "sources",
+      "i.mail": "L'envoyer", "i.slots": "Proposer des créneaux d'appel", "i.dur": "Durée (min)", "i.prepMail": "Préparer l'e-mail",
+      "i.subj": "Objet", "i.body": "E-mail (modifiable)", "i.openMail": "Ouvrir dans la messagerie", "i.copy": "Copier le texte", "i.sent": "Marquer comme envoyé",
+      "i.ics": "Invitation calendrier (.ics)", "i.doneEmail": "Invitation envoyée le {d}.", "i.doneCall": "Appel planifié : {d}.",
+      "q.title": "Validations", "q.lead": "Demandes pour lesquelles la promotion économique souhaite votre avis technique sur les partenaires bernois proposés.",
+      "q.mine": "Qui vous sont attribuées", "q.others": "Autres validations ouvertes", "q.done": "Décidées récemment", "q.empty": "Rien à valider.",
+      "rv.banner": "Validation technique demandée par {who}", "rv.note": "Sa question", "rv.request": "La demande de l'entreprise",
+      "rv.check": "Partenaires à vérifier", "rv.ok": "Adapté", "rv.no": "Non adapté", "rv.comment1": "Commentaire (facultatif)",
+      "rv.evidence": "Preuves sur les pages sources", "rv.comment": "Votre commentaire général pour {who}",
+      "rv.approve": "Valider", "rv.changes": "Demander des modifications", "rv.need": "Marquez au moins un partenaire comme adapté pour valider.",
+      "rv.notOpen": "Cette demande n'attend pas de validation.", "rv.assigned": "Attribuée à {who}",
+      "ctx": "Ajout de partenaires à la demande de {c}", "ctxBack": "Retour à la demande",
+      "bf.prepared": "préparée le {d}", "bf.missing": "Cette note n'existe pas ou a été retirée.", "bf.teams": "équipes de recherche",
       "llm.on": "{m} en ligne", "llm.off": "{m} hors ligne · mode règles",
-      "llm.onT": "Apertus est actif : résumés simples, élargissement des requêtes et explications.",
-      "llm.offT": "Apertus injoignable : le glossaire validé et des règles fixes sont utilisés. Rien n'est inventé dans les deux cas.",
-      "err": "Une erreur est survenue", "saved": "Enregistré",
+      "llm.onT": "Apertus est actif : résumés, élargissement des requêtes et explications.",
+      "llm.offT": "Apertus injoignable : glossaire validé et règles fixes. Rien n'est inventé dans les deux cas.",
+      "err": "Une erreur est survenue", "forbidden": "Votre rôle ne permet pas cette action.",
     },
   };
-  let LANG = store.get("nav-lang", null) || ((navigator.language || "en").slice(0, 2) === "de" ? "de" : (navigator.language || "").startsWith("fr") ? "fr" : "en");
+  let LANG = store.get("nav-lang", null) || ((navigator.language || "en").startsWith("de") ? "de" : (navigator.language || "").startsWith("fr") ? "fr" : "en");
   if (!I18N[LANG]) LANG = "en";
   const t = (k, v = {}) => (I18N[LANG][k] ?? I18N.en[k] ?? k).replace(/\{(\w+)\}/g, (_, x) => v[x] ?? "");
-  const fmtDate = (iso, withTime = true) => {
-    try { return new Intl.DateTimeFormat(LANG === "en" ? "en-GB" : LANG + "-CH", withTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }).format(new Date(iso)); }
+  const fmtDate = (iso, withTime = true, lang = LANG) => {
+    try { return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : lang + "-CH", withTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }).format(new Date(iso)); }
     catch { return iso; }
   };
-  function applyStaticI18n() {
-    document.documentElement.lang = LANG;
-    $$("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
-    $("#lang").value = LANG;
-  }
 
-  /* ======================= profile ======================= */
-  let me = store.get("nav-me", { name: "", email: "", team: "", role: "officer" });
-  function renderMe() {
-    $("#meName").textContent = me.name || "—";
-    $("#meRole").textContent = t(me.role === "reviewer" ? "role.reviewer" : "role.officer");
-    $("#meAv").textContent = (me.name || "?").split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+  /* ======================= staff identity ======================= */
+  let staff = store.get("nav-staff", null);
+  const recent = () => store.get("nav-recent", []);
+  function setStaff(p) {
+    staff = p; store.set("nav-staff", p);
+    if (p) store.set("nav-recent", [p, ...recent().filter((x) => !(x.name === p.name && x.role === p.role))].slice(0, 6));
   }
-  function openMe() {
-    const f = $("#meForm");
-    f.name.value = me.name; f.email.value = me.email; f.team.value = me.team;
-    $$("input[name=role]", f).forEach((r) => { r.checked = r.value === me.role; });
-    $("#meDlg").showModal();
-  }
-  function setRole(role) { me.role = role; store.set("nav-me", me); renderMe(); }
+  const initialsOf = (name) => {
+    const parts = (name || "?").split(/\s+/).filter((p) => !/^(prof\.?|dr\.?|pd|med\.?|phil\.?|em\.?|nat\.?|rer\.?|dr\.-ing\.?|ing\.?|msc|phd)$/i.test(p));
+    return (((parts[0] || "")[0] || "") + ((parts.length > 1 ? parts[parts.length - 1][0] : "") || "")).toUpperCase() || "?";
+  };
+  const roleHome = () => (staff?.role === "reviewer" ? "#/staff/review" : "#/staff/requests");
+  const asStaff = (extra = {}) => ({ actor: staff.name, role: staff.role, ...extra });
 
   /* ======================= API ======================= */
   async function api(path, opts = {}) {
@@ -297,7 +365,8 @@
     if (!r.ok) {
       let msg = `${r.status}`;
       try { const j = await r.json(); msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch {}
-      throw new Error(msg);
+      if (r.status === 403) msg = `${t("forbidden")} (${msg})`;
+      const e = new Error(msg); e.status = r.status; throw e;
     }
     return r.json();
   }
@@ -314,27 +383,17 @@
       GLOSS = { lang: LANG, map, rx: forms.length ? new RegExp(`(?<![\\p{L}\\p{N}-])(${forms.join("|")})(?![\\p{L}\\p{N}-])`, "giu") : null };
     } catch { GLOSS = { lang: LANG, rx: null, map: new Map() }; }
   }
-  /** Escape `text` and underline technical words with a plain-language tooltip. */
   function jargon(text) {
     const h = esc(text);
     if (!GLOSS.rx) return h;
-    return h.replace(GLOSS.rx, (m) => {
-      const g = GLOSS.map.get(m.toLowerCase());
-      return g ? `<abbr class="jargon" title="${esc(g.plain)}">${m}</abbr>` : m;
-    });
+    return h.replace(GLOSS.rx, (m) => { const g = GLOSS.map.get(m.toLowerCase()); return g ? `<abbr class="jargon" title="${esc(g.plain)}">${m}</abbr>` : m; });
   }
 
   /* ======================= shared rendering ======================= */
-  const TITLE_RX = /^(prof\.?|dr\.?|pd|med\.?|phil\.?|em\.?|nat\.?|rer\.?|dr\.-ing\.?|ing\.?|msc|phd)$/i;
-  function initialsOf(name) {
-    const parts = name.split(/\s+/).filter((p) => !TITLE_RX.test(p));
-    return (((parts[0] || "")[0] || "") + ((parts[parts.length - 1] || "")[0] || "")).toUpperCase();
-  }
-  function avatar(name, type, sm = false) {
-    const inner = type === "person" ? esc(initialsOf(name)) : ICON[type] || "";
-    return `<div class="avatar ${sm ? "sm " : ""}${esc(type)}" aria-hidden="true">${inner}</div>`;
-  }
+  const avatar = (name, type, sm = false) =>
+    `<div class="avatar ${sm ? "sm " : ""}${esc(type)}" aria-hidden="true">${type === "person" ? esc(initialsOf(name)) : ICON[type] || ""}</div>`;
   const pill = (status) => `<span class="pill st-${esc(status)}">${esc(t("st." + status))}</span>`;
+  const spinner = (msg = "") => `<div class="working"><span class="spinner"></span>${msg ? `<span>${esc(msg)}</span>` : ""}</div>`;
   function highlight(text, terms) {
     const h = esc(text);
     if (!terms.length) return h;
@@ -342,168 +401,425 @@
     return h.replace(rx, "<mark>$1</mark>");
   }
   function termsFor(q, extra = []) {
-    const stop = new Set("the and for with von und der die das des den ein eine in of on to at by or a an les une pour sur".split(" "));
+    const stop = new Set("the and for with von und der die das des den ein eine in of on to at by or a an les une pour sur non".split(" "));
     return [...new Set([q, ...extra].join(" ").toLowerCase().split(/[^\p{L}\p{N}-]+/u).filter((x) => x.length > 2 && !stop.has(x)))]
       .sort((a, b) => b.length - a.length).slice(0, 30);
   }
-
-  /* ======================= state & routing ======================= */
-  const S = { cases: [], stats: null, showcase: null, examples: null, entityCache: new Map(),
-    ex: { sources: null, types: new Set(["person", "unit", "project", "infrastructure"]), data: null, ctl: null },
-    ctx: store.get("nav-ctx", null) };
   const view = () => $("#view");
-  const spinner = () => `<div class="working"><span class="spinner"></span></div>`;
+  const L = (o) => (o && (o[LANG] || o.en)) || "";
 
-  async function refreshCases() {
-    try { S.cases = await api("/cases"); } catch { S.cases = []; }
-    const open = S.cases.filter((c) => ["new", "changes_requested", "in_review", "approved"].includes(c.status)).length;
-    const rev = S.cases.filter((c) => c.status === "in_review").length;
-    $("#cntOpen").textContent = open || ""; $("#cntReview").textContent = rev || "";
-  }
+  /* ======================= state ======================= */
+  const S = { cases: [], stats: null, showcase: null, examples: null, entity: new Map(),
+    sources: null, types: new Set(["person", "unit", "project", "infrastructure"]), data: null, ctl: null, ctx: store.get("nav-ctx", null) };
+  const entity = async (id) => { if (!S.entity.has(id)) S.entity.set(id, await api(`/entity/${encodeURIComponent(id)}`)); return S.entity.get(id); };
+  async function stats() { if (!S.stats) { try { S.stats = await api("/stats"); } catch { S.stats = { sources: [], entities_per_source: {}, pages_per_source: {} }; } } return S.stats; }
+  async function showcase() { if (!S.showcase) { try { S.showcase = await api("/showcase"); } catch { S.showcase = { themes: [], highlights: [], labs: [], facilities: [], engage: [] }; } } return S.showcase; }
+  async function refreshCases() { try { S.cases = await api("/cases"); } catch { S.cases = []; } }
 
-  function route() {
-    const h = location.hash.replace(/^#/, "") || "/";
-    const [path, qs] = h.split("?");
-    const parts = path.split("/").filter(Boolean);
-    const nav = parts[0] === "review" ? "review" : parts[0] === "explore" ? "explore" : "requests";
-    $$(".tabs a").forEach((a) => { a.classList.toggle("on", a.dataset.nav === nav); a.toggleAttribute("aria-current", a.dataset.nav === nav); });
-    document.body.classList.remove("sheet-open");
-    window.scrollTo(0, 0);
-    if (parts[0] === "new") return viewNew();
-    if (parts[0] === "case" && parts[1]) return viewCase(parts[1]);
-    if (parts[0] === "review") return viewReview();
-    if (parts[0] === "explore") return viewExplore(new URLSearchParams(qs || ""));
-    return viewRequests();
-  }
+  /* ======================= chrome per area ======================= */
+  let LLM = { on: false, m: "Apertus" };
+  const statusPill = () => `<span class="status ${LLM.on ? "on" : "off"}" title="${esc(t(LLM.on ? "llm.onT" : "llm.offT"))}"><span class="dot"></span><span class="status-label">${esc(t(LLM.on ? "llm.on" : "llm.off", { m: LLM.m }))}</span></span>`;
+  const langSel = () => `<select id="lang" class="lang" aria-label="Language">${["en", "de", "fr"].map((l) => `<option value="${l}" ${l === LANG ? "selected" : ""}>${l.toUpperCase()}</option>`).join("")}</select>`;
+  const themeBtn = () => `<button class="icon-btn" id="themeBtn" type="button" aria-label="Dark mode" title="Dark mode">${ICON.moon}</button>`;
 
-  /* ======================= view: requests board ======================= */
-  async function viewRequests() {
-    view().innerHTML = spinner();
-    await refreshCases();
-    const by = (sts) => S.cases.filter((c) => sts.includes(c.status));
-    const cols = [["col.todo", ["new", "changes_requested"]], ["col.review", ["in_review"]], ["col.ready", ["approved"]], ["col.done", ["contacted", "call_scheduled", "closed"]]];
-    const card = (c) => `<a class="case-card" href="#/case/${esc(c.id)}">
-        <h3>${esc(c.company)}</h3><p>${esc(c.summary)}</p>
-        <div class="case-meta">${pill(c.status)}${c.selected ? `<span>${c.selected} ${esc(t("partners"))}</span>` : ""}
-          ${c.country ? `<span>${esc(c.country)}</span>` : ""}<span>${esc(fmtDate(c.updated_at, false))}</span></div></a>`;
-    const kpi = (v, l) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(t(l))}</div></div>`;
-    view().innerHTML = `
-      <section class="hero-band">
-        <div><h1>${esc(t("req.title"))}</h1><p>${esc(t("req.lead"))}</p>
-          <div class="actions"><a class="btn-primary btn-brand" href="#/new">${ICON.plus}${esc(t("req.new"))}</a>
-          <a class="btn" href="#/explore">${esc(t("req.explore"))}</a></div></div>
-        <div class="flow">${[1, 2, 3, 4].map((n) => `<div><span class="n">${n}</span><b>${esc(t("flow." + n))}</b>${esc(t("flow." + n + "d"))}</div>`).join("")}</div>
-      </section>
-      <div class="kpis">
-        ${kpi(by(["new", "changes_requested", "in_review", "approved"]).length, "kpi.open")}${kpi(by(["in_review"]).length, "kpi.review")}
-        ${kpi(by(["approved"]).length, "kpi.ready")}${kpi(by(["contacted", "call_scheduled"]).length, "kpi.invited")}
-      </div>
-      ${S.cases.length ? `<div class="board">${cols.map(([l, sts]) => {
-        const xs = by(sts);
-        return `<section class="col" aria-label="${esc(t(l))}"><div class="col-h"><span>${esc(t(l))}</span><i class="count">${xs.length || ""}</i></div>
-          ${xs.map(card).join("") || `<div class="col-empty">${esc(t("col.empty"))}</div>`}</section>`;
-      }).join("")}</div>`
-      : `<div class="panel empty"><div class="empty-ico">${ICON.inbox}</div><h3>${esc(t("board.emptyTitle"))}</h3><p>${esc(t("board.emptyText"))}</p>
-          <p style="margin-top:14px"><a class="btn-primary btn-brand" href="#/new">${ICON.plus}${esc(t("req.new"))}</a></p></div>`}`;
-  }
-
-  /* ======================= view: new request ======================= */
-  async function viewNew() {
-    if (!S.examples) { try { S.examples = await api("/examples"); } catch { S.examples = []; } }
-    view().innerHTML = `
-      <a class="back" href="#/">${ICON.back}${esc(t("case.back"))}</a>
-      <div class="page-h"><div><h1>${esc(t("new.title"))}</h1><p>${esc(t("new.lead"))}</p></div></div>
-      <div class="new-grid">
-        <form class="panel" id="newForm">
-          <div class="grid-form">
-            <label class="field">${esc(t("f.company"))}<input name="company" required maxlength="200"></label>
-            <label class="field">${esc(t("f.country"))}<input name="country" maxlength="100"></label>
-            <label class="field">${esc(t("f.contact"))}<input name="contact_name" maxlength="200"></label>
-            <label class="field">${esc(t("f.email"))}<input name="contact_email" type="email" maxlength="200"></label>
-            <label class="field full">${esc(t("f.request"))} <small>${esc(t("f.requestHint"))}</small>
-              <textarea name="request_text" required minlength="10" maxlength="12000" rows="9"></textarea></label>
-          </div>
-          <div class="sel-bar"><span class="muted">${ICON.shield} ${esc(t("foot.data"))}</span>
-            <button class="btn-primary btn-brand" type="submit">${ICON.sparkle}${esc(t("new.submit"))}</button></div>
-        </form>
-        <aside class="stack">
-          <div class="panel"><div class="panel-h"><h2>${esc(t("new.examples"))}</h2></div>
-            <div class="examples-list">${(S.examples || []).map((x, i) => `<button type="button" class="ex-btn" data-ex="${i}">
-              <b>${esc((x.label && (x.label[LANG] || x.label.en)) || x.company)}</b><span>${esc(x.company)} · ${esc(x.country)}</span></button>`).join("")}</div></div>
-          <div class="panel"><div class="panel-h"><h2>${esc(t("new.next"))}</h2></div>
-            <ol class="timeline">${["new.next1", "new.next2", "new.next3"].map((k) => `<li>${esc(t(k))}</li>`).join("")}</ol></div>
-        </aside>
-      </div>`;
-    $$("[data-ex]").forEach((b) => b.addEventListener("click", () => {
-      const x = S.examples[+b.dataset.ex], f = $("#newForm");
-      for (const k of ["company", "country", "contact_name", "contact_email", "request_text"]) f[k].value = x[k] || "";
-      f.request_text.focus();
-    }));
-    $("#newForm").addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      const f = ev.target, body = Object.fromEntries(new FormData(f));
-      body.lang = LANG; body.actor = me.name || t("role.officer");
-      f.innerHTML = `<div class="working"><span class="spinner"></span><span>${esc(t("new.working"))}</span></div>`;
-      try {
-        const c = await api("/cases", { method: "POST", body });
-        await refreshCases();
-        location.hash = `#/case/${c.id}`;
-      } catch (e) { toast(`${t("err")}: ${e.message}`); viewNew(); }
+  function renderChrome(shell, active) {
+    const bar = $("#topbar");
+    bar.className = `topbar ${shell === "staff" ? "staff" : ""} ${shell === "brief" ? "brief" : ""}`;
+    document.body.classList.toggle("brief-mode", shell === "brief");
+    const brand = (sub, href) => `<a class="brand" href="${href}"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M9 23V9h7.5a4 4 0 0 1 0 8H9m7.5 0a3.5 3.5 0 0 1 0 6H9"/></svg>
+      <span class="brand-text"><b>Bern Expertise Navigator</b><small>${esc(sub)}</small></span></a>`;
+    const tab = (href, key, label, count = "") => `<a href="${href}" class="${active === key ? "on" : ""}" ${active === key ? 'aria-current="page"' : ""}>${esc(label)}${count ? `<i class="count ${key === "queue" ? "warn" : ""}">${count}</i>` : ""}</a>`;
+    if (shell === "brief") {
+      bar.innerHTML = `<div class="topbar-in">${brand(t("brand.briefSub"), location.hash)}<div class="topbar-right">${themeBtn()}</div></div>`;
+      $("#foot").innerHTML = `<span>${esc(t("foot.brief"))}</span>`;
+    } else if (shell === "public") {
+      bar.innerHTML = `<div class="topbar-in">${brand(t("brand.sub"), "#/")}
+        <nav class="tabs" aria-label="Main">${tab("#/", "search", t("nav.search"))}${tab("#/directory", "dir", t("nav.dir"))}${tab("#/about", "about", t("nav.about"))}</nav>
+        <div class="topbar-right">${statusPill()}${langSel()}${themeBtn()}<a class="staff-link" href="#/staff">${ICON.lock}<span>${esc(t("nav.staff"))}</span></a></div></div>`;
+      $("#foot").innerHTML = `<span>${esc(t("foot.public"))}</span>`;
+    } else {
+      const open = S.cases.filter((c) => ["new", "changes_requested", "in_review", "approved"].includes(c.status)).length;
+      const rev = S.cases.filter((c) => c.status === "in_review").length;
+      const nav = !staff ? "" : staff.role === "officer"
+        ? tab("#/staff/requests", "requests", t("nav.requests"), open || "") + tab("#/staff/new", "new", t("nav.new")) + tab("#/staff/search", "ssearch", t("nav.search"))
+        : tab("#/staff/review", "queue", t("nav.queue"), rev || "") + tab("#/staff/search", "ssearch", t("nav.search"));
+      bar.innerHTML = `<div class="topbar-in">${brand(t("brand.staffSub"), staff ? roleHome() : "#/staff")}<span class="staff-tag">${esc(t("staff.tag"))}</span>
+        ${nav ? `<nav class="tabs" aria-label="Workspace">${nav}</nav>` : ""}
+        <div class="topbar-right">${langSel()}${themeBtn()}
+          ${staff ? `<div class="who"><span class="av ${esc(staff.role)}">${esc(initialsOf(staff.name))}</span>
+            <span class="txt"><b>${esc(staff.name)}</b><small>${esc(t("role." + staff.role))}</small></span>
+            <button type="button" id="switchUser">${esc(t("who.switch"))}</button></div>` : ""}
+          <a class="staff-link" href="#/">${ICON.ext}<span>${esc(t("nav.public"))}</span></a></div></div>`;
+      $("#foot").innerHTML = `<span>${esc(t("foot.staff"))}</span>`;
+      $("#switchUser")?.addEventListener("click", () => go("#/staff/who"));
+    }
+    $("#lang")?.addEventListener("change", (ev) => { LANG = ev.target.value; store.set("nav-lang", LANG); route(); });
+    $("#themeBtn").addEventListener("click", () => {
+      const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      const nx = cur === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = nx; store.set("nav-theme", nx);
     });
   }
 
-  /* ======================= view: case ======================= */
+  /* ======================= router ======================= */
+  async function route() {
+    const h = location.hash.replace(/^#/, "") || "/";
+    const [path, qs] = h.split("?");
+    const p = path.split("/").filter(Boolean);
+    const params = new URLSearchParams(qs || "");
+    document.body.classList.remove("sheet-open");
+    window.scrollTo(0, 0);
+    document.documentElement.lang = LANG;
+
+    if (p[0] === "b" && p[1]) { renderChrome("brief"); return viewBrief(p[1], params); }
+    if (p[0] !== "staff") {
+      renderChrome("public", p[0] === "directory" ? "dir" : p[0] === "about" ? "about" : "search");
+      if (p[0] === "directory") return viewDirectory();
+      if (p[0] === "about") return viewAbout();
+      if (p[0] === "search" && params.get("q")) return viewSearch(params, "public");
+      return viewHome();
+    }
+    if (p[1] === "who" || !staff) { renderChrome("staff", ""); return viewIdentity(); }
+    await refreshCases();
+    const sub = p[1] || "";
+    if (!sub || (staff.role === "reviewer" && ["requests", "new"].includes(sub)) || (staff.role === "officer" && sub === "review")) return go(roleHome());
+    renderChrome("staff", { requests: "requests", new: "new", review: "queue", search: "ssearch", case: staff.role === "officer" ? "requests" : "queue" }[sub] || "");
+    if (sub === "requests") return viewRequests();
+    if (sub === "new") return viewNew();
+    if (sub === "review") return viewQueue();
+    if (sub === "search") return params.get("q") ? viewSearch(params, "staff") : viewStaffSearchHome();
+    if (sub === "case" && p[2]) return viewCase(p[2]);
+    return go(roleHome());
+  }
+
+  /* ======================= PUBLIC: home ======================= */
+  const searchBox = (q = "", target = "#/search") => `<form class="searchbox" id="sForm" role="search" data-target="${target}">${ICON.search}
+      <input id="sQ" type="search" value="${esc(q)}" placeholder="${esc(t("ph"))}" aria-label="${esc(t("go"))}" autocomplete="off">
+      <button class="btn-primary" type="submit">${esc(t("go"))}</button></form>`;
+  function bindSearchBox() {
+    $("#sForm")?.addEventListener("submit", (ev) => {
+      ev.preventDefault(); const v = $("#sQ").value.trim();
+      if (v.length > 1) go(`${ev.target.dataset.target}?q=${encodeURIComponent(v)}`);
+    });
+    $$(".chip[data-q]").forEach((b) => b.addEventListener("click", () => go(`${$("#sForm").dataset.target}?q=${encodeURIComponent(b.dataset.q)}`)));
+  }
+  const exampleChips = () => `<div class="chips"><span class="muted">${esc(t("try"))}:</span>
+    ${["glucose sensors", "kontinuierliche Glukosemessung", "robots for neurosurgery", "3D printing facility", "organs-on-chip"].map((x) => `<button class="chip" type="button" data-q="${esc(x)}">${esc(x)}</button>`).join("")}
+    <button class="chip ghost" type="button" data-q="best pizza delivery in Bern">${esc(t("abstainChip"))}</button></div>`;
+
+  async function viewHome() {
+    await loadGlossary();
+    view().innerHTML = `<section class="hero"><h1>${esc(t("home.title"))}</h1><p>${esc(t("home.lead"))}</p>${searchBox()}${exampleChips()}</section><div id="homeBody">${spinner()}</div>`;
+    bindSearchBox();
+    const sc = await showcase();
+    const sQ = (q) => `#/search?q=${encodeURIComponent(q)}`;
+    $("#homeBody").innerHTML = `
+      ${sc.highlights.length ? `<div class="section-h"><h2>${esc(t("proof"))}</h2><span class="muted">${esc(t("proofNote"))}</span></div>
+      <div class="proof">${sc.highlights.map((h) => `<article class="proof-card"><div class="fig">${esc(h.figure)}</div><div class="lbl">${esc(L(h.label))}</div>
+        <q>${esc(h.quote)}</q><a href="${esc(safeUrl(h.url))}" target="_blank" rel="noopener">${ICON.link} ${esc(hostPath(h.url))}</a></article>`).join("")}</div>` : ""}
+      <div class="section-h"><h2>${esc(t("themes"))}</h2><span class="muted">${esc(t("themesNote"))}</span></div>
+      <div class="themes">${sc.themes.map((th) => `<a class="theme" href="${sQ(th.query)}" style="text-decoration:none">
+        <h3>${esc(L(th.title))}</h3><p>${esc(L(th.blurb))}</p>
+        <div class="nums"><span><b>${th.counts.person}</b> ${esc(t("people"))}</span><span><b>${th.counts.unit}</b> ${esc(t("labsN"))}</span><span><b>${th.counts.project}</b> ${esc(t("projects"))}</span></div>
+        ${th.labs.length ? `<div class="labs">${th.labs.map((l) => esc(l.name)).join(" · ")}</div>` : ""}</a>`).join("")}</div>
+      <div class="actions" style="margin-top:22px;justify-content:center"><a class="btn" href="#/directory">${esc(t("home.more"))}</a><a class="btn" href="#/about">${esc(t("home.how"))}</a></div>`;
+  }
+
+  /* ======================= search (public and staff) ======================= */
+  async function filtersHtml() {
+    const st = await stats();
+    if (!S.sources) S.sources = new Set(st.sources.map((x) => x.name));
+    return `<div class="filters"><div class="fgroup" role="group" aria-label="${esc(t("flt.sources"))}">${st.sources.filter((x) => (st.entities_per_source[x.name] ?? 0) > 0).map((x) =>
+      `<button type="button" class="fchip ${S.sources.has(x.name) ? "on" : ""}" data-src="${esc(x.name)}" title="${esc(x.label)}" aria-pressed="${S.sources.has(x.name)}">
+        <i class="t-dot src"></i>${esc(x.name === "unibe" ? "UniBE" : x.name.toUpperCase())} <span class="muted">${st.entities_per_source[x.name] ?? 0}</span></button>`).join("")}</div>
+      <div class="fgroup" role="group" aria-label="${esc(t("flt.types"))}">${[["person", "t.people"], ["unit", "t.labs"], ["project", "t.projects"], ["infrastructure", "t.facilities"]].map(([k, l]) =>
+      `<button type="button" class="fchip ${S.types.has(k) ? "on" : ""}" data-type="${k}" aria-pressed="${S.types.has(k)}"><i class="t-dot ${k}"></i>${esc(t(l))}</button>`).join("")}</div></div>`;
+  }
+
+  async function viewSearch(params, shell) {
+    await loadGlossary();
+    const q = params.get("q") || "";
+    const ctx = shell === "staff" && staff?.role === "officer" ? S.ctx : null;
+    view().innerHTML = `
+      ${ctx ? `<div class="ctx-banner"><span>${ICON.info} ${esc(t("ctx", { c: ctx.company }))}</span>
+        <span class="actions"><a class="btn btn-sm" href="#/staff/case/${esc(ctx.id)}">${esc(t("ctxBack"))}</a>
+        <button class="link-btn" id="ctxClose" type="button" aria-label="Close">✕</button></span></div>` : ""}
+      <div style="margin:4px 0 12px">${searchBox(q, shell === "staff" ? "#/staff/search" : "#/search")}</div>${await filtersHtml()}
+      <div class="results-view"><div class="results-col"><div class="results-head" id="rHead"><span class="cnt">…</span></div>
+        <div class="results" id="rList">${Array.from({ length: 3 }, () => `<div class="skel"><div class="sk" style="width:40%;height:16px"></div><div class="sk" style="width:70%"></div><div class="sk"></div></div>`).join("")}</div></div>
+        <aside class="detail" id="detail" aria-label="Details"><div class="detail-empty"><p>${esc(t("res.select"))}</p></div></aside></div>`;
+    bindSearchBox();
+    $("#ctxClose")?.addEventListener("click", () => { S.ctx = null; store.set("nav-ctx", null); route(); });
+    $$(".fchip").forEach((f) => f.addEventListener("click", () => {
+      const set = f.dataset.src ? S.sources : S.types, key = f.dataset.src || f.dataset.type;
+      if (set.has(key) && set.size === 1) return;
+      set.has(key) ? set.delete(key) : set.add(key);
+      f.classList.toggle("on"); f.setAttribute("aria-pressed", f.classList.contains("on"));
+      runSearch(q, ctx);
+    }));
+    runSearch(q, ctx);
+  }
+
+  async function runSearch(q, ctx) {
+    const p = new URLSearchParams({ q, k: "12" });
+    if (S.stats && S.sources.size < S.stats.sources.length) S.sources.forEach((s) => p.append("source", s));
+    if (S.types.size < 4) S.types.forEach((x) => p.append("type", x));
+    S.ctl?.abort(); S.ctl = new AbortController();
+    try { S.data = await api(`/search?${p}`, { signal: S.ctl.signal }); }
+    catch (e) { if (e.name !== "AbortError") $("#rList").innerHTML = `<div class="abstain"><h3>${esc(t("err"))}</h3><p>${esc(e.message)}</p></div>`; return; }
+    renderResults(ctx);
+  }
+
+  /** One result = the brief's structured record: who/what, role, affiliation, expertise, projects,
+   *  infrastructure/services, contact, why it matches, verbatim source. Empty fields are omitted. */
+  function resultCard(r, i, terms, ctx) {
+    const hit = (s) => terms.reduce((n, w) => n + (s.toLowerCase().includes(w) ? 1 : 0), 0);
+    const q0 = [...r.sources].sort((a, b) => hit(b.snippet) - hit(a.snippet) || (a.field === "name") - (b.field === "name"))[0];
+    const aff = [r.affiliation.unit, r.affiliation.institute, r.affiliation.institution].filter(Boolean).filter((x, j, a) => a.indexOf(x) === j);
+    const list = (xs, n) => `<div class="tags">${xs.slice(0, n).map((x) => `<span class="tag" title="${esc(x)}">${jargon(x.length > 70 ? x.slice(0, 67) + "…" : x)}</span>`).join("")}${xs.length > n ? `<span class="muted">+${xs.length - n}</span>` : ""}</div>`;
+    const rows = [
+      r.role && [t("f.role"), esc(r.role)],
+      aff.length && [t("f.aff"), aff.map(esc).join(" · ")],
+      r.expertise.length && [t("f.exp"), list(r.expertise, 4)],
+      r.projects.length && [t("f.proj"), list(r.projects, 3)],
+      r.infrastructure_services.length && [t("f.infra"), list(r.infrastructure_services, 3)],
+      r.contact && [t("f.contact"), `<a href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>`],
+    ].filter(Boolean);
+    return `<article class="card" tabindex="0" data-i="${i}">
+      <div class="card-top">${avatar(r.person_or_unit, r.entity_type)}
+        <div><h3>${esc(r.person_or_unit)}</h3>${r.role ? `<div class="sub2">${esc(r.role)}</div>` : ""}<div class="inst">${esc(r.institution)}</div></div>
+        <span class="type-badge ${esc(r.entity_type)}">${esc(t("type." + r.entity_type))}</span></div>
+      ${r.via ? `<div class="via">${esc(t("res.found"))} <b>${esc(r.via)}</b></div>` : ""}
+      <p class="why-line"><b>${esc(t("res.why"))}:</b> ${highlight(r.why_match, terms)}</p>
+      ${rows.length ? `<dl class="rfields">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}
+      ${q0 ? `<div class="src-line"><q>${highlight(q0.snippet.length > 220 ? q0.snippet.slice(0, 217) + "…" : q0.snippet, terms)}</q>
+        <a href="${esc(safeUrl(q0.url))}" target="_blank" rel="noopener">${ICON.link} ${esc(hostPath(q0.url))}</a></div>` : ""}
+      <div class="card-foot"><span class="verified">${ICON.check}${esc(t("res.verified"))}</span><span>${r.sources.length} ${esc(t("res.sources"))}</span>
+        ${ctx ? `<span style="flex:1"></span><button class="btn btn-sm" type="button" data-add="${esc(r.id)}">${ICON.plus}${esc(t("res.add"))}</button>` : ""}</div>
+    </article>`;
+  }
+
+  function renderResults(ctx) {
+    const d = S.data, terms = termsFor(d.query, d.expanded_terms);
+    $(".results-view").classList.toggle("solo", !!d.abstained);
+    $("#rHead").innerHTML = d.abstained ? "" : `<span class="cnt">${d.results.length} ${esc(t("res.n"))}</span><span>${(d.took_ms / 1000).toFixed(2)} s</span>
+      ${d.expanded_terms.length ? `<span>${esc(t("res.also"))}</span>${d.expanded_terms.slice(0, 7).map((x) => `<span class="term">${esc(x)}</span>`).join("")}` : ""}`;
+    if (d.abstained) {
+      $("#rList").innerHTML = `<div class="abstain"><div class="empty-ico" style="color:var(--warn);background:var(--warn-bg)">${ICON.shield}</div>
+        <h3>${esc(t("res.none"))}</h3><p>${esc(d.message)}</p><p class="muted" style="margin-top:10px">${esc(t("res.noneHint"))}</p></div>`;
+      return;
+    }
+    $("#rList").innerHTML = d.results.map((r, i) => resultCard(r, i, terms, ctx)).join("");
+    $$(".card", $("#rList")).forEach((c) => {
+      c.addEventListener("click", (ev) => { if (!ev.target.closest("a,button")) selectResult(+c.dataset.i, true, ctx); });
+      c.addEventListener("keydown", (ev) => { if (ev.key === "Enter") selectResult(+c.dataset.i, true, ctx); });
+    });
+    $$("[data-add]").forEach((b) => b.addEventListener("click", () => addToCase(b.dataset.add, b)));
+    if (!isNarrow() && d.results.length) selectResult(0, false, ctx);
+  }
+
+  async function addToCase(id, btn) {
+    try {
+      await api(`/cases/${S.ctx.id}/matches`, { method: "POST", body: asStaff({ entity_id: id }) });
+      toast(t("res.added")); if (btn) { btn.disabled = true; btn.innerHTML = `${ICON.check}${esc(t("res.added"))}`; }
+    } catch (e) { toast(e.message); }
+  }
+
+  function selectResult(i, open, ctx) {
+    $$(".card").forEach((c, j) => c.classList.toggle("sel", j === i));
+    showDetail(S.data.results[i].id, S.data.results[i], open, ctx);
+  }
+
+  async function showDetail(id, result, open, ctx) {
+    const panel = $("#detail"); if (!panel) return;
+    if (isNarrow() && open) { panel.classList.add("open"); document.body.classList.add("sheet-open"); }
+    panel.innerHTML = `<div class="d-head"><div class="sk" style="width:60%;height:18px"></div></div>`;
+    let det; try { det = await entity(id); } catch { panel.innerHTML = `<div class="detail-empty">${esc(t("err"))}</div>`; return; }
+    const e = det.entity, terms = S.data ? termsFor(S.data.query, S.data.expanded_terms) : [];
+    const byUrl = new Map();
+    e.evidence.forEach((ev) => { if (!byUrl.has(ev.url)) byUrl.set(ev.url, []); byUrl.get(ev.url).push(ev); });
+    panel.innerHTML = `
+      <div class="d-head"><div class="row">${avatar(e.name, e.entity_type)}
+        <div><h2>${esc(e.name)}</h2>${e.role ? `<div class="sub2">${esc(e.role)}</div>` : ""}
+          <div class="crumbs">${[e.source_label, e.institute, e.unit].filter(Boolean).map(esc).join(" › ")}</div></div>
+        <button class="icon-btn close-btn" id="dClose" type="button" aria-label="Close">${ICON.close}</button></div>
+        <div class="d-actions">
+          ${ctx ? `<button class="btn-primary btn-brand btn-sm" type="button" id="dAdd">${ICON.plus}${esc(t("res.add"))}</button>` : ""}
+          ${e.email ? `<a class="btn btn-sm" href="mailto:${esc(e.email)}">${ICON.mail}${esc(e.email)}</a>` : ""}
+          <a class="btn btn-sm" href="${esc(safeUrl(e.source_urls[0]))}" target="_blank" rel="noopener">${ICON.ext}${esc(t("res.open"))}</a></div></div>
+      <div class="d-body">
+        ${result ? `<section class="d-sec"><h4>${esc(t("res.why"))}</h4><p>${highlight(result.why_match, terms)}</p></section>` : ""}
+        ${e.description?.length ? `<section class="d-sec"><h4>${esc(t("res.about"))}</h4><p>${jargon(e.description[0])}</p></section>` : ""}
+        ${e.expertise.length ? `<section class="d-sec"><h4>${esc(t("f.exp"))}</h4><div class="tags">${e.expertise.slice(0, 12).map((x) => `<span class="tag" title="${esc(x)}">${jargon(x)}</span>`).join("")}</div></section>` : ""}
+        ${det.related.length ? `<section class="d-sec"><h4>${esc(t("res.linked"))}</h4><div class="rel">${det.related.map((x) => `<button type="button" data-id="${esc(x.id)}">
+          <span class="mini ${esc(x.entity_type)}">${esc(x.entity_type === "person" ? initialsOf(x.name) : x.entity_type[0].toUpperCase())}</span>
+          <span>${esc(x.name)}</span>${x.role ? `<span class="r-role">· ${esc(x.role.slice(0, 28))}</span>` : ""}</button>`).join("")}</div></section>` : ""}
+        <section class="d-sec"><h4>${esc(t("res.evidence"))} · ${e.evidence.length}</h4>
+          ${[...byUrl.entries()].map(([u, evs]) => `<div class="ev-page"><a class="ev-url" href="${esc(safeUrl(u))}" target="_blank" rel="noopener">${ICON.ext}<span>${esc(hostPath(u))}</span></a>
+            <ul class="ev-list">${evs.map((ev) => `<li><span class="ev-field">${esc(ev.field)}</span><span>“${highlight(ev.snippet, terms)}”</span></li>`).join("")}</ul></div>`).join("")}</section>
+      </div>`;
+    $("#dClose")?.addEventListener("click", () => { panel.classList.remove("open"); document.body.classList.remove("sheet-open"); });
+    $$(".rel button", panel).forEach((b) => b.addEventListener("click", () => showDetail(b.dataset.id, null, true, ctx)));
+    $("#dAdd")?.addEventListener("click", (ev) => addToCase(e.id, ev.currentTarget));
+  }
+
+  /* ======================= PUBLIC: directory ======================= */
+  async function viewDirectory() {
+    await loadGlossary();
+    view().innerHTML = `<div class="page-h"><div><h1>${esc(t("dir.title"))}</h1><p>${esc(t("dir.lead"))}</p></div></div>${spinner()}`;
+    const sc = await showcase();
+    let tab = store.get("nav-dirtab", "labs"), inst = "";
+    const insts = [...new Set([...sc.labs, ...sc.facilities].map((x) => x.institution))].sort();
+    const card = (f) => {
+      const meta = [f.lead ? `${t("lead")}: ${f.lead.name}` : "", f.people ? `${f.people} ${t("people")}` : "", f.institution].filter(Boolean);
+      return `<a class="dir-card" href="#/search?q=${encodeURIComponent(f.name)}" style="text-decoration:none">${avatar(f.name, f.entity_type, true)}
+        <div><h3>${esc(f.name)}</h3><div class="lead">${esc(meta.join(" · "))}</div>${f.summary ? `<p>${jargon(f.summary)}</p>` : ""}</div></a>`;
+    };
+    const draw = () => {
+      const xs = (tab === "labs" ? sc.labs : sc.facilities).filter((x) => !inst || x.institution === inst);
+      view().innerHTML = `<div class="page-h"><div><h1>${esc(t("dir.title"))}</h1><p>${esc(t("dir.lead"))}</p></div></div>
+        <div class="filters"><div class="seg-tabs" role="tablist">
+          <button type="button" role="tab" data-tab="labs" aria-selected="${tab === "labs"}" class="${tab === "labs" ? "on" : ""}">${esc(t("dir.labs"))} (${sc.labs.length})</button>
+          <button type="button" role="tab" data-tab="fac" aria-selected="${tab === "fac"}" class="${tab === "fac" ? "on" : ""}">${esc(t("dir.fac"))} (${sc.facilities.length})</button></div>
+          <div class="fgroup"><button type="button" class="fchip ${!inst ? "on" : ""}" data-inst="">${esc(t("dir.all"))}</button>
+          ${insts.map((i) => `<button type="button" class="fchip ${inst === i ? "on" : ""}" data-inst="${esc(i)}">${esc(i)}</button>`).join("")}</div></div>
+        <div class="dir">${xs.map(card).join("")}</div>`;
+      $$("[data-tab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; store.set("nav-dirtab", tab); draw(); }));
+      $$("[data-inst]").forEach((b) => b.addEventListener("click", () => { inst = b.dataset.inst; draw(); }));
+    };
+    draw();
+  }
+
+  /* ======================= PUBLIC: about ======================= */
+  async function viewAbout() {
+    const st = await stats(), ev = st.eval || {};
+    const pct = (v) => parseInt(v, 10);
+    const covered = st.sources.filter((s) => (st.pages_per_source[s.name] ?? 0) > 0).length;
+    const rows = [
+      ["1", "Finds the right people", "≥ 80% in top 10", ev.recall_at_k, (v) => pct(v) >= 80, "Hybrid keyword + multilingual vector search; labs surface their heads"],
+      ["2", "Handles different wording", "same experts", ev.synonym_twins_consistent, (v) => pct(v) >= 70, "Reviewed glossary + Apertus expansion + multilingual embeddings"],
+      ["3", "Every result traceable", "100%", ev.traceability, (v) => pct(v) === 100, "Every value quotes the page verbatim, re-checked; unsupported claims dropped"],
+      ["—", "Honest when unsure", "abstain", ev.abstention_correct, (v) => pct(v) === 100, "Out-of-scope or unknown-person queries → “no verifiable source”"],
+      ["4", "Structured results", "all fields", "✓", () => true, "Person, role, affiliation, expertise, projects, infrastructure, why, source"],
+      ["5", "Covers all three sources", "UniBE · ARTORG · DCB", `${covered}/${st.sources.length}`, () => covered === st.sources.length, "UniBE waits for the supplied subdomain inventory"],
+      ["6", "Easy to extend", "config only", "✓", () => true, "One YAML block + one command; no code changes"],
+    ];
+    view().innerHTML = `<div class="page-h"><div><h1>${esc(t("about.title"))}</h1><p>${esc(t("about.lead"))}</p></div></div>
+      <div class="section-h" style="margin-top:6px"><h2>${esc(t("about.pipe"))}</h2></div>
+      <ol class="pipeline">${[1, 2, 3, 4, 5].map((n) => `<li class="${n === 3 || n === 5 ? "ai" : ""}"><span class="n">${n}</span><b>${esc(t("p." + n))}</b>${esc(t("p." + n + "d"))}</li>`).join("")}</ol>
+      <div class="section-h"><h2>${esc(t("about.crit"))}</h2><span class="muted">${ev.queries ? `${ev.queries} test queries · make eval` : "make eval"}</span></div>
+      <div class="panel" style="padding:4px 8px;overflow-x:auto"><table class="criteria"><thead><tr><th>#</th><th>${esc(t("crit.c"))}</th><th>${esc(t("crit.t"))}</th><th>${esc(t("crit.m"))}</th><th>${esc(t("crit.how"))}</th></tr></thead>
+        <tbody>${rows.map(([n, c, tg, v, ok, how]) => `<tr><td>${n}</td><td><b>${esc(c)}</b></td><td>${esc(tg)}</td>
+          <td class="val ${v && ok(v) ? "ok" : "mid"}">${esc(v ?? "n/a")}</td><td class="muted">${esc(how)}</td></tr>`).join("")}</tbody></table></div>
+      <div class="section-h"><h2>${esc(t("about.cov"))}</h2></div>
+      <div class="cov">${st.sources.map((s) => { const pg = st.pages_per_source[s.name] ?? 0, en = st.entities_per_source[s.name] ?? 0;
+        return `<div class="cov-card ${pg ? "" : "pending"}"><h3>${esc(s.label)}</h3>${pg ? `<div class="v">${en}</div><div class="muted">${esc(t("cov.ents"))} · ${pg} ${esc(t("cov.pages"))}</div>`
+          : `<div class="muted" style="margin-top:6px">${esc(t("cov.pending"))}</div>`}</div>`; }).join("")}</div>
+      <div class="section-h"><h2>${esc(t("about.ext"))}</h2></div>
+      <div class="panel"><ol class="timeline">${[1, 2, 3].map((n) => `<li>${esc(t("about.ext" + n))}</li>`).join("")}</ol></div>`;
+  }
+
+  /* ======================= STAFF: identity ======================= */
+  function viewIdentity() {
+    let role = staff?.role || "";
+    const rc = (r, ico) => `<button type="button" class="role-card ${r} ${role === r ? "on" : ""}" data-role="${r}" aria-pressed="${role === r}">
+      <span class="ico">${ICON[ico]}</span><h2>${esc(t(`id.${r}T`))}</h2><p>${esc(t(`id.${r}D`))}</p>
+      <ul>${[1, 2, 3].map((n) => `<li>${esc(t(`id.${r}${n}`))}</li>`).join("")}</ul></button>`;
+    const rec = recent();
+    view().innerHTML = `<div class="ident"><h1>${esc(t("id.title"))}</h1><p>${esc(t("id.lead"))}</p>
+      <div class="role-cards">${rc("officer", "briefcase")}${rc("reviewer", "microscope")}</div>
+      <form class="panel" id="idForm"><div class="grid-form">
+        <label class="field">${esc(t("id.name"))}<input name="name" required maxlength="80" value="${esc(staff?.name || "")}" autocomplete="name"></label>
+        <label class="field">${esc(t("id.email"))}<input name="email" type="email" maxlength="120" value="${esc(staff?.email || "")}" autocomplete="email"></label>
+        <label class="field full">${esc(t("id.team"))}<input name="team" maxlength="120" value="${esc(staff?.team || "")}"></label></div>
+        <div class="sel-bar"><span class="muted" id="idHint"></span><button class="btn-primary btn-brand" type="submit">${esc(t("id.enter"))}</button></div>
+        ${rec.length ? `<div class="recent"><span class="muted">${esc(t("id.recent"))}:</span>${rec.map((p, i) => `<button type="button" data-rec="${i}">
+          <span class="av ${esc(p.role)}">${esc(initialsOf(p.name))}</span>${esc(p.name)} · <span class="muted">${esc(t("role." + p.role))}</span></button>`).join("")}</div>` : ""}
+      </form></div>`;
+    $$("[data-role]").forEach((b) => b.addEventListener("click", () => {
+      role = b.dataset.role;
+      $$("[data-role]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
+      $("#idHint").textContent = "";
+      $("#idForm").name.focus();
+    }));
+    $$("[data-rec]").forEach((b) => b.addEventListener("click", () => { setStaff(rec[+b.dataset.rec]); go(roleHome()); }));
+    $("#idForm").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      if (!role) { $("#idHint").textContent = t("id.pick"); return; }
+      const f = ev.target;
+      setStaff({ name: f.name.value.trim(), email: f.email.value.trim(), team: f.team.value.trim(), role });
+      go(roleHome());
+    });
+  }
+
+  /* ======================= STAFF/officer: requests board ======================= */
+  function viewRequests() {
+    const by = (sts) => S.cases.filter((c) => sts.includes(c.status));
+    const cols = [["col.todo", ["new", "changes_requested"]], ["col.review", ["in_review"]], ["col.ready", ["approved"]], ["col.done", ["contacted", "call_scheduled", "closed"]]];
+    const card = (c) => `<a class="case-card" href="#/staff/case/${esc(c.id)}"><h3>${esc(c.company)}</h3><p>${esc(c.summary)}</p>
+      <div class="case-meta">${pill(c.status)}${c.selected ? `<span>${c.selected} ${esc(t("partners"))}</span>` : ""}${c.reviewer && c.status === "in_review" ? `<span>→ ${esc(c.reviewer)}</span>` : ""}
+      <span>${esc(fmtDate(c.updated_at, false))}</span></div></a>`;
+    const kpi = (v, l) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(t(l))}</div></div>`;
+    view().innerHTML = `<div class="page-h"><div><h1>${esc(t("rq.title"))}</h1><p>${esc(t("rq.lead"))}</p></div>
+        <a class="btn-primary btn-brand" href="#/staff/new">${ICON.plus}${esc(t("nav.new"))}</a></div>
+      <div class="kpis">${kpi(by(["new", "changes_requested", "in_review", "approved"]).length, "kpi.open")}${kpi(by(["in_review"]).length, "kpi.review")}
+        ${kpi(by(["approved"]).length, "kpi.ready")}${kpi(by(["contacted", "call_scheduled"]).length, "kpi.invited")}</div>
+      ${S.cases.length ? `<div class="board">${cols.map(([l, sts]) => { const xs = by(sts);
+        return `<section class="col" aria-label="${esc(t(l))}"><div class="col-h"><span>${esc(t(l))}</span><i class="count">${xs.length || ""}</i></div>
+          ${xs.map(card).join("") || `<div class="col-empty">${esc(t("col.empty"))}</div>`}</section>`; }).join("")}</div>`
+      : `<div class="panel empty"><div class="empty-ico">${ICON.inbox}</div><h3>${esc(t("rq.empty"))}</h3><p>${esc(t("rq.emptyD"))}</p>
+          <p style="margin-top:14px"><a class="btn-primary btn-brand" href="#/staff/new">${ICON.plus}${esc(t("nav.new"))}</a></p></div>`}`;
+  }
+
+  /* ======================= STAFF/officer: new request ======================= */
+  async function viewNew() {
+    if (!S.examples) { try { S.examples = await api("/examples"); } catch { S.examples = []; } }
+    view().innerHTML = `<a class="back" href="#/staff/requests">${ICON.back}${esc(t("cs.back"))}</a>
+      <div class="page-h"><div><h1>${esc(t("nw.title"))}</h1><p>${esc(t("nw.lead"))}</p></div></div>
+      <div class="new-grid"><form class="panel" id="newForm"><div class="grid-form">
+          <label class="field">${esc(t("nw.company"))}<input name="company" required maxlength="200"></label>
+          <label class="field">${esc(t("nw.country"))}<input name="country" maxlength="100"></label>
+          <label class="field">${esc(t("nw.contact"))}<input name="contact_name" maxlength="200"></label>
+          <label class="field">${esc(t("nw.email"))}<input name="contact_email" type="email" maxlength="200"></label>
+          <label class="field full">${esc(t("nw.text"))} <small>${esc(t("nw.textHint"))}</small><textarea name="request_text" required minlength="10" maxlength="12000" rows="9"></textarea></label></div>
+        <div class="sel-bar"><span></span><button class="btn-primary btn-brand" type="submit">${ICON.sparkle}${esc(t("nw.submit"))}</button></div></form>
+        <aside class="panel"><div class="panel-h"><h2>${esc(t("nw.examples"))}</h2></div><div class="examples-list">${S.examples.map((x, i) => `<button type="button" class="ex-btn" data-ex="${i}">
+          <b>${esc(L(x.label) || x.company)}</b><span>${esc(x.company)} · ${esc(x.country)}</span></button>`).join("")}</div></aside></div>`;
+    $$("[data-ex]").forEach((b) => b.addEventListener("click", () => {
+      const x = S.examples[+b.dataset.ex], f = $("#newForm");
+      for (const k of ["company", "country", "contact_name", "contact_email", "request_text"]) f[k].value = x[k] || "";
+    }));
+    $("#newForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const f = ev.target, body = asStaff({ ...Object.fromEntries(new FormData(f)), lang: LANG });
+      f.innerHTML = spinner(t("nw.working"));
+      try { const c = await api("/cases", { method: "POST", body }); go(`#/staff/case/${c.id}`); }
+      catch (e) { toast(`${t("err")}: ${e.message}`); viewNew(); }
+    });
+  }
+
+  /* ======================= STAFF: request page (different per role) ======================= */
   let CASE = null;
   const stepOf = (st) => ({ new: 2, changes_requested: 2, in_review: 3, approved: 4 }[st] || 5);
-
   async function viewCase(id) {
     view().innerHTML = spinner();
     await loadGlossary();
     try { CASE = await api(`/cases/${encodeURIComponent(id)}`); }
-    catch { view().innerHTML = `<div class="panel empty"><h3>${esc(t("err"))}</h3><p><a href="#/">${esc(t("case.back"))}</a></p></div>`; return; }
-    renderCase();
+    catch { view().innerHTML = `<div class="panel empty"><h3>${esc(t("err"))}</h3><p><a href="${roleHome()}">${esc(t("cs.back"))}</a></p></div>`; return; }
+    staff.role === "reviewer" ? renderReviewerCase() : renderOfficerCase();
   }
+  const requester = (c) => (c.events.find((e) => e.kind === "review_requested") || c.events.find((e) => e.kind === "created"))?.actor || "—";
 
-  function renderCase() {
-    const c = CASE, step = stepOf(c.status), a = c.analysis;
-    const stepCls = (n) => (n < step ? "done" : n === step ? "now" : "");
-    view().innerHTML = `
-      <a class="back" href="#/">${ICON.back}${esc(t("case.back"))}</a>
-      <div class="case-h"><div><h1>${esc(c.company)}</h1>
-        <div class="sub">${c.country ? `<span>${esc(c.country)}</span>` : ""}<span>${esc(t("case.received"))} ${esc(fmtDate(c.created_at))}</span></div></div>
-        ${pill(c.status)}</div>
-      <ol class="stepper">${[1, 2, 3, 4].map((n) => `<li class="${stepCls(n)}"><span class="dotn">${n < step ? "✓" : n}</span>${esc(t("step." + n))}</li>`).join("")}</ol>
-      <div class="case-grid">
-        <div>${panelUnderstand(a)}${panelPartners(c, step)}${panelReview(c, step)}${panelInvite(c, step)}</div>
-        <aside class="side">
-          <div class="panel contact-box"><div class="panel-h"><h2>${esc(t("case.contact"))}</h2></div>
-            <dl>${c.contact_name ? `<dt>${esc(t("f.contact"))}</dt><dd>${esc(c.contact_name)}</dd>` : ""}
-              ${c.contact_email ? `<dt>Email</dt><dd><a href="mailto:${esc(c.contact_email)}">${esc(c.contact_email)}</a></dd>` : ""}
-              ${c.country ? `<dt>${esc(t("f.country"))}</dt><dd>${esc(c.country)}</dd>` : ""}</dl></div>
-          <div class="panel"><div class="panel-h"><h2>${esc(t("side.activity"))}</h2></div>
-            <ol class="timeline">${[...c.events].reverse().map((e) => `<li><b>${esc(e.actor)}</b> · ${esc(e.text)}<time>${esc(fmtDate(e.at))}</time></li>`).join("")}</ol></div>
-          <button class="link-btn" id="delCase" type="button">${ICON.trash}${esc(t("side.delete"))}</button>
-        </aside>
-      </div>`;
-    bindCase();
-  }
-
-  function panelUnderstand(a) {
-    const ai = a.generated_by === "apertus";
-    return `<section class="panel done" aria-labelledby="p1h">
-      <div class="panel-h"><h2 id="p1h"><span class="num">✓</span>${esc(t("p1.title"))}</h2>
-        <span class="ai-badge ${ai ? "" : "rules"}">${ai ? ICON.sparkle : ""}${esc(t(ai ? "p1.ai" : "p1.rules"))}</span></div>
-      <p class="plain-summary">${jargon(a.summary)}</p>
-      <div class="facts">
-        <div class="fact"><h4>${esc(t("p1.does"))}</h4><p>${jargon(a.company_does || "—")}</p></div>
-        <div class="fact"><h4>${esc(t("p1.needs"))}</h4>${a.company_needs.length ? `<ul>${a.company_needs.map((n) => `<li>${jargon(n)}</li>`).join("")}</ul>` : "<p>—</p>"}</div>
-      </div>
-      <div class="words-h">${esc(t("p1.words"))}</div>
-      ${a.terms.length ? `<div class="words">${a.terms.map((w) => `<div class="word"><b>${esc(termLabel(w))}
-          <span class="src-tag ${w.source === "apertus" ? "ai" : ""}">${esc(t(w.source === "apertus" ? "p1.aiterm" : "p1.glossary"))}</span></b>
-          <p>${esc(w.plain)}</p></div>`).join("")}</div>` : `<p class="muted">${esc(t("p1.noterms"))}</p>`}
-      <details class="orig"><summary>${esc(t("p1.orig"))}</summary><div class="orig-text">${jargon(CASE.request_text)}</div></details>
-    </section>`;
+  function sidePanels(c) {
+    return `<aside class="side">
+      <div class="panel contact-box"><div class="panel-h"><h2>${esc(t("cs.contact"))}</h2></div>
+        <dl><dt>${esc(t("nw.company"))}</dt><dd>${esc(c.company)}</dd>
+          ${c.contact_name ? `<dt>${esc(t("nw.contact"))}</dt><dd>${esc(c.contact_name)}</dd>` : ""}
+          ${c.contact_email ? `<dt>Email</dt><dd>${staff.role === "officer" ? `<a href="mailto:${esc(c.contact_email)}">${esc(c.contact_email)}</a>` : esc(c.contact_email)}</dd>` : ""}
+          ${c.country ? `<dt>${esc(t("nw.country"))}</dt><dd>${esc(c.country)}</dd>` : ""}</dl></div>
+      <div class="panel"><div class="panel-h"><h2>${esc(t("cs.activity"))}</h2></div>
+        <ol class="timeline">${[...c.events].reverse().map((e) => `<li><b>${esc(e.actor)}</b>${e.role ? ` <span class="muted">(${esc(t("role." + e.role))})</span>` : ""} · ${esc(e.text)}<time>${esc(fmtDate(e.at))}</time></li>`).join("")}</ol></div>
+      ${staff.role === "officer" ? `<button class="link-btn" id="delCase" type="button">${ICON.trash}${esc(t("cs.delete"))}</button>` : ""}
+    </aside>`;
   }
 
   function termLabel(w) {
@@ -512,409 +828,313 @@
     return shown.toLowerCase() === (w.term || "").toLowerCase() ? shown : `${shown} · ${w.term}`;
   }
 
-  function panelPartners(c, step) {
-    const editable = ["new", "changes_requested"].includes(c.status);
-    const nSel = c.matches.filter((m) => m.selected).length;
-    const rows = c.matches.map((m) => {
-      const who = [m.role, m.unit].filter(Boolean).map(esc).join(" · ");
-      const verdict = m.review === "ok" ? `<span class="verdict ok">${esc(t("p2.ok"))}</span>`
-        : m.review === "no" ? `<span class="verdict no">${esc(t("p2.no"))}</span>` : "";
-      return `<div class="match ${m.selected ? "sel" : ""} ${m.review === "no" ? "rej" : ""}">
-        <input type="checkbox" data-sel="${esc(m.id)}" ${m.selected ? "checked" : ""} ${editable ? "" : "disabled"} aria-label="${esc(m.name)}">
-        ${avatar(m.name, m.entity_type, true)}
-        <div><h3>${esc(m.name)}</h3>
-          <div class="who">${who ? who + " · " : ""}${esc(m.institution)}</div>
-          ${m.plain ? `<p class="plain">${jargon(m.plain.length > 240 ? m.plain.slice(0, 237) + "…" : m.plain)}</p>` : ""}
-          <p class="why">${esc(m.why)}${m.review_note ? ` · <b>${esc(m.review_note)}</b>` : ""}</p></div>
-        <div class="right"><span class="type-badge ${esc(m.entity_type)}">${esc(t("type." + m.entity_type))}</span>${verdict}
-          <a class="link-btn" href="${esc(safeUrl(m.url))}" target="_blank" rel="noopener">${ICON.ext}${esc(t("p2.source"))}</a></div>
-      </div>`;
-    }).join("");
-    return `<section class="panel ${step === 2 ? "active" : step > 2 ? "done" : ""}" aria-labelledby="p2h">
-      <div class="panel-h"><h2 id="p2h"><span class="num">${step > 2 ? "✓" : 2}</span>${esc(t("p2.title"))}</h2><span class="muted">${nSel} ${esc(t("p2.selected"))}</span></div>
-      ${editable ? `<p class="muted" style="margin:-4px 0 12px">${esc(t("p2.lead"))}</p>
-        <form class="match-tools" id="rematch"><input name="q" value="${esc(c.analysis.search_query)}" aria-label="${esc(t("p2.rematch"))}">
-          <button class="btn" type="submit">${esc(t("p2.rematch"))}</button>
-          <button class="btn" type="button" id="moreExplore">${esc(t("p2.more"))}</button></form>` : ""}
-      ${c.matches.length ? `<div class="matches">${rows}</div>` : `<div class="callout warn">${ICON.info}<span>${esc(c.no_match_message || t("p2.none"))}</span></div>`}
-    </section>`;
+  function panelUnderstand(a, withWords = true) {
+    const ai = a.generated_by === "apertus";
+    return `<section class="panel done"><div class="panel-h"><h2><span class="num">✓</span>${esc(t("u.title"))}</h2>
+        <span class="ai-badge ${ai ? "" : "rules"}">${ai ? ICON.sparkle : ""}${esc(t(ai ? "u.ai" : "u.rules"))}</span></div>
+      <p class="plain-summary">${jargon(a.summary)}</p>
+      <div class="facts"><div class="fact"><h4>${esc(t("u.does"))}</h4><p>${jargon(a.company_does || "—")}</p></div>
+        <div class="fact"><h4>${esc(t("u.needs"))}</h4>${a.company_needs.length ? `<ul>${a.company_needs.map((n) => `<li>${jargon(n)}</li>`).join("")}</ul>` : "<p>—</p>"}</div></div>
+      ${withWords ? `<div class="words-h">${esc(t("u.words"))}</div>${a.terms.length ? `<div class="words">${a.terms.map((w) => `<div class="word"><b>${esc(termLabel(w))}
+          <span class="src-tag ${w.source === "apertus" ? "ai" : ""}">${esc(t(w.source === "apertus" ? "u.aiterm" : "u.gloss"))}</span></b><p>${esc(w.plain)}</p></div>`).join("")}</div>`
+        : `<p class="muted">${esc(t("u.none"))}</p>`}
+      <details class="orig"><summary>${esc(t("u.orig"))}</summary><div class="orig-text">${jargon(CASE.request_text)}</div></details>` : ""}</section>`;
   }
 
-  function panelReview(c, step) {
+  /* ---------- officer ---------- */
+  function renderOfficerCase() {
+    const c = CASE, step = stepOf(c.status), cls = (n) => (n < step ? "done" : n === step ? "now" : "");
+    view().innerHTML = `<a class="back" href="#/staff/requests">${ICON.back}${esc(t("cs.back"))}</a>
+      <div class="case-h"><div><h1>${esc(c.company)}</h1><div class="sub">${c.country ? `<span>${esc(c.country)}</span>` : ""}<span>${esc(t("cs.received"))} ${esc(fmtDate(c.created_at))}</span></div></div>${pill(c.status)}</div>
+      <ol class="stepper">${[1, 2, 3, 4].map((n) => `<li class="${cls(n)}"><span class="dotn">${n < step ? "✓" : n}</span>${esc(t("step." + n))}</li>`).join("")}</ol>
+      <div class="case-grid"><div>${panelUnderstand(c.analysis)}${officerPartners(c, step)}${officerReview(c, step)}${officerPitch(c, step)}</div>${sidePanels(c)}</div>`;
+    bindOfficerCase();
+  }
+
+  function matchRow(m, editable) {
+    const who = [m.role, m.unit].filter(Boolean).map(esc).join(" · ");
+    const verdict = m.review === "ok" ? `<span class="verdict ok">${esc(t("m.ok"))}</span>` : m.review === "no" ? `<span class="verdict no">${esc(t("m.no"))}</span>` : "";
+    return `<div class="match ${m.selected ? "sel" : ""} ${m.review === "no" ? "rej" : ""}">
+      <input type="checkbox" data-sel="${esc(m.id)}" ${m.selected ? "checked" : ""} ${editable ? "" : "disabled"} aria-label="${esc(m.name)}">
+      ${avatar(m.name, m.entity_type, true)}
+      <div><h3>${esc(m.name)}</h3><div class="who">${who ? who + " · " : ""}${esc(m.institution)}</div>
+        ${m.plain ? `<p class="plain">${jargon(m.plain.length > 240 ? m.plain.slice(0, 237) + "…" : m.plain)}</p>` : ""}
+        <p class="why">${esc(m.why)}${m.review_note ? ` · <b>${esc(m.review_note)}</b>` : ""}</p></div>
+      <div class="right"><span class="type-badge ${esc(m.entity_type)}">${esc(t("type." + m.entity_type))}</span>${verdict}
+        <a class="link-btn" href="${esc(safeUrl(m.url))}" target="_blank" rel="noopener">${ICON.ext}${esc(t("m.src"))}</a></div></div>`;
+  }
+
+  function officerPartners(c, step) {
+    const editable = ["new", "changes_requested"].includes(c.status);
+    const nSel = c.matches.filter((m) => m.selected).length;
+    const shown = editable ? c.matches : c.matches.filter((m) => m.selected);
+    return `<section class="panel ${step === 2 ? "active" : step > 2 ? "done" : ""}">
+      <div class="panel-h"><h2><span class="num">${step > 2 ? "✓" : 2}</span>${esc(t("m.title"))}</h2><span class="muted">${nSel} ${esc(t("m.sel"))}${editable ? "" : ` · ${esc(t("m.locked"))}`}</span></div>
+      ${editable ? `<p class="muted" style="margin:-4px 0 12px">${esc(t("m.lead"))}</p>
+        <form class="match-tools" id="rematch"><input name="q" value="${esc(c.analysis.search_query)}" aria-label="${esc(t("m.again"))}">
+          <button class="btn" type="submit">${esc(t("m.again"))}</button><button class="btn" type="button" id="moreSearch">${esc(t("m.more"))}</button></form>` : ""}
+      ${shown.length ? `<div class="matches">${shown.map((m) => matchRow(m, editable)).join("")}</div>` : `<div class="callout warn">${ICON.info}<span>${esc(c.no_match_message || t("m.none"))}</span></div>`}</section>`;
+  }
+
+  function officerReview(c, step) {
     const sel = c.matches.filter((m) => m.selected);
+    const reviewers = [...new Set(recent().filter((p) => p.role === "reviewer").map((p) => p.name))];
     let body;
     if (["new", "changes_requested"].includes(c.status)) {
-      body = `${c.status === "changes_requested" ? `<div class="callout warn" style="margin-bottom:12px">${ICON.info}<div><b>${esc(t("p3.changes", { who: c.reviewer }))}</b>${c.review_comment ? `<br>“${esc(c.review_comment)}”` : ""}</div></div>` : ""}
-        <p class="muted" style="margin:-4px 0 12px">${esc(t("p3.lead"))}</p>
+      body = `${c.status === "changes_requested" ? `<div class="callout warn" style="margin-bottom:12px">${ICON.info}<div><b>${esc(t("r.changes", { who: c.reviewer }))}</b>${c.review_comment ? `<br>“${esc(c.review_comment)}”` : ""}</div></div>` : ""}
+        <p class="muted" style="margin:-4px 0 12px">${esc(t("r.lead"))}</p>
         <form id="reviewReq" class="grid-form">
-          <label class="field">${esc(t("p3.reviewer"))}<input name="reviewer" required maxlength="120" value="${esc(c.reviewer || store.get("nav-lastReviewer", ""))}"></label>
-          <label class="field full">${esc(t("p3.note"))}<textarea name="note" rows="2" maxlength="2000" style="min-height:70px"></textarea></label>
-          <div class="full actions"><button class="btn-primary" type="submit" ${sel.length ? "" : "disabled"}>${ICON.send}${esc(t("p3.send"))}</button>
-            ${sel.length ? "" : `<span class="muted">${esc(t("p3.needSel"))}</span>`}</div>
-        </form>`;
-    } else if (c.status === "in_review" && me.role !== "reviewer") {
-      body = `<div class="callout info">${ICON.info}<div><b>${esc(t("p3.waiting", { who: c.reviewer, n: sel.length }))}</b>${c.review_note ? `<br>“${esc(c.review_note)}”` : ""}</div></div>
-        <div class="actions" style="margin-top:10px"><button class="btn btn-sm" id="asReviewer" type="button">${esc(t("p3.switch"))}</button></div>`;
+          <label class="field">${esc(t("r.reviewer"))}<input name="reviewer" required maxlength="120" list="reviewerList" value="${esc(c.reviewer || reviewers[0] || "")}"></label>
+          <datalist id="reviewerList">${reviewers.map((r) => `<option value="${esc(r)}">`).join("")}</datalist>
+          <label class="field full">${esc(t("r.note"))}<textarea name="note" rows="2" maxlength="2000" style="min-height:70px"></textarea></label>
+          <div class="full actions"><button class="btn-primary" type="submit" ${sel.length ? "" : "disabled"}>${ICON.send}${esc(t("r.send"))}</button>
+            ${sel.length ? "" : `<span class="muted">${esc(t("r.needSel"))}</span>`}</div></form>`;
     } else if (c.status === "in_review") {
-      body = `<p class="muted" style="margin:-4px 0 12px">${esc(t("p3.rv.lead"))}</p>
-        ${c.review_note ? `<div class="callout" style="margin-bottom:12px">${ICON.info}<span>“${esc(c.review_note)}”</span></div>` : ""}
-        <div id="rvItems">${sel.map((m) => `<div class="review-item" data-rv="${esc(m.id)}">
-          <div class="review-row"><div style="display:flex;gap:10px;align-items:center;min-width:0">${avatar(m.name, m.entity_type, true)}<div><b>${esc(m.name)}</b>
-            <div class="muted">${[m.role, m.unit, m.institution].filter(Boolean).map(esc).join(" · ")}</div></div></div>
-            <div class="seg" role="group" aria-label="${esc(m.name)}"><button type="button" data-v="ok">${esc(t("p3.rv.ok"))}</button><button type="button" data-v="no">${esc(t("p3.rv.no"))}</button></div></div>
-          <p class="muted" style="margin:8px 0 6px">${esc(m.why)}</p>
-          <div class="actions"><input class="rv-note" placeholder="${esc(t("p3.rv.note"))}" style="flex:1;min-width:180px" aria-label="${esc(t("p3.rv.note"))}">
-            <button class="btn btn-sm" type="button" data-details="${esc(m.id)}">${esc(t("p3.rv.details"))}</button></div>
-          <div class="rv-details"></div></div>`).join("")}</div>
-        <label class="field" style="margin-top:12px">${esc(t("p3.rv.comment"))}<textarea id="rvComment" rows="2" style="min-height:70px"></textarea></label>
-        <div class="actions" style="margin-top:12px"><button class="btn-primary btn-ok" id="rvApprove" type="button" disabled>${ICON.check}${esc(t("p3.rv.approve"))}</button>
-          <button class="btn" id="rvChanges" type="button">${esc(t("p3.rv.changes"))}</button></div>`;
+      body = `<div class="callout info">${ICON.info}<div><b>${esc(t("r.waiting", { who: c.reviewer, n: sel.length }))}</b><br>${esc(t("r.waitHint", { who: c.reviewer }))}
+        ${c.review_note ? `<br>“${esc(c.review_note)}”` : ""}</div></div>`;
     } else {
-      const ok = c.matches.filter((m) => m.selected && m.review === "ok").length;
-      body = `<div class="callout ok">${ICON.check}<div><b>${esc(t("p3.approved", { who: c.reviewer, n: ok }))}</b>${c.review_comment ? `<br>“${esc(c.review_comment)}”` : ""}</div></div>`;
+      body = `<div class="callout ok">${ICON.check}<div><b>${esc(t("r.approved", { who: c.reviewer, n: c.matches.filter((m) => m.selected && m.review === "ok").length }))}</b>${c.review_comment ? `<br>“${esc(c.review_comment)}”` : ""}</div></div>`;
     }
-    return `<section class="panel ${step === 3 ? "active" : step > 3 ? "done" : ""}" aria-labelledby="p3h">
-      <div class="panel-h"><h2 id="p3h"><span class="num">${step > 3 ? "✓" : 3}</span>${esc(t("p3.title"))}</h2>
-        ${c.reviewer ? `<span class="muted">${esc(c.reviewer)}</span>` : ""}</div>${body}</section>`;
+    return `<section class="panel ${step === 3 ? "active" : step > 3 ? "done" : ""}"><div class="panel-h"><h2><span class="num">${step > 3 ? "✓" : 3}</span>${esc(t("r.title"))}</h2>
+      ${c.reviewer ? `<span class="muted">${esc(c.reviewer)}</span>` : ""}</div>${body}</section>`;
   }
 
   function nextSlots() {
     const out = [], d = new Date(), pad = (n) => String(n).padStart(2, "0");
-    while (out.length < 3) {
-      d.setDate(d.getDate() + 1);
-      if (d.getDay() === 0 || d.getDay() === 6) continue;
-      out.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${out.length % 2 ? "14" : "10"}:00`);
-    }
+    while (out.length < 3) { d.setDate(d.getDate() + 1); if (d.getDay() === 0 || d.getDay() === 6) continue;
+      out.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${out.length % 2 ? "14" : "10"}:00`); }
     return out;
   }
 
-  function panelInvite(c, step) {
-    if (step < 4) {
-      return `<section class="panel locked" aria-labelledby="p4h"><div class="panel-h"><h2 id="p4h"><span class="num">4</span>${esc(t("p4.title"))}</h2></div>
-        <p class="muted" style="margin:0">${esc(t("p4.locked"))}</p></section>`;
-    }
-    const done = ["contacted", "call_scheduled", "closed"].includes(c.status);
-    return `<section class="panel ${done ? "done" : "active"}" aria-labelledby="p4h">
-      <div class="panel-h"><h2 id="p4h"><span class="num">${done ? "✓" : 4}</span>${esc(t("p4.title"))}</h2></div>
-      ${c.outreach?.sent_at ? `<div class="callout ok" style="margin-bottom:12px">${ICON.check}<span>${esc(t("p4.doneEmail", { d: fmtDate(c.outreach.sent_at) }))}</span></div>` : ""}
-      ${c.outreach?.call ? `<div class="callout ok" style="margin-bottom:12px">${ICON.cal}<span>${esc(t("p4.doneCall", { d: c.outreach.call }))}</span></div>` : ""}
-      <div class="grid-form">
-        <label class="field">${esc(t("p4.lang"))}<select class="input" id="mailLang">${["en", "de", "fr"].map((l) => `<option value="${l}" ${l === LANG ? "selected" : ""}>${l.toUpperCase()}</option>`).join("")}</select></label>
-        <label class="field">${esc(t("p4.duration"))}<select class="input" id="callMin"><option>30</option><option>45</option><option>60</option></select></label>
-        <div class="field full">${esc(t("p4.slots"))}<div class="slots">${nextSlots().map((s) => `<input type="datetime-local" class="slot" value="${s}" aria-label="${esc(t("p4.slots"))}">`).join("")}</div></div>
-      </div>
-      <div class="actions" style="margin-top:12px"><button class="btn-primary btn-brand" id="prepMail" type="button">${ICON.mail}${esc(t("p4.prepare"))}</button>
-        <button class="btn" id="dlIcs" type="button">${ICON.cal}${esc(t("p4.ics"))}</button></div>
-      <div id="mailBox"></div>
+  /** Step 4: Output 1 (plain, for her) + Output 2 (executive brief, for the CEO) + sending. */
+  function pitchOutputs(c) {
+    const b = c.outreach?.brief;
+    if (!b) return "";
+    const s = b.stats || {};
+    return `<div class="pitch-grid">
+      <div class="explain"><h3><span class="tag1">${esc(t("i.forYou"))}</span>${esc(t("i.forYouT"))}</h3>
+        ${(b.explainer || []).map((sec) => `<section><h4>${esc(sec.title)}</h4>${sec.lines.map((l) => `<p>${jargon(l.text)}</p>${l.plain ? `<p class="mean">${esc(l.plain)}</p>` : ""}`).join("")}</section>`).join("")}</div>
+      <div class="preview"><div class="pv-top"><small>${esc(t("i.forCeo"))} · ${esc(t("i.forCeoT"))}</small><h3>${esc(c.company)} × Bern</h3><p>${esc(b.data.hook)}</p></div>
+        <div class="pv-body"><div class="stat-chips"><span><b>${b.data.items.length}</b> ${esc(t("i.teams"))}</span><span><b>${s.claims ?? "–"}</b> ${esc(t("i.stmt"))}</span>
+          <span><b>${s.publications ?? 0}</b> ${esc(t("i.pubs"))}</span><span><b>${s.sources ?? b.data.sources.length}</b> ${esc(t("i.srcs"))}</span></div>
+          <div class="actions"><a class="btn-primary btn-brand btn-sm" href="#/b/${esc(b.token)}" target="_blank" rel="noopener">${ICON.doc}${esc(t("i.open"))}</a>
+            <a class="btn btn-sm" href="#/b/${esc(b.token)}?print=1" target="_blank" rel="noopener">${ICON.printer}${esc(t("i.pdf"))}</a>
+            <button class="btn btn-sm" type="button" id="copyBrief">${ICON.link}${esc(t("i.copyLink"))}</button></div>
+          <p class="muted" style="margin:0">${esc(t("bf.prepared", { d: fmtDate(b.at) }))} · ${esc(b.lang.toUpperCase())}</p></div></div></div>`;
+  }
+
+  function officerPitch(c, step) {
+    if (step < 4) return `<section class="panel locked"><div class="panel-h"><h2><span class="num">4</span>${esc(t("i.title"))}</h2><span class="muted">${ICON.lock}</span></div>
+      <p class="muted" style="margin:0">${esc(t("i.locked"))}</p></section>`;
+    const done = ["contacted", "call_scheduled", "closed"].includes(c.status), b = c.outreach?.brief;
+    return `<section class="panel ${done ? "done" : "active"}"><div class="panel-h"><h2><span class="num">${done ? "✓" : 4}</span>${esc(t("i.title"))}</h2></div>
+      <p class="muted" style="margin:-4px 0 12px">${esc(t("i.lead"))}</p>
+      ${c.outreach?.sent_at ? `<div class="callout ok" style="margin-bottom:12px">${ICON.check}<span>${esc(t("i.doneEmail", { d: fmtDate(c.outreach.sent_at) }))}</span></div>` : ""}
+      ${c.outreach?.call ? `<div class="callout ok" style="margin-bottom:12px">${ICON.cal}<span>${esc(t("i.doneCall", { d: c.outreach.call }))}</span></div>` : ""}
+      <div class="actions"><label class="field" style="min-width:180px">${esc(t("i.lang"))}<select class="input" id="pitchLang">${["en", "de", "fr"].map((l) => `<option value="${l}" ${l === (b?.lang || LANG) ? "selected" : ""}>${l.toUpperCase()}</option>`).join("")}</select></label>
+        <button class="btn-primary btn-brand" id="prepBrief" type="button" style="align-self:flex-end">${ICON.sparkle}${esc(t(b ? "i.regen" : "i.prep"))}</button></div>
+      <div id="pitchBox">${pitchOutputs(c)}</div>
+      ${b ? `<div class="sub-h">${ICON.mail}${esc(t("i.mail"))}</div>
+        <div class="grid-form"><div class="field full">${esc(t("i.slots"))}<div class="slots">${nextSlots().map((s) => `<input type="datetime-local" class="slot" value="${s}" aria-label="${esc(t("i.slots"))}">`).join("")}</div></div>
+          <label class="field">${esc(t("i.dur"))}<select class="input" id="callMin"><option>30</option><option>45</option><option>60</option></select></label></div>
+        <div class="actions" style="margin-top:12px"><button class="btn-primary" id="prepMail" type="button">${ICON.mail}${esc(t("i.prepMail"))}</button>
+          <button class="btn" id="dlIcs" type="button">${ICON.cal}${esc(t("i.ics"))}</button></div><div id="mailBox"></div>` : ""}
     </section>`;
   }
 
-  const slotLabels = () => $$(".slot").map((i) => i.value).filter(Boolean).map((v) => fmtDate(v));
-
-  function bindCase() {
+  function bindOfficerCase() {
     const c = CASE;
-    $("#delCase")?.addEventListener("click", async () => {
-      if (!confirm(t("side.confirmDelete"))) return;
-      await api(`/cases/${c.id}`, { method: "DELETE" }); await refreshCases(); location.hash = "#/";
-    });
-    let selTimer;
+    const rerender = (keep = true) => { const y = window.scrollY; renderOfficerCase(); if (keep) window.scrollTo(0, y); };
+    $("#delCase")?.addEventListener("click", async () => { if (!confirm(t("cs.confirmDelete"))) return; await api(`/cases/${c.id}`, { method: "DELETE" }); go("#/staff/requests"); });
+    let timer;
     $$("[data-sel]").forEach((cb) => cb.addEventListener("change", () => {
-      const m = c.matches.find((x) => x.id === cb.dataset.sel); m.selected = cb.checked;
+      c.matches.find((x) => x.id === cb.dataset.sel).selected = cb.checked;
       cb.closest(".match").classList.toggle("sel", cb.checked);
-      clearTimeout(selTimer);
-      selTimer = setTimeout(async () => {
-        CASE = await api(`/cases/${c.id}/selection`, { method: "POST", body: { selected: c.matches.filter((x) => x.selected).map((x) => x.id), actor: me.name } });
-        const y = window.scrollY; renderCase(); window.scrollTo(0, y);
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        try { CASE = await api(`/cases/${c.id}/selection`, { method: "POST", body: asStaff({ selected: c.matches.filter((x) => x.selected).map((x) => x.id) }) }); rerender(); }
+        catch (e) { toast(e.message); }
       }, 250);
     }));
     $("#rematch")?.addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      const q = ev.target.q.value.trim(); if (q.length < 2) return;
+      ev.preventDefault(); const q = ev.target.q.value.trim(); if (q.length < 2) return;
       ev.target.querySelector("button").disabled = true;
-      CASE = await api(`/cases/${c.id}/rematch`, { method: "POST", body: { query: q, actor: me.name } });
-      renderCase();
+      CASE = await api(`/cases/${c.id}/rematch`, { method: "POST", body: asStaff({ query: q }) }); rerender();
     });
-    $("#moreExplore")?.addEventListener("click", () => {
+    $("#moreSearch")?.addEventListener("click", () => {
       S.ctx = { id: c.id, company: c.company }; store.set("nav-ctx", S.ctx);
-      location.hash = `#/explore?q=${encodeURIComponent(c.analysis.search_query)}`;
+      go(`#/staff/search?q=${encodeURIComponent(c.analysis.search_query)}`);
     });
     $("#reviewReq")?.addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      const f = ev.target; store.set("nav-lastReviewer", f.reviewer.value);
-      try {
-        CASE = await api(`/cases/${c.id}/review-request`, { method: "POST", body: { reviewer: f.reviewer.value, note: f.note.value, actor: me.name || t("role.officer") } });
-        await refreshCases(); renderCase(); toast(t("st.in_review"));
-      } catch (e) { toast(e.message); }
-    });
-    $("#asReviewer")?.addEventListener("click", () => { S.demoReviewer = true; setRole("reviewer"); renderCase(); });
-    const verdicts = {};
-    $$("[data-rv]").forEach((it) => {
-      $$(".seg button", it).forEach((b) => b.addEventListener("click", () => {
-        verdicts[it.dataset.rv] = b.dataset.v;
-        $$(".seg button", it).forEach((x) => x.classList.remove("on-ok", "on-no"));
-        b.classList.add(b.dataset.v === "ok" ? "on-ok" : "on-no");
-        $("#rvApprove").disabled = !Object.values(verdicts).includes("ok");
-      }));
-    });
-    $$("[data-details]").forEach((b) => b.addEventListener("click", async () => {
-      const box = $(".rv-details", b.closest(".review-item"));
-      if (box.innerHTML) { box.innerHTML = ""; return; }
-      const d = await entity(b.dataset.details);
-      box.innerHTML = `<ul class="evidence">${d.entity.evidence.slice(0, 12).map((ev) =>
-        `<li><span class="f">${esc(ev.field)}</span>“${esc(ev.snippet)}” <a href="${esc(safeUrl(ev.url))}" target="_blank" rel="noopener">${esc(hostPath(ev.url))}</a></li>`).join("")}</ul>`;
-    }));
-    const submitReview = async (decision) => {
-      // In the single-browser demo the officer "plays" the assigned reviewer: attribute it to that person
-      const actor = S.demoReviewer || !me.name ? (c.reviewer || t("role.reviewer")) : me.name;
-      const body = { decision, comment: $("#rvComment").value, actor,
-        verdicts: $$("[data-rv]").filter((it) => verdicts[it.dataset.rv]).map((it) => ({ id: it.dataset.rv, verdict: verdicts[it.dataset.rv], note: $(".rv-note", it).value })) };
-      try {
-        CASE = await api(`/cases/${c.id}/review`, { method: "POST", body });
-        if (S.demoReviewer) { S.demoReviewer = false; setRole("officer"); }
-        await refreshCases(); renderCase(); toast(t("st." + decision));
-      }
+      ev.preventDefault(); const f = ev.target;
+      try { CASE = await api(`/cases/${c.id}/review-request`, { method: "POST", body: asStaff({ reviewer: f.reviewer.value.trim(), note: f.note.value }) }); toast(t("st.in_review")); rerender(); }
       catch (e) { toast(e.message); }
-    };
-    $("#rvApprove")?.addEventListener("click", () => submitReview("approved"));
-    $("#rvChanges")?.addEventListener("click", () => submitReview("changes_requested"));
+    });
+    $("#prepBrief")?.addEventListener("click", async (ev) => {
+      ev.currentTarget.disabled = true;
+      $("#pitchBox").innerHTML = spinner();
+      try {
+        await api(`/cases/${c.id}/brief`, { method: "POST", body: asStaff({ lang: $("#pitchLang").value, email: staff.email || "", team: staff.team || "" }) });
+        CASE = await api(`/cases/${c.id}`); rerender();
+      } catch (e) { toast(e.message); rerender(); }
+    });
+    $("#copyBrief")?.addEventListener("click", () => { navigator.clipboard?.writeText(briefUrl(c.outreach.brief.token)); toast(t("i.copied")); });
+    const slotLabels = () => $$(".slot").map((i) => i.value).filter(Boolean).map((v) => fmtDate(v, true, c.outreach?.brief?.lang || LANG));
     $("#prepMail")?.addEventListener("click", async () => {
-      const d = await api(`/cases/${c.id}/draft`, { method: "POST", body: { lang: $("#mailLang").value, slots: slotLabels(), sender: me.name, team: me.team } });
-      $("#mailBox").innerHTML = `<div class="email-box">
-        <label class="field">${esc(t("p4.subject"))}<input id="mSubj" value="${esc(d.subject)}"></label>
-        <label class="field">${esc(t("p4.body"))}<textarea id="mBody">${esc(d.body)}</textarea></label>
-        <div class="actions"><a class="btn-primary" id="mOpen" href="#">${ICON.mail}${esc(t("p4.open"))}</a>
-          <button class="btn" id="mCopy" type="button">${ICON.copy}${esc(t("p4.copy"))}</button>
-          <button class="btn" id="mSent" type="button">${ICON.check}${esc(t("p4.sent"))}</button></div></div>`;
-      $("#mOpen").addEventListener("click", (ev) => {
-        ev.preventDefault();
-        location.href = `mailto:${encodeURIComponent(c.contact_email || "")}?subject=${encodeURIComponent($("#mSubj").value)}&body=${encodeURIComponent($("#mBody").value)}`;
-      });
+      const lang = c.outreach.brief.lang;
+      const d = await api(`/cases/${c.id}/draft`, { method: "POST", body: asStaff({ lang, slots: slotLabels(), sender: staff.name, team: staff.team || "", link: briefUrl(c.outreach.brief.token) }) });
+      $("#mailBox").innerHTML = `<div class="email-box"><label class="field">${esc(t("i.subj"))}<input id="mSubj" value="${esc(d.subject)}"></label>
+        <label class="field">${esc(t("i.body"))}<textarea id="mBody">${esc(d.body)}</textarea></label>
+        <div class="actions"><a class="btn-primary" id="mOpen" href="#">${ICON.mail}${esc(t("i.openMail"))}</a>
+          <button class="btn" id="mCopy" type="button">${ICON.copy}${esc(t("i.copy"))}</button><button class="btn" id="mSent" type="button">${ICON.check}${esc(t("i.sent"))}</button></div></div>`;
+      $("#mOpen").addEventListener("click", (ev) => { ev.preventDefault();
+        location.href = `mailto:${encodeURIComponent(c.contact_email || "")}?subject=${encodeURIComponent($("#mSubj").value)}&body=${encodeURIComponent($("#mBody").value)}`; });
       $("#mCopy").addEventListener("click", () => { navigator.clipboard?.writeText(`${$("#mSubj").value}\n\n${$("#mBody").value}`); toast("✓"); });
       $("#mSent").addEventListener("click", async () => {
-        CASE = await api(`/cases/${c.id}/outcome`, { method: "POST", body: { kind: "email", subject: $("#mSubj").value, body: $("#mBody").value, actor: me.name } });
-        await refreshCases(); renderCase(); toast(t("st.contacted"));
+        CASE = await api(`/cases/${c.id}/outcome`, { method: "POST", body: asStaff({ kind: "email", subject: $("#mSubj").value, body: $("#mBody").value }) });
+        toast(t("st.contacted")); rerender(false);
       });
       $("#mBody").scrollIntoView({ behavior: "smooth", block: "center" });
     });
     $("#dlIcs")?.addEventListener("click", async () => {
       const start = $$(".slot")[0]?.value; if (!start) return;
-      const p = new URLSearchParams({ start, minutes: $("#callMin").value, organizer: me.name || "", organizer_email: me.email || "" });
+      const p = new URLSearchParams({ start, minutes: $("#callMin").value, organizer: staff.name, organizer_email: staff.email || "" });
       const a = document.createElement("a"); a.href = `/cases/${c.id}/invite.ics?${p}`; a.download = ""; a.click();
-      CASE = await api(`/cases/${c.id}/outcome`, { method: "POST", body: { kind: "call", detail: fmtDate(start), actor: me.name } });
-      await refreshCases(); renderCase(); toast(t("st.call_scheduled"));
+      CASE = await api(`/cases/${c.id}/outcome`, { method: "POST", body: asStaff({ kind: "call", detail: fmtDate(start) }) });
+      toast(t("st.call_scheduled")); rerender();
     });
   }
 
-  /* ======================= view: review queue ======================= */
-  async function viewReview() {
+  /* ---------- reviewer ---------- */
+  function renderReviewerCase() {
+    const c = CASE, sel = c.matches.filter((m) => m.selected), who = requester(c), open = c.status === "in_review";
+    view().innerHTML = `<a class="back" href="#/staff/review">${ICON.back}${esc(t("cs.backQ"))}</a>
+      <div class="case-h"><div><h1>${esc(c.company)}</h1><div class="sub">${c.country ? `<span>${esc(c.country)}</span>` : ""}<span>${esc(t("rv.assigned", { who: c.reviewer || "—" }))}</span></div></div>${pill(c.status)}</div>
+      <div class="role-banner reviewer">${ICON.shield}<div><b>${esc(t("rv.banner", { who }))}</b>${c.review_note ? `<br>${esc(t("rv.note"))}: “${esc(c.review_note)}”` : ""}</div></div>
+      <div class="case-grid"><div>
+        <section class="panel"><div class="panel-h"><h2>${esc(t("rv.request"))}</h2></div><div class="orig-text" style="margin:0">${jargon(c.request_text)}</div></section>
+        ${panelUnderstand(c.analysis, false)}
+        <section class="panel ${open ? "active" : "done"}"><div class="panel-h"><h2>${esc(t("rv.check"))}</h2><span class="muted">${sel.length}</span></div>
+          ${open ? "" : `<div class="callout ${c.status === "changes_requested" ? "warn" : "ok"}" style="margin-bottom:12px">${ICON.info}<span>${esc(t("rv.notOpen"))} ${pill(c.status)}</span></div>`}
+          <div id="rvItems">${sel.map((m) => `<div class="review-item" data-rv="${esc(m.id)}">
+            <div class="review-row"><div style="display:flex;gap:10px;align-items:center;min-width:0">${avatar(m.name, m.entity_type, true)}<div><b>${esc(m.name)}</b>
+              <div class="muted">${[m.role, m.unit, m.institution].filter(Boolean).map(esc).join(" · ")}</div></div></div>
+              ${open ? `<div class="seg" role="group" aria-label="${esc(m.name)}"><button type="button" data-v="ok">${esc(t("rv.ok"))}</button><button type="button" data-v="no">${esc(t("rv.no"))}</button></div>`
+                : m.review ? `<span class="verdict ${m.review}">${esc(t(m.review === "ok" ? "m.ok" : "m.no"))}</span>` : ""}</div>
+            <p class="muted" style="margin:8px 0 4px">${esc(m.why)}</p>
+            <div class="rv-details" data-ev="${esc(m.id)}"><div class="sk" style="width:70%"></div></div>
+            ${open ? `<input class="rv-note" placeholder="${esc(t("rv.comment1"))}" aria-label="${esc(t("rv.comment1"))}" style="margin-top:8px">` : m.review_note ? `<p><b>${esc(m.review_note)}</b></p>` : ""}
+          </div>`).join("")}</div>
+          ${open ? `<label class="field" style="margin-top:14px">${esc(t("rv.comment", { who }))}<textarea id="rvComment" rows="2" style="min-height:70px"></textarea></label>
+            <div class="actions" style="margin-top:12px"><button class="btn-primary btn-ok" id="rvApprove" type="button" disabled>${ICON.check}${esc(t("rv.approve"))}</button>
+              <button class="btn" id="rvChanges" type="button">${esc(t("rv.changes"))}</button><span class="muted" id="rvHint">${esc(t("rv.need"))}</span></div>`
+            : c.review_comment ? `<div class="callout" style="margin-top:12px">“${esc(c.review_comment)}”</div>` : ""}
+        </section></div>${sidePanels(c)}</div>`;
+    $$("[data-ev]").forEach(async (box) => {
+      try {
+        const d = await entity(box.dataset.ev);
+        const seen = new Set(), evs = d.entity.evidence.filter((ev) => !seen.has(ev.snippet) && seen.add(ev.snippet)).slice(0, 8);
+        box.innerHTML = `<div class="muted small" style="margin-top:6px">${esc(t("rv.evidence"))}</div><ul class="evidence">${evs.map((ev) =>
+          `<li><span class="f">${esc(ev.field)}</span>“${esc(ev.snippet.length > 240 ? ev.snippet.slice(0, 237) + "…" : ev.snippet)}” <a href="${esc(safeUrl(ev.url))}" target="_blank" rel="noopener" title="${esc(ev.url)}">${esc(hostPath(ev.url))}</a></li>`).join("")}</ul>`;
+      } catch { box.innerHTML = ""; }
+    });
+    if (!open) return;
+    const verdicts = {};
+    $$("[data-rv]").forEach((it) => $$(".seg button", it).forEach((b) => b.addEventListener("click", () => {
+      verdicts[it.dataset.rv] = b.dataset.v;
+      $$(".seg button", it).forEach((x) => x.classList.remove("on-ok", "on-no"));
+      b.classList.add(b.dataset.v === "ok" ? "on-ok" : "on-no");
+      const ok = Object.values(verdicts).includes("ok");
+      $("#rvApprove").disabled = !ok; $("#rvHint").hidden = ok;
+    })));
+    const submit = async (decision) => {
+      const body = asStaff({ decision, comment: $("#rvComment").value,
+        verdicts: $$("[data-rv]").filter((it) => verdicts[it.dataset.rv]).map((it) => ({ id: it.dataset.rv, verdict: verdicts[it.dataset.rv], note: $(".rv-note", it).value })) });
+      try { await api(`/cases/${c.id}/review`, { method: "POST", body }); toast(t("st." + decision)); go("#/staff/review"); }
+      catch (e) { toast(e.message); }
+    };
+    $("#rvApprove").addEventListener("click", () => submit("approved"));
+    $("#rvChanges").addEventListener("click", () => submit("changes_requested"));
+  }
+
+  /* ======================= STAFF/reviewer: queue ======================= */
+  function viewQueue() {
+    const mine = (c) => c.reviewer && c.reviewer.trim().toLowerCase() === staff.name.trim().toLowerCase();
+    const open = S.cases.filter((c) => c.status === "in_review");
+    const decided = S.cases.filter((c) => ["approved", "changes_requested", "contacted", "call_scheduled"].includes(c.status) && c.reviewer).slice(0, 6);
+    const card = (c) => `<a class="case-card" href="#/staff/case/${esc(c.id)}"><h3>${esc(c.company)}</h3><p>${esc(c.summary)}</p>
+      <div class="case-meta">${pill(c.status)}<span>${c.selected} ${esc(t("partners"))}</span><span>→ ${esc(c.reviewer)}</span><span>${esc(fmtDate(c.updated_at, false))}</span></div></a>`;
+    const section = (title, xs) => xs.length ? `<div class="section-h"><h2>${esc(title)}</h2><span class="muted">${xs.length}</span></div><div class="dir">${xs.map(card).join("")}</div>` : "";
+    view().innerHTML = `<div class="page-h"><div><h1>${esc(t("q.title"))}</h1><p>${esc(t("q.lead"))}</p></div></div>
+      ${open.length ? section(t("q.mine"), open.filter(mine)) + section(t("q.others"), open.filter((c) => !mine(c)))
+        : `<div class="panel empty"><div class="empty-ico">${ICON.check}</div><h3>${esc(t("q.empty"))}</h3></div>`}
+      ${section(t("q.done"), decided)}`;
+  }
+
+  function viewStaffSearchHome() {
+    view().innerHTML = `<section class="hero" style="padding-top:8px"><h1 style="font-size:28px">${esc(t("home.title"))}</h1>${searchBox("", "#/staff/search")}${exampleChips()}</section>`;
+    bindSearchBox();
+  }
+
+  /* ======================= BRIEF: the CEO's executive brief ======================= */
+  async function viewBrief(token, params) {
     view().innerHTML = spinner();
-    await refreshCases();
-    const xs = S.cases.filter((c) => c.status === "in_review");
-    const mine = (c) => !!(me.name && c.reviewer && c.reviewer.toLowerCase().includes(me.name.toLowerCase()));
-    view().innerHTML = `<div class="page-h"><div><h1>${esc(t("rv.title"))}</h1><p>${esc(t("rv.lead"))}</p></div></div>
-      ${xs.length ? `<div class="dir">${xs.sort((a, b) => mine(b) - mine(a)).map((c) => `<a class="case-card" href="#/case/${esc(c.id)}">
-          <h3>${esc(c.company)}</h3><p>${esc(c.summary)}</p>
-          <div class="case-meta">${pill(c.status)}<span>${c.selected} ${esc(t("partners"))}</span><span>${esc(c.reviewer)}</span>
-          ${mine(c) ? `<b style="color:var(--brand)">${esc(t("rv.mine"))}</b>` : ""}</div></a>`).join("")}</div>`
-      : `<div class="panel empty"><div class="empty-ico">${ICON.check}</div><h3>${esc(t("rv.empty"))}</h3></div>`}`;
-    if (me.role !== "reviewer" && xs.length) setRole("reviewer");
-  }
+    let b;
+    try { b = await api(`/briefs/${encodeURIComponent(token)}`); }
+    catch { view().innerHTML = `<div class="panel empty"><h3>${esc(t("bf.missing"))}</h3></div>`; return; }
+    const lb = b.labels, sup = (n) => `<sup class="ref"><a href="#src-${n}" data-ref="${n}">[${n}]</a></sup>`;
+    document.title = `${b.company} × Bern`;
+    const nClaims = b.items.reduce((n, i) => n + (i.quote ? 1 : 0) + i.technical.length, 0) + b.proof.length;
+    const nPubs = b.items.reduce((n, i) => n + i.publications.length, 0);
+    view().innerHTML = `<article class="brief" lang="${esc(b.lang)}">
+      <header class="b-hero"><div class="kick">${esc(b.kicker)}</div>
+        <h1>${esc(b.company)} <span>×</span> Bern</h1><p>${esc(b.hook)}</p>
+        <div class="stat-chips"><span><b>${b.items.length}</b> ${esc(lb.teams)}</span><span>${ICON.check}<b>${nClaims}</b> ${esc(lb.stmt)}</span>${nPubs ? `<span><b>${nPubs}</b> ${esc(lb.pubs_n)} (DOI)</span>` : ""}</div></header>
 
-  /* ======================= view: explore ======================= */
-  async function entity(id) {
-    if (!S.entityCache.has(id)) S.entityCache.set(id, await api(`/entity/${encodeURIComponent(id)}`));
-    return S.entityCache.get(id);
-  }
+      <section class="b-sec"><h2>${esc(lb.why)}</h2><div class="b-cards">${b.items.map((it, k) => `<article class="b-card">
+        <div class="hd">${avatar(it.name, it.type)}<div><h3>${esc(it.name)}</h3><div class="meta">${[it.role, it.unit, it.institution].filter(Boolean).map(esc).join(" · ")} ${sup(it.page_ref)}</div></div></div>
+        ${it.topics.length ? `<div class="tags">${it.topics.map((x) => `<span class="topic" title="${esc(x.plain)}">${esc(x.term)}</span>`).join("")}</div>
+          <p class="plain-topic">${esc(it.topics[0].plain)}</p>` : ""}
+        ${it.quote ? `<blockquote>“${esc(it.quote.text)}” ${sup(it.quote.ref)}${it.quote.via ? `<span class="via">— ${esc(it.quote.via)}</span>` : ""}</blockquote>` : ""}
+        <button class="tech-btn" type="button" aria-expanded="false" aria-controls="tech-${k}">${esc(lb.tech)} <span class="chev">▾</span></button>
+        <div class="tech" id="tech-${k}"><ul>${it.technical.map((x) => `<li><span class="f">${esc(x.field)}</span>${esc(x.text)} ${sup(x.ref)}</li>`).join("")}</ul>
+          ${it.publications.length ? `<h4>${esc(lb.pubs)}</h4><ul>${it.publications.map((p) => `<li class="pub">${esc(p.citation)} — <a href="https://doi.org/${esc(p.doi)}" target="_blank" rel="noopener">doi:${esc(p.doi)}</a> ${sup(p.page_ref)}</li>`).join("")}</ul>` : ""}</div>
+      </article>`).join("")}</div></section>
 
-  async function viewExplore(params) {
-    await loadGlossary();
-    if (!S.stats) { try { S.stats = await api("/stats"); } catch {} }
-    if (!S.ex.sources && S.stats) S.ex.sources = new Set(S.stats.sources.map((x) => x.name));
-    const q = params.get("q") || "";
-    const ctx = S.ctx;
-    const st = S.stats || { sources: [], entities_per_source: {} };
-    view().innerHTML = `
-      ${ctx ? `<div class="ctx-banner"><span>${ICON.info} ${esc(t("ex.ctx", { c: ctx.company }))}</span>
-        <span class="actions"><a class="btn btn-sm" href="#/case/${esc(ctx.id)}">${esc(t("ex.ctxBack"))}</a>
-        <button class="link-btn" id="ctxClose" type="button" aria-label="Close">✕</button></span></div>` : ""}
-      <section class="hero" ${q ? 'style="padding-top:4px"' : ""}>
-        ${q ? "" : `<h1>${t("ex.title")}</h1><p>${esc(t("ex.lead"))}</p>`}
-        <form class="searchbox" id="exForm" role="search">${ICON.search}
-          <input id="exQ" type="search" value="${esc(q)}" placeholder="${esc(t("ex.ph"))}" aria-label="${esc(t("ex.search"))}" autocomplete="off">
-          <button class="btn-primary" type="submit">${esc(t("ex.search"))}</button></form>
-        ${q ? "" : `<div class="chips">${["glucose sensors", "kontinuierliche Glukosemessung", "robots for neurosurgery", "3D printing facility", "organs-on-chip"].map((x) => `<button class="chip" type="button" data-q="${esc(x)}">${esc(x)}</button>`).join("")}
-          <button class="chip ghost" type="button" data-q="best pizza delivery in Bern">${esc(t("ex.abstainChip"))}</button></div>`}
-      </section>
-      <div class="filters">
-        <div class="fgroup">${st.sources.filter((x) => (st.entities_per_source[x.name] ?? 0) > 0).map((x) => `<button type="button" class="fchip ${S.ex.sources?.has(x.name) ? "on" : ""}" data-src="${esc(x.name)}" title="${esc(x.label)}">
-          <i class="t-dot src"></i>${esc(x.name === "unibe" ? "UniBE" : x.name.toUpperCase())} <span class="muted">${st.entities_per_source[x.name] ?? 0}</span></button>`).join("")}</div>
-        <div class="fgroup">${[["person", "f.people"], ["unit", "f.labs"], ["project", "f.projects"], ["infrastructure", "f.facilities"]].map(([k, l]) =>
-          `<button type="button" class="fchip ${S.ex.types.has(k) ? "on" : ""}" data-type="${k}"><i class="t-dot ${k}"></i>${esc(t(l))}</button>`).join("")}</div>
-      </div>
-      <div id="exBody"></div>`;
-    $("#ctxClose")?.addEventListener("click", () => { S.ctx = null; store.set("nav-ctx", null); viewExplore(params); });
-    $("#exForm").addEventListener("submit", (ev) => { ev.preventDefault(); const v = $("#exQ").value.trim(); if (v.length > 1) location.hash = `#/explore?q=${encodeURIComponent(v)}`; });
-    $$(".chip[data-q]").forEach((b) => b.addEventListener("click", () => { location.hash = `#/explore?q=${encodeURIComponent(b.dataset.q)}`; }));
-    $$(".fchip").forEach((f) => f.addEventListener("click", () => {
-      const set = f.dataset.src ? S.ex.sources : S.ex.types, key = f.dataset.src || f.dataset.type;
-      if (set.has(key) && set.size === 1) return;
-      set.has(key) ? set.delete(key) : set.add(key);
-      f.classList.toggle("on");
-      if (q) runExplore(q);
+      ${b.proof.length ? `<section class="b-sec"><h2>${esc(lb.proof)}</h2><div class="b-proof">${b.proof.map((h) => `<div><div class="fig">${esc(h.figure)}</div><div class="lbl">${esc(h.label)}</div>
+        <q>${esc(h.quote)}</q> ${sup(h.ref)}</div>`).join("")}</div></section>` : ""}
+
+      <section class="b-sec"><h2>${esc(lb.visit)}</h2><div class="b-visit">
+        <ol class="agenda">${b.agenda.map((a) => `<li>${esc(a)}</li>`).join("")}</ol>
+        <div class="cta-box">${b.contact.email ? `<a class="btn-primary" href="mailto:${esc(b.contact.email)}?subject=${encodeURIComponent(`${b.company} — Bern`)}">${ICON.cal}${esc(lb.cta)}</a>` : ""}
+          <button class="btn" type="button" id="bPrint">${ICON.printer}${esc(lb.pdf)}</button>
+          <small>${esc(b.from)}${b.contact.email ? ` · ${esc(b.contact.email)}` : ""}</small></div></div></section>
+
+      <div class="honest">${ICON.shield}<span>${esc(b.honest)}</span></div>
+      <section class="b-sources"><h2 style="font-size:15px;margin:0">${esc(lb.sources)}</h2><ol>${b.sources.map((s, i) =>
+        `<li id="src-${i + 1}"><a href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(s.kind === "doi" ? s.label : hostPath(s.url))}</a>${s.kind === "doi" ? ` <span class="muted">${esc(s.url)}</span>` : ""}</li>`).join("")}</ol></section>
+    </article>`;
+    $$(".tech-btn").forEach((btn) => btn.addEventListener("click", () => {
+      const box = $("#" + btn.getAttribute("aria-controls")), open = !box.classList.contains("open");
+      box.classList.toggle("open", open); btn.setAttribute("aria-expanded", open);
     }));
-    if (q) runExplore(q); else renderShowcase();
-  }
-
-  async function renderShowcase() {
-    const body = $("#exBody");
-    body.innerHTML = spinner();
-    if (!S.showcase) { try { S.showcase = await api("/showcase"); } catch { body.innerHTML = ""; return; } }
-    const sc = S.showcase, L = (o) => (o && (o[LANG] || o.en)) || "";
-    const go = (q) => `#/explore?q=${encodeURIComponent(q)}`;
-    body.innerHTML = `
-      ${sc.highlights.length ? `<div class="section-h"><h2>${esc(t("ex.proof"))}</h2><span class="muted">${esc(t("ex.proofNote"))}</span></div>
-      <div class="proof">${sc.highlights.map((h) => `<article class="proof-card"><div class="fig">${esc(h.figure)}</div><div class="lbl">${esc(L(h.label))}</div>
-        <q>${esc(h.quote)}</q><a href="${esc(safeUrl(h.url))}" target="_blank" rel="noopener">${ICON.link} ${esc(hostPath(h.url))}</a></article>`).join("")}</div>` : ""}
-      <div class="section-h"><h2>${esc(t("ex.themes"))}</h2><span class="muted">${esc(t("ex.themesNote"))}</span></div>
-      <div class="themes">${sc.themes.map((th) => `<a class="theme" href="${go(th.query)}" style="text-decoration:none">
-        <h3>${esc(L(th.title))}</h3><p>${esc(L(th.blurb))}</p>
-        <div class="nums"><span><b>${th.counts.person}</b> ${esc(t("ex.people"))}</span><span><b>${th.counts.unit}</b> ${esc(t("ex.labsN"))}</span>
-          <span><b>${th.counts.project}</b> ${esc(t("ex.projects"))}</span></div>
-        ${th.labs.length ? `<div class="labs">${th.labs.map((l) => esc(l.name)).join(" · ")}</div>` : ""}</a>`).join("")}</div>
-      <div class="section-h"><h2>${esc(t("ex.fac"))}</h2><span class="muted">${sc.facilities.length}</span></div>
-      <div class="dir">${sc.facilities.map(dirCard).join("")}</div>
-      <div class="section-h"><h2>${esc(t("ex.labs"))}</h2><span class="muted">${sc.labs.length}</span></div>
-      <div class="dir">${sc.labs.map(dirCard).join("")}</div>
-      ${sc.engage.length ? `<div class="section-h"><h2>${esc(t("ex.engage"))}</h2></div>
-      <div class="engage">${sc.engage.map((e) => `<article class="engage-card"><b>${esc(L(e.title))}</b><q>${esc(e.quote)}</q>
-        <a href="${esc(safeUrl(e.url))}" target="_blank" rel="noopener">${ICON.link} ${esc(hostPath(e.url))}</a></article>`).join("")}</div>` : ""}`;
-    $$("[data-open]", body).forEach((b) => b.addEventListener("click", () => { location.hash = go(b.dataset.open); }));
-  }
-
-  function dirCard(f) {
-    const meta = [f.lead ? `${t("ex.lead_")}: ${f.lead.name}` : "", f.people ? `${f.people} ${t("ex.people")}` : "", f.institution].filter(Boolean);
-    return `<button type="button" class="dir-card" data-open="${esc(f.name)}">${avatar(f.name, f.entity_type, true)}
-      <div><h3>${esc(f.name)}</h3><div class="lead">${esc(meta.join(" · "))}</div>${f.summary ? `<p>${jargon(f.summary)}</p>` : ""}</div></button>`;
-  }
-
-  async function runExplore(q) {
-    const body = $("#exBody");
-    body.innerHTML = `<div class="results-view"><div class="results-col"><div class="results-head" id="rHead"><span class="cnt">…</span></div>
-      <div class="results" id="rList">${Array.from({ length: 3 }, () => `<div class="skel"><div class="sk" style="width:40%;height:16px"></div><div class="sk" style="width:70%"></div><div class="sk"></div></div>`).join("")}</div></div>
-      <aside class="detail" id="detail" aria-label="Details"><div class="detail-empty"><p>${esc(t("ex.select"))}</p></div></aside></div>`;
-    const p = new URLSearchParams({ q, k: "12" });
-    if (S.stats && S.ex.sources && S.ex.sources.size < S.stats.sources.length) S.ex.sources.forEach((s) => p.append("source", s));
-    if (S.ex.types.size < 4) S.ex.types.forEach((x) => p.append("type", x));
-    S.ex.ctl?.abort(); S.ex.ctl = new AbortController();
-    try { S.ex.data = await api(`/search?${p}`, { signal: S.ex.ctl.signal }); }
-    catch (e) { if (e.name !== "AbortError") body.innerHTML = `<div class="abstain"><h3>${esc(t("err"))}</h3><p>${esc(e.message)}</p></div>`; return; }
-    renderResults();
-  }
-
-  function renderResults() {
-    const d = S.ex.data, terms = termsFor(d.query, d.expanded_terms);
-    $(".results-view").classList.toggle("solo", !!d.abstained);
-    $("#rHead").innerHTML = d.abstained ? "" : `<span class="cnt">${d.results.length} ${esc(t("ex.results"))}</span><span>${(d.took_ms / 1000).toFixed(2)} s</span>
-      ${d.expanded_terms.length ? `<span>${esc(t("ex.also"))}</span>${d.expanded_terms.slice(0, 7).map((x) => `<span class="term">${esc(x)}</span>`).join("")}` : ""}`;
-    if (d.abstained) {
-      $("#rList").innerHTML = `<div class="abstain"><div class="empty-ico" style="color:var(--warn);background:var(--warn-bg)">${ICON.shield}</div>
-        <h3>${esc(t("ex.none"))}</h3><p>${esc(d.message)}</p><p class="muted" style="margin-top:10px">${esc(t("ex.noneHint"))}</p></div>`;
-      return;
-    }
-    const hit = (s) => terms.reduce((n, w) => n + (s.toLowerCase().includes(w) ? 1 : 0), 0);
-    $("#rList").innerHTML = d.results.map((r, i) => {
-      const q0 = [...r.sources].sort((a, b) => hit(b.snippet) - hit(a.snippet) || (a.field === "name") - (b.field === "name"))[0];
-      const sub = [r.role, r.affiliation.unit, r.affiliation.institute].filter(Boolean).map(esc).join(" · ");
-      return `<article class="card" tabindex="0" data-i="${i}">
-        <div class="card-top">${avatar(r.person_or_unit, r.entity_type)}
-          <div><h3>${esc(r.person_or_unit)}</h3>${sub ? `<div class="sub2">${sub}</div>` : ""}<div class="inst">${esc(r.institution)}</div></div>
-          <span class="type-badge ${esc(r.entity_type)}">${esc(t("type." + r.entity_type))}</span></div>
-        ${r.via ? `<div class="via">${esc(t("ex.found"))} <b>${esc(r.via)}</b></div>` : ""}
-        ${r.description ? `<p class="why">${jargon(r.description.length > 220 ? r.description.slice(0, 217) + "…" : r.description)}</p>` : ""}
-        <p class="why"><b>${esc(t("ex.why"))}:</b> ${highlight(r.why_match, terms)}</p>
-        ${q0 ? `<div class="quote">“${highlight(q0.snippet.length > 240 ? q0.snippet.slice(0, 237) + "…" : q0.snippet, terms)}”
-          <div class="src">${ICON.link}<a href="${esc(safeUrl(q0.url))}" target="_blank" rel="noopener">${esc(hostPath(q0.url))}</a></div></div>` : ""}
-        <div class="card-foot"><span class="verified">${ICON.check}${esc(t("ex.verified"))}</span><span>${r.sources.length} ${esc(t("ex.cites"))}</span>
-          ${r.contact ? `<span>${esc(r.contact)}</span>` : ""}</div></article>`;
-    }).join("");
-    $$(".card", $("#rList")).forEach((c) => {
-      c.addEventListener("click", (ev) => { if (!ev.target.closest("a")) selectResult(+c.dataset.i); });
-      c.addEventListener("keydown", (ev) => { if (ev.key === "Enter") selectResult(+c.dataset.i); });
-    });
-    if (!isNarrow() && d.results.length) selectResult(0, false);
-  }
-
-  function selectResult(i, open = true) {
-    $$(".card").forEach((c, j) => c.classList.toggle("sel", j === i));
-    showDetail(S.ex.data.results[i].id, S.ex.data.results[i], open);
-  }
-
-  async function showDetail(id, result, open = true) {
-    const panel = $("#detail");
-    if (!panel) return;
-    if (isNarrow() && open) { panel.classList.add("open"); document.body.classList.add("sheet-open"); }
-    panel.innerHTML = `<div class="d-head"><div class="sk" style="width:60%;height:18px"></div></div>`;
-    let det; try { det = await entity(id); } catch { panel.innerHTML = `<div class="detail-empty">${esc(t("err"))}</div>`; return; }
-    const e = det.entity, terms = S.ex.data ? termsFor(S.ex.data.query, S.ex.data.expanded_terms) : [];
-    const byUrl = new Map();
-    e.evidence.forEach((ev) => { if (!byUrl.has(ev.url)) byUrl.set(ev.url, []); byUrl.get(ev.url).push(ev); });
-    const ctx = S.ctx;
-    panel.innerHTML = `
-      <div class="d-head"><div class="row">${avatar(e.name, e.entity_type)}
-        <div><h2>${esc(e.name)}</h2>${e.role ? `<div class="sub2">${esc(e.role)}</div>` : ""}
-          <div class="crumbs">${[e.source_label, e.institute, e.unit].filter(Boolean).map(esc).join(" › ")}</div></div>
-        <button class="icon-btn close-btn" id="dClose" type="button" aria-label="Close">${ICON.close}</button></div>
-        <div class="d-actions">
-          ${ctx ? `<button class="btn-primary btn-brand btn-sm" id="addCtx" type="button">${ICON.plus}${esc(t("ex.add"))}</button>` : ""}
-          ${e.email ? `<a class="btn btn-sm" href="mailto:${esc(e.email)}">${ICON.mail}${esc(e.email)}</a>` : ""}
-          <a class="btn btn-sm" href="${esc(safeUrl(e.source_urls[0]))}" target="_blank" rel="noopener">${ICON.ext}${esc(t("ex.open"))}</a></div></div>
-      <div class="d-body">
-        ${result ? `<section class="d-sec"><h4>${esc(t("ex.why"))}</h4><p>${highlight(result.why_match, terms)}</p></section>` : ""}
-        ${e.description?.length ? `<section class="d-sec"><h4>${esc(t("ex.about"))}</h4><p>${jargon(e.description[0])}</p></section>` : ""}
-        ${e.expertise.length ? `<section class="d-sec"><h4>${esc(t("ex.expertise"))}</h4><div class="tags">${e.expertise.slice(0, 12).map((x) => `<span class="tag" title="${esc(x)}">${jargon(x)}</span>`).join("")}</div></section>` : ""}
-        ${det.related.length ? `<section class="d-sec"><h4>${esc(t("ex.linked"))}</h4><div class="rel">${det.related.map((x) => `<button type="button" data-id="${esc(x.id)}">
-          <span class="mini ${esc(x.entity_type)}">${esc(x.entity_type === "person" ? initialsOf(x.name) : x.entity_type[0].toUpperCase())}</span>
-          <span>${esc(x.name)}</span>${x.role ? `<span class="r-role">· ${esc(x.role.slice(0, 28))}</span>` : ""}</button>`).join("")}</div></section>` : ""}
-        <section class="d-sec"><h4>${esc(t("ex.evidence"))} · ${e.evidence.length}</h4>
-          ${[...byUrl.entries()].map(([u, evs]) => `<div class="ev-page"><a class="ev-url" href="${esc(safeUrl(u))}" target="_blank" rel="noopener">${ICON.ext}<span>${esc(hostPath(u))}</span></a>
-            <ul class="ev-list">${evs.map((ev) => `<li><span class="ev-field">${esc(ev.field)}</span><span>“${highlight(ev.snippet, terms)}”</span></li>`).join("")}</ul></div>`).join("")}</section>
-      </div>`;
-    $("#dClose")?.addEventListener("click", () => { panel.classList.remove("open"); document.body.classList.remove("sheet-open"); });
-    $$(".rel button", panel).forEach((b) => b.addEventListener("click", () => showDetail(b.dataset.id, null)));
-    $("#addCtx")?.addEventListener("click", async () => {
-      try { await api(`/cases/${ctx.id}/matches`, { method: "POST", body: { entity_id: e.id, actor: me.name } }); toast(`${t("ex.added")}: ${e.name}`); }
-      catch (err) { toast(err.message); }
-    });
+    $$("sup.ref a").forEach((a) => a.addEventListener("click", (ev) => { ev.preventDefault(); const el = $("#src-" + a.dataset.ref); el?.scrollIntoView({ behavior: "smooth", block: "center" }); el?.animate?.([{ background: "var(--mark)" }, { background: "transparent" }], { duration: 1600 }); }));
+    $("#bPrint").addEventListener("click", () => window.print());
+    if (params.get("print") === "1") setTimeout(() => window.print(), 400);
   }
 
   /* ======================= boot ======================= */
-  async function status() {
-    try {
-      const h = await api("/health"), el = $("#status"), m = (h.model || "Apertus").split("/").pop();
-      el.classList.toggle("on", h.llm_available); el.classList.toggle("off", !h.llm_available);
-      $(".status-label", el).textContent = t(h.llm_available ? "llm.on" : "llm.off", { m });
-      el.title = t(h.llm_available ? "llm.onT" : "llm.offT");
-    } catch {}
+  async function pollStatus() {
+    try { const h = await api("/health"); LLM = { on: !!h.llm_available, m: (h.model || "Apertus").split("/").pop() }; } catch {}
+    const el = $(".status"); if (el) el.outerHTML = statusPill();
   }
 
   function boot() {
-    let theme = store.get("nav-theme", null);
+    const theme = store.get("nav-theme", null);
     if (theme) document.documentElement.dataset.theme = theme;
-    $("#themeBtn").addEventListener("click", () => {
-      const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      theme = cur === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = theme; store.set("nav-theme", theme);
-    });
-    $("#lang").addEventListener("change", (ev) => { LANG = ev.target.value; store.set("nav-lang", LANG); applyStaticI18n(); renderMe(); status(); route(); });
-    $("#meBtn").addEventListener("click", openMe);
-    $("#meDlg").addEventListener("close", () => {
-      if ($("#meDlg").returnValue !== "ok") return;
-      const f = $("#meForm");
-      me = { name: f.name.value.trim(), email: f.email.value.trim(), team: f.team.value.trim(), role: f.role.value || "officer" };
-      store.set("nav-me", me); renderMe(); route(); toast(t("saved"));
-    });
     document.addEventListener("keydown", (ev) => {
       if (ev.key === "Escape" && document.body.classList.contains("sheet-open")) { $("#detail")?.classList.remove("open"); document.body.classList.remove("sheet-open"); }
-      if (ev.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName) && $("#exQ")) { ev.preventDefault(); $("#exQ").focus(); }
+      if (ev.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName) && $("#sQ")) { ev.preventDefault(); $("#sQ").focus(); }
     });
     document.addEventListener("click", (ev) => {
       if (document.body.classList.contains("sheet-open") && !ev.target.closest("#detail") && !ev.target.closest(".card")) {
@@ -922,9 +1142,8 @@
       }
     });
     window.addEventListener("hashchange", route);
-    applyStaticI18n(); renderMe(); status(); refreshCases(); route();
-    if (!me.name) setTimeout(openMe, 400);
-    setInterval(status, 60000);
+    pollStatus(); route();
+    setInterval(pollStatus, 60000);
   }
   boot();
 })();

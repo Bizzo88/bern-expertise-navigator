@@ -22,6 +22,7 @@ DB = DATA_DIR / "cases.db"
 _lock = threading.Lock()
 
 Status = Literal["new", "in_review", "changes_requested", "approved", "contacted", "call_scheduled", "closed"]
+Role = Literal["officer", "reviewer"]
 
 
 class Match(BaseModel):
@@ -45,6 +46,7 @@ class Match(BaseModel):
 class Event(BaseModel):
     at: str
     actor: str
+    role: str = ""
     kind: str
     text: str = ""
 
@@ -76,7 +78,8 @@ class NewCase(BaseModel):
     country: str = Field("", max_length=100)
     request_text: str = Field(..., min_length=10, max_length=12000)
     lang: str = "en"
-    actor: str = "Officer"
+    actor: str = Field(..., min_length=1, max_length=120)
+    role: Role
 
 
 def _now() -> str:
@@ -114,8 +117,8 @@ def delete(cid: str) -> None:
         c.execute("DELETE FROM cases WHERE id = ?", (cid,))
 
 
-def log(case: Case, actor: str, kind: str, text: str = "") -> None:
-    case.events.append(Event(at=_now(), actor=actor or "—", kind=kind, text=text))
+def log(case: Case, actor: str, kind: str, text: str = "", role: str = "") -> None:
+    case.events.append(Event(at=_now(), actor=actor or "—", role=role, kind=kind, text=text))
 
 
 # ---------------- matching ---------------------------------------------------
@@ -148,20 +151,20 @@ def create(req: NewCase) -> Case:
                 contact_name=req.contact_name.strip(), contact_email=req.contact_email.strip(),
                 country=req.country.strip(), request_text=req.request_text.strip(), analysis=analysis,
                 matches=matches, no_match_message=msg)
-    log(case, req.actor, "created", f"Request from {case.company} received")
+    log(case, req.actor, "created", f"Request from {case.company} received", "officer")
     log(case, "Navigator", "analysed",
         f"Plain-language summary by {'Apertus' if analysis.generated_by == 'apertus' else 'glossary rules'}; "
         f"{len(matches)} possible partners found in Bern")
     return save(case)
 
 
-def rematch(case: Case, query: str, actor: str) -> Case:
+def rematch(case: Case, query: str, actor: str, role: str = "officer") -> Case:
     keep = {m.id: m for m in case.matches if m.selected}
     case.analysis.search_query = query
     found, msg = find_matches(case.analysis)
     case.matches = list(keep.values()) + [m for m in found if m.id not in keep]
     case.no_match_message = msg if not case.matches else None
-    log(case, actor, "rematched", f"Searched again for: {query}")
+    log(case, actor, "rematched", f"Searched again for: {query}", role)
     return save(case)
 
 
@@ -172,6 +175,7 @@ _T = {
         "hello": "Dear {name},",
         "intro": "Thank you for your interest in the Canton of Bern. Based on your request{need}, we have identified "
                  "the following research partners here in Bern:",
+        "brief": "We have put together a short overview for you — every statement in it is linked to its public source:",
         "why": "Why Bern",
         "call": "We would be glad to introduce you personally and to set up a short call with the experts. "
                 "Would one of these times suit you?",
@@ -184,6 +188,7 @@ _T = {
         "hello": "Guten Tag {name}",
         "intro": "Vielen Dank für Ihr Interesse am Kanton Bern. Aufgrund Ihrer Anfrage{need} haben wir folgende "
                  "Forschungspartner in Bern gefunden:",
+        "brief": "Wir haben für Sie eine kurze Übersicht zusammengestellt — jede Aussage darin ist mit ihrer öffentlichen Quelle verlinkt:",
         "why": "Warum Bern",
         "call": "Gerne stellen wir Sie persönlich vor und organisieren ein kurzes Gespräch mit den Fachleuten. "
                 "Passt Ihnen einer dieser Termine?",
@@ -196,6 +201,7 @@ _T = {
         "hello": "Bonjour {name},",
         "intro": "Merci de votre intérêt pour le canton de Berne. Suite à votre demande{need}, nous avons identifié "
                  "les partenaires de recherche suivants à Berne :",
+        "brief": "Nous avons préparé pour vous un bref aperçu — chaque affirmation y est liée à sa source publique :",
         "why": "Pourquoi Berne",
         "call": "Nous serions heureux de vous présenter personnellement et d'organiser un bref appel avec les experts. "
                 "L'un de ces créneaux vous conviendrait-il ?",
@@ -206,9 +212,19 @@ _T = {
 }
 
 
-def draft_email(case: Case, lang: str, slots: list[str], sender: str, team: str) -> dict:
-    """Deterministic template: only approved matches and verified proof points, each with its link."""
+def draft_email(case: Case, lang: str, slots: list[str], sender: str, team: str, link: str = "") -> dict:
+    """Deterministic template: only approved matches and verified proof points, each with its link.
+    With a published executive brief the email stays short and points to it."""
     t = _T.get(lang, _T["en"])
+    if link:
+        approved = [m for m in case.matches if m.selected and m.review == "ok"]
+        lines = [t["hello"].format(name=case.contact_name or case.company), "", t["intro"].format(need=""), ""]
+        lines += [f"• {m.name}{' – ' + m.unit if m.unit else ''} ({m.institution})" for m in approved]
+        lines += ["", t["brief"], link, "", t["call"] if slots else t["nocall"]]
+        lines += [f"  – {s}" for s in slots]
+        lines += ["", t["bye"], sender or "", team or ""]
+        return {"subject": t["subject"].format(company=case.company), "body": "\n".join(lines).strip() + "\n",
+                "to": case.contact_email, "matches": [m.id for m in approved]}
     approved = [m for m in case.matches if m.selected and m.review == "ok"] or [m for m in case.matches if m.selected]
     lines = [t["hello"].format(name=case.contact_name or case.company), "", t["intro"].format(need=""), ""]
     for m in approved:
