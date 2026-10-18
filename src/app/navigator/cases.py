@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, model_validator
 
 import yaml
 
-from . import archetypes, company as company_web, documents as docs, index, plain, search, showcase
+from . import archetypes, company as company_web, documents as docs, index, plain, search, showcase, understand
 from .config import CONFIG_DIR, DATA_DIR
 
 DB = DATA_DIR / "cases.db"
@@ -68,6 +68,8 @@ class Case(BaseModel):
     contact_email: str = ""
     country: str = ""
     canton: str = ""                 # when the company is in Switzerland
+    city: str = ""                   # from a broad search ("glucose company in Milan")
+    understood: list[dict] = []      # what the broad search recognised, with the words that triggered it
     area: str = ""                   # medtech area id   (config/medtech_areas.yaml)
     niche: str = ""                  # niche id within the area
     company_url: str = ""
@@ -110,6 +112,7 @@ class NewCase(BaseModel):
     niche: str = Field("", max_length=40)
     lang: str = "en"
     actor: str = Field(..., min_length=1, max_length=120)
+    broad: bool = False   # request_text is a one-line search ("glucose company in Milan"): read place and topic from it
 
     @model_validator(mode="after")
     def _something(self):
@@ -219,9 +222,19 @@ def create(req: NewCase) -> Case:
     # the company's own pitch says most about what they do, then the officer's notes, then the website
     text = "\n\n".join(x for x in [*(d.text for d in req.documents), req.request_text.strip(),
                                     site.text if site else ""] if x)
+    u = understand.understand(req.request_text) if req.broad else None
+    if u:
+        # broad search: place and topic come from the sentence; explicit filters still win
+        req.country, req.canton = req.country or u.country, req.canton or u.canton
+        if not req.area:
+            req.area, req.niche = u.area, u.niche
     if site or req.documents or req.need.strip():
         analysis = plain.analyze_company(name, site.description if site else "", text, req.need, req.lang,
                                          page_titles=[p.title for p in site.pages] if site else None)
+    elif u:
+        # search with what is left once the place and filler words are removed ("glucose", not "Milan")
+        analysis = plain.analyze_request(u.rest or req.request_text, req.lang)
+        analysis.search_query = u.rest or analysis.search_query
     else:
         analysis = plain.analyze_request(req.request_text, req.lang)   # an email from the company: the old path
     # the chosen medtech niche sharpens the search; the company's own words stay in the query
@@ -235,6 +248,7 @@ def create(req: NewCase) -> Case:
                 company_url=site.url if site else "", need=req.need.strip(), website=site, documents=req.documents,
                 contact_name=req.contact_name.strip(), contact_email=req.contact_email.strip(),
                 country=req.country.strip(), canton=req.canton.strip() if swiss else "", area=req.area, niche=req.niche,
+                city=u.city if u else "", understood=[d.model_dump() for d in u.detections] if u else [],
                 request_text=req.request_text.strip(), analysis=analysis, matches=matches, no_match_message=msg)
     log(case, req.actor, "created", f"Request received{' from ' + case.company if case.company else ''}")
     for d in req.documents:

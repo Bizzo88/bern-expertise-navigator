@@ -130,6 +130,15 @@
       "bf.prepared": "prepared {d}", "bf.missing": "This brief does not exist or has been withdrawn.", "bf.teams": "research teams",
       "err": "Something went wrong",
       "st.pitch": "Pitch ready",
+      "bs.tab": "Broad search",
+      "bs.tab2": "Company details",
+      "bs.title": "What are you looking for?",
+      "bs.ph": "e.g. glucose company in Milan — in any language",
+      "bs.place": "Place",
+      "bs.topic": "Topic",
+      "bs.searching": "Searching Bern for",
+      "bs.hint": "Type a topic, a company type and/or a place.",
+      "bs.langs": "Works in English, Deutsch, Français, Italiano and Rumantsch.",
     },
     de: {
       "u.sources": "Analysierte Quellen",
@@ -204,6 +213,15 @@
       "bf.prepared": "erstellt {d}", "bf.missing": "Dieses Dokument existiert nicht oder wurde zurückgezogen.", "bf.teams": "Forschungsteams",
       "err": "Etwas ist schiefgelaufen",
       "st.pitch": "Pitch bereit",
+      "bs.tab": "Freie Suche",
+      "bs.tab2": "Angaben zur Firma",
+      "bs.title": "Wonach suchen Sie?",
+      "bs.ph": "z. B. Glukose-Firma aus Mailand — in jeder Sprache",
+      "bs.place": "Ort",
+      "bs.topic": "Thema",
+      "bs.searching": "Suche in Bern nach",
+      "bs.hint": "Thema, Art der Firma und/oder Ort eingeben.",
+      "bs.langs": "Funktioniert auf English, Deutsch, Français, Italiano und Rumantsch.",
     },
     fr: {
       "u.sources": "Sources analysées",
@@ -278,6 +296,15 @@
       "bf.prepared": "préparée le {d}", "bf.missing": "Cette note n'existe pas ou a été retirée.", "bf.teams": "équipes de recherche",
       "err": "Une erreur est survenue",
       "st.pitch": "Pitch prêt",
+      "bs.tab": "Recherche libre",
+      "bs.tab2": "Détails de l'entreprise",
+      "bs.title": "Que recherchez-vous ?",
+      "bs.ph": "p. ex. entreprise de glucose à Milan — dans toute langue",
+      "bs.place": "Lieu",
+      "bs.topic": "Thème",
+      "bs.searching": "Recherche à Berne de",
+      "bs.hint": "Saisissez un thème, un type d'entreprise et/ou un lieu.",
+      "bs.langs": "Fonctionne en English, Deutsch, Français, Italiano et Rumantsch.",
     },
   };
   let LANG = store.get("nav-lang", null) || ((navigator.language || "en").startsWith("de") ? "de" : (navigator.language || "").startsWith("fr") ? "fr" : "en");
@@ -374,7 +401,7 @@
     return N ? `${L(A.label)} › ${L(N.label)}` : L(A.label);
   };
   const companyOf = (c) => c.company || t("rq.untitled");
-  const placeOf = (c) => [c.canton, c.country].filter(Boolean).join(", ");
+  const placeOf = (c) => [c.city, c.canton !== c.city ? c.canton : "", c.country].filter(Boolean).join(", ");
 
   /* ======================= chrome per area ======================= */
   const langSel = () => `<select id="lang" class="lang" aria-label="Language">${["en", "de", "fr"].map((l) => `<option value="${l}" ${l === LANG ? "selected" : ""}>${l.toUpperCase()}</option>`).join("")}</select>`;
@@ -685,7 +712,65 @@
   }
 
   /* ======================= STAFF/officer: new request (company link or info first) ======================= */
+  /** New request: "Broad search" (one free-text field, any language) or "Company details" (website,
+   *  documents, filters). The broad search reads place and topic itself and shows what it understood. */
   async function viewNew(prev = {}) {
+    const mode = prev.mode || store.get("nav-newmode", "broad");
+    store.set("nav-newmode", mode);
+    if (mode === "broad") return viewNewBroad(prev);
+    await viewNewDetails(prev);
+    $(".back")?.insertAdjacentHTML("afterend", newTabs("details"));
+    bindNewTabs();
+  }
+
+  const newTabs = (mode) => `<div class="nr-tabs"><div class="seg-tabs" role="tablist">
+      <button type="button" role="tab" data-mode="broad" aria-selected="${mode === "broad"}" class="${mode === "broad" ? "on" : ""}">${ICON.search.replace("<svg", '<svg class="i"')}${esc(t("bs.tab"))}</button>
+      <button type="button" role="tab" data-mode="details" aria-selected="${mode === "details"}" class="${mode === "details" ? "on" : ""}">${esc(t("bs.tab2"))}</button></div></div>`;
+  const bindNewTabs = () => $$("[data-mode]").forEach((b) => b.addEventListener("click", () => viewNew({ mode: b.dataset.mode })));
+
+  async function viewNewBroad(prev = {}) {
+    await areas();
+    const examples = ["glucose company in Milan", "Glukosesensor-Firma aus München", "fabricant d'implants à Lausanne",
+      "azienda di robotica chirurgica a Torino", "interpresa da glucosa a Cuira"];
+    view().innerHTML = `<a class="back" href="#/staff/requests">${ICON.back}${esc(t("cs.back"))}</a>${newTabs("broad")}
+      <form class="nr" id="broadForm" novalidate>
+        <h1>${esc(t("bs.title"))}</h1>
+        <div class="nr-box">${ICON.search}<input id="bsQ" maxlength="500" autocomplete="off" spellcheck="false" placeholder="${esc(t("bs.ph"))}" value="${esc(prev.q || "")}">
+          <button class="btn-primary btn-brand" type="submit">${esc(t("nw.find"))}</button></div>
+        <div class="bs-understood" id="bsU" aria-live="polite"></div>
+        <div class="chips nr-try"><span class="muted">${esc(t("nw.try"))}:</span>${examples.map((x) => `<button type="button" class="chip" data-q="${esc(x)}">${esc(x)}</button>`).join("")}</div>
+        <p class="muted bs-langs">${esc(t("bs.langs"))}</p>
+      </form>`;
+    bindNewTabs();
+    const q = $("#bsQ");
+    let timer, seq = 0;
+    const preview = async () => {
+      const v = q.value.trim(), my = ++seq;
+      if (v.length < 2) { $("#bsU").innerHTML = `<span class="muted">${esc(t("bs.hint"))}</span>`; return; }
+      let u; try { u = await api(`/understand?q=${encodeURIComponent(v)}`); } catch { return; }
+      if (my !== seq) return;                                   // a newer keystroke already answered
+      const place = [u.city, u.canton !== u.city ? u.canton : "", u.country].filter(Boolean).join(", ");
+      const topic = u.area ? areaLabel(u.area, u.niche) : "";
+      $("#bsU").innerHTML = [
+        place && `<span class="u-chip place"><b>${esc(t("bs.place"))}</b>${esc(place)}</span>`,
+        topic && `<span class="u-chip topic"><b>${esc(t("bs.topic"))}</b>${esc(topic)}</span>`,
+        u.rest && `<span class="u-chip rest"><b>${esc(t("bs.searching"))}</b>“${esc(u.rest)}”</span>`,
+      ].filter(Boolean).join("") || `<span class="muted">${esc(t("bs.hint"))}</span>`;
+    };
+    q.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(preview, 220); });
+    $$("[data-q]").forEach((b) => b.addEventListener("click", () => { q.value = b.dataset.q; preview(); q.focus(); }));
+    preview(); q.focus();
+    $("#broadForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const v = q.value.trim();
+      if (v.length < 3) { q.focus(); return; }
+      $("#broadForm").innerHTML = spinner(t("nw.working"));
+      try { const c = await api("/cases", { method: "POST", body: asStaff({ request_text: v, broad: true, lang: LANG }) }); go(`#/staff/case/${c.id}`); }
+      catch (e) { toast(`${t("err")}: ${e.message}`, 9000); viewNewBroad({ q: v }); }
+    });
+  }
+
+  async function viewNewDetails(prev = {}) {
     if (!S.examples) { try { S.examples = await api("/examples"); } catch { S.examples = []; } }
     const ar = await areas();
     const f = { area: prev.area || "", niche: prev.niche || "", docs: [...(prev.documents || [])], pending: 0 };
@@ -776,7 +861,7 @@
       if (!body.company_url && !body.documents.length && body.request_text.length < 3) { toast(t("nw.missing")); url.focus(); return; }
       form.innerHTML = spinner(t(body.company_url ? "nw.reading" : body.documents.length ? "nw.readingDocs" : "nw.working"));
       try { const c = await api("/cases", { method: "POST", body }); go(`#/staff/case/${c.id}`); }
-      catch (e) { toast(`${t("err")}: ${e.message}`, 9000); viewNew(body); }
+      catch (e) { toast(`${t("err")}: ${e.message}`, 9000); viewNew({ ...body, mode: "details" }); }
     });
   }
 

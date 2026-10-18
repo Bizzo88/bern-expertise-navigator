@@ -18,7 +18,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import archetypes, brief, cases, crawl, documents, index, llm, plain, search as search_mod, showcase
+from . import archetypes, brief, cases, crawl, documents, index, llm, plain, search as search_mod, showcase, understand
 from .config import DATA_DIR, load_sources, settings
 from .schema import EntityDetail, RelatedRef, SearchResponse
 
@@ -145,6 +145,13 @@ def _case_or_404(cid: str) -> cases.Case:
 @app.get("/archetypes")
 def get_archetypes():
     return archetypes.ARCHETYPES
+
+
+@app.get("/understand")
+def get_understand(q: str = Query("", max_length=500)):
+    """Live preview for the broad search: place (city / canton / country), medtech area / niche and the
+    words that remain to search, read from free text in EN/DE/FR/IT/Romansh (config-driven, no AI)."""
+    return understand.understand(q)
 
 
 @app.get("/medtech-areas")

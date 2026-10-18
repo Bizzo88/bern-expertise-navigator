@@ -657,3 +657,21 @@ sup.ref a { font-size: 11px; font-weight: 700; color: var(--ok); text-decoration
 .atab.on .s { color: inherit; }
 .atab .s svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 3; }
 @media (max-width: 760px) { .atabs { flex-wrap: nowrap; overflow-x: auto; } .atab { flex: none; } }
+
+/* =================== broad search =================== */
+.nr-tabs { display: flex; justify-content: center; margin: 4px 0 14px; }
+.nr-tabs .seg-tabs button { display: inline-flex; align-items: center; gap: 6px; }
+.bs-understood { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 34px; margin: 12px 0 2px; }
+.u-chip { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; padding: 5px 12px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--ink); }
+.u-chip b { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+.u-chip.place { border-color: color-mix(in srgb, var(--info) 45%, var(--border)); background: var(--info-bg); }
+.u-chip.topic { border-color: color-mix(in srgb, var(--brand) 40%, var(--border)); background: color-mix(in srgb, var(--brand) 6%, var(--surface)); }
+.bs-langs { text-align: center; margin-top: 14px; }
+.nr-box input#bsQ { flex: 1; min-width: 0; border: 0 !important; box-shadow: none !important; background: transparent; font-size: 17px; padding: 9px 2px; }
+
+/* segmented tabs (New request: Broad search / Company details; Labs & facilities directory) */
+.seg-tabs { display: inline-flex; background: var(--surface-2); padding: 3px; border-radius: 11px; gap: 2px; }
+.seg-tabs button { border: 0; background: transparent; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+.seg-tabs button:hover { color: var(--ink); }
+.seg-tabs button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
