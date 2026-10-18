@@ -1,0 +1,134 @@
+# bern-db: PostgreSQL 18 + pgvector + Apache AGE
+
+> Deployed on the team server at /opt/bern/db — see docs/server-handoff.md.
+
+The single database for the Bern Expertise Navigator. It replaces the YAML files, the entities JSON,
+SQLite, Qdrant/NumPy and the BM25 pickle.
+
+## Architecture
+
+- Immagine `bern-pg:18-age1.8.0-vec0.8.6`: `apache/age:release_PG18_1.8.0` (PG 18.6, AGE 1.8.0) + `postgresql-18-pgvector=0.8.6-1.pgdg13+1`.
+  The `initdb/` scripts are copied into the image and run **only on first start** (empty volume). Later schema changes are made with migrations recorded in `nav.schema_migrations`.
+- A single `db` service. The port is published only on `127.0.0.1:${PG_HOST_PORT:-5432}`. It uses the `pgdata` volume (mounted at `/var/lib/postgresql`, PG18 layout) and the `bern` network, which the app containers join.
+- AGE is in `shared_preload_libraries`: no `LOAD 'age'` needed. The `bern_app` role has `search_path = nav, ag_catalog, public`.
+- Roles:
+  - `postgres`: owner and DDL.
+  - `bern_app`: LOGIN, not superuser. Can run DML and MAINTAIN on `nav` and on the label tables of `expertise_graph`. Cannot run DDL: it cannot create tables or new graph labels.
+- Tuning for 8 vCPU / 15 GB shared with the app:
+  - `shared_buffers=3GB`, `effective_cache_size=8GB`, `work_mem=32MB`;
+  - `maintenance_work_mem=1GB` and `max_parallel_maintenance_workers=4`, for the HNSW build;
+  - `shm_size=2gb`, because the parallel HNSW build uses POSIX DSM.
+
+  All of these values can be changed in `.env`.
+
+## From current files to tables
+
+| Before | Now |
+|---|---|
+| `sources/*.yaml` | `nav.source` |
+| pagine crawl (`Page`) | `nav.page` |
+| entities JSON (`Entity`) | `nav.entity` (with generated `tsv`: simple+unaccent, weights A/B/C; trigram on `name`) |
+| `Entity.evidence[]` | `nav.evidence` (FK entity, optional FK page, `tsv` on the snippet) |
+| rejected claims | `nav.rejected_claim` (+ `reason`) |
+| Qdrant / NumPy | `nav.passage` (`vector(768)` cosine, HNSW m=16 ef_c=64; `source`/`entity_type` denormalized) |
+| BM25 pickle | Postgres FTS (`nav.entity.tsv`, `nav.evidence.tsv`) |
+| SQLite cases (JSON blob) | `nav."case"`, `nav.case_match`, `nav.case_event` |
+| implicit graph (same name/same source, `link_site_structure`, `derive_units`) | AGE graph `expertise_graph` |
+
+Graph:
+- Vertices:
+  - `Person`, `Unit`, `Project`, `Infrastructure`, with properties `entity_id` (= `nav.entity.id`), `name` and `source`;
+  - `Source`, with property `name`;
+  - `Topic`, with properties `key` and `label`.
+- Edges:
+  - `MEMBER_OF`: person->unit;
+  - `WORKS_ON`: person->project;
+  - `PART_OF`: project->unit e unit->unit;
+  - `OPERATES`: unit->infrastructure;
+  - `FROM_SOURCE`: entity->source;
+  - `HAS_EXPERTISE`: ->topic.
+
+Why `Topic` is a vertex: today expertise values are free-form strings repeated in every entity. As vertices they become a meeting point: the query "who shares expertise with X" is a 2-hop. Synonyms can also be merged later, by letting the LLM choose from a list of existing Topics, with no alias dictionaries. `key` is the normalized form (lowercase, accent-free), `label` is the original text.
+
+## Getting started
+
+```bash
+cp .env.example .env    # put the real passwords in
+docker compose build
+docker compose up -d
+docker compose ps       # must show (healthy)
+```
+
+To connect the app, add it to the `bern` network (`networks: { bern: { external: true } }`) and use this connection string:
+`postgresql://bern_app:<APP_DB_PASSWORD>@db:5432/bern`.
+
+For remote access, through an SSH tunnel:
+
+```bash
+ssh -L 5432:127.0.0.1:5432 deploy@116.203.127.208
+psql "postgresql://bern_app@127.0.0.1:5432/bern"
+```
+
+## Example queries (as `bern_app`)
+
+Vector search filtered by source, keeping the best point per entity. `$1` is the normalized e5 embedding of the query, `"query: ..."`.
+
+```sql
+SET hnsw.ef_search = 100;
+SET hnsw.iterative_scan = relaxed_order;   -- pgvector 0.8: the filter does not empty the top-k
+WITH hits AS (
+  SELECT entity_id, kind, text, embedding <=> $1 AS dist
+  FROM nav.passage WHERE source = $2
+  ORDER BY embedding <=> $1 LIMIT 100)
+SELECT DISTINCT ON (entity_id) entity_id, kind, text, 1 - dist AS cos_sim
+FROM hits ORDER BY entity_id, dist;        -- then re-sort by cos_sim in the app or in an outer SELECT
+```
+
+FTS, which replaces BM25. With unaccent, `zurich` finds `Zürich`.
+
+```sql
+SELECT id, name, ts_rank(tsv, q) AS rank
+FROM nav.entity, websearch_to_tsquery('nav.simple_unaccent', $1) q
+WHERE tsv @@ q ORDER BY rank DESC LIMIT 20;
+-- fuzzy match on name
+SELECT id, name, similarity(name, $1) FROM nav.entity WHERE name % $1 ORDER BY 3 DESC;
+```
+
+Cypher 1-hop, unit -> people:
+
+```sql
+SELECT * FROM cypher('expertise_graph', $$
+  MATCH (p:Person)-[:MEMBER_OF]->(u:Unit {entity_id: 'a1b2c3d4e5f60001'})
+  RETURN p.entity_id, p.name $$) AS (entity_id agtype, name agtype);
+```
+
+Hybrid graph+vector query: members of a unit ordered by similarity to the query. `agtype::text` strips the quotes.
+
+```sql
+WITH members AS (
+  SELECT g.entity_id::text AS id FROM cypher('expertise_graph', $$
+    MATCH (p:Person)-[:MEMBER_OF]->(:Unit {entity_id: 'a1b2c3d4e5f60001'}) RETURN p.entity_id
+  $$) AS g(entity_id agtype))
+SELECT e.id, e.name, e.role, 1 - min(ps.embedding <=> $1) AS best_sim
+FROM members m JOIN nav.passage ps ON ps.entity_id = m.id JOIN nav.entity e ON e.id = m.id
+GROUP BY e.id, e.name, e.role ORDER BY best_sim DESC;
+```
+
+Planner note: with few rows and a weakly selective filter, Postgres may prefer a bitmap scan on the `source` index followed by an exact sort. This is correct, because at that scale it is faster. The HNSW index comes into play when the table grows or when the query has no filter. After a bulk load run `ANALYZE nav.passage;`: `bern_app` has the MAINTAIN privilege.
+
+## Backup and restore
+
+```bash
+docker compose exec -T db pg_dump -U postgres -d bern -Fc > bern_$(date +%F).dump
+docker compose exec -T db pg_restore -U postgres -d bern --clean --if-exists < bern_YYYY-MM-DD.dump
+```
+
+The dump includes both the `nav` schema and the AGE graph (the `expertise_graph` schema and `ag_catalog.ag_graph`/`ag_label`). To restore into an empty DB, first run `CREATE EXTENSION age; CREATE EXTENSION vector;`, which initdb already does.
+
+## Local test (Docker Desktop)
+
+```bash
+docker compose -p bern-db-test build
+docker compose -p bern-db-test up -d    # with PG_HOST_PORT=55432 in .env
+docker compose -p bern-db-test down -v
+```
