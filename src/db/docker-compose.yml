@@ -1,0 +1,68 @@
+name: bern-db
+
+services:
+  db:
+    build: .
+    image: bern-pg:18-age1.8.0-vec0.8.6
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD missing in .env}
+      POSTGRES_DB: bern
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD missing in .env}
+      POSTGRES_INITDB_ARGS: "--data-checksums --encoding=UTF8 --locale=C.UTF-8"
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=age
+      - -c
+      - max_connections=100
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-3GB}
+      - -c
+      - effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-8GB}
+      - -c
+      - maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-1GB}
+      - -c
+      - work_mem=${PG_WORK_MEM:-32MB}
+      - -c
+      - max_worker_processes=16
+      - -c
+      - max_parallel_workers=8
+      - -c
+      - max_parallel_workers_per_gather=4
+      - -c
+      - max_parallel_maintenance_workers=4
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - effective_io_concurrency=200
+      - -c
+      - wal_compression=on
+      - -c
+      - max_wal_size=4GB
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - log_min_duration_statement=1000
+    # Parallel HNSW build uses POSIX DSM: the Docker default (64MB) is not enough
+    shm_size: ${PG_SHM_SIZE:-2gb}
+    ports:
+      - "127.0.0.1:${PG_HOST_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bern -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - bern
+
+volumes:
+  pgdata:
+
+networks:
+  bern:
+    name: bern
