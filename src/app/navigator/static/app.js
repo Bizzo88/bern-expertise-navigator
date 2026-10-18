@@ -308,6 +308,30 @@
     },
   };
   let LANG = store.get("nav-lang", null) || ((navigator.language || "en").startsWith("de") ? "de" : (navigator.language || "").startsWith("fr") ? "fr" : "en");
+  Object.assign(I18N.en, {
+    "loading": "Loading…", "retry": "Try again",
+    "rq.loadError": "Company requests could not be loaded",
+    "rq.filter": "Find a company request", "rq.filterHint": "Search company, needs, location or specialty",
+    "rq.count": "{n} of {total} requests", "rq.noMatch": "No matching requests. Try another search.",
+    "rq.workflow": "Request progress", "i.working": "Preparing your personalized pitch…",
+    "i.failed": "The pitch could not be prepared. Your previous pitch is preserved. Please try again.",
+  });
+  Object.assign(I18N.de, {
+    "loading": "Wird geladen…", "retry": "Erneut versuchen",
+    "rq.loadError": "Firmenanfragen konnten nicht geladen werden",
+    "rq.filter": "Firmenanfrage finden", "rq.filterHint": "Firma, Bedarf, Standort oder Fachgebiet suchen",
+    "rq.count": "{n} von {total} Anfragen", "rq.noMatch": "Keine passenden Anfragen. Versuchen Sie eine andere Suche.",
+    "rq.workflow": "Fortschritt der Anfrage", "i.working": "Ihr persönlicher Pitch wird vorbereitet…",
+    "i.failed": "Der Pitch konnte nicht erstellt werden. Ihr bisheriger Pitch bleibt erhalten. Bitte versuchen Sie es erneut.",
+  });
+  Object.assign(I18N.fr, {
+    "loading": "Chargement…", "retry": "Réessayer",
+    "rq.loadError": "Impossible de charger les demandes d’entreprises",
+    "rq.filter": "Trouver une demande", "rq.filterHint": "Rechercher une entreprise, un besoin, un lieu ou une spécialité",
+    "rq.count": "{n} demandes sur {total}", "rq.noMatch": "Aucune demande correspondante. Essayez une autre recherche.",
+    "rq.workflow": "Progression de la demande", "i.working": "Préparation de votre pitch personnalisé…",
+    "i.failed": "Le pitch n’a pas pu être préparé. Le pitch précédent est conservé. Veuillez réessayer.",
+  });
   if (!I18N[LANG]) LANG = "en";
   const t = (k, v = {}) => (I18N[LANG][k] ?? I18N.en[k] ?? k).replace(/\{(\w+)\}/g, (_, x) => v[x] ?? "");
   const fmtDate = (iso, withTime = true, lang = LANG) => {
@@ -371,7 +395,7 @@
   const avatar = (name, type, sm = false) =>
     `<div class="avatar ${sm ? "sm " : ""}${esc(type)}" aria-hidden="true">${type === "person" ? esc(initialsOf(name)) : ICON[type] || ""}</div>`;
   const pill = (status) => `<span class="pill st-${esc(status)}">${esc(t("st." + status))}</span>`;
-  const spinner = (msg = "") => `<div class="working"><span class="spinner"></span>${msg ? `<span>${esc(msg)}</span>` : ""}</div>`;
+  const spinner = (msg = "") => `<div class="working" role="status"><span class="spinner" aria-hidden="true"></span><span>${esc(msg || t("loading"))}</span></div>`;
   function highlight(text, terms) {
     const h = esc(text);
     if (!terms.length) return h;
@@ -392,7 +416,11 @@
   const entity = async (id) => { if (!S.entity.has(id)) S.entity.set(id, await api(`/entity/${encodeURIComponent(id)}`)); return S.entity.get(id); };
   async function stats() { if (!S.stats) { try { S.stats = await api("/stats"); } catch { S.stats = { sources: [], entities_per_source: {}, pages_per_source: {} }; } } return S.stats; }
   async function showcase() { if (!S.showcase) { try { S.showcase = await api("/showcase"); } catch { S.showcase = { themes: [], highlights: [], labs: [], facilities: [], engage: [] }; } } return S.showcase; }
-  async function refreshCases() { try { S.cases = await api("/cases"); } catch { S.cases = []; } }
+  async function refreshCases() {
+    S.casesError = "";
+    try { S.cases = await api("/cases"); }
+    catch (e) { S.casesError = e.message; }
+  }
   async function archetypes() { if (!S.arch) { try { S.arch = await api("/archetypes"); } catch { S.arch = []; } } return S.arch; }
   async function areas() { if (!S.areas) { try { S.areas = await api("/medtech-areas"); } catch { S.areas = []; } } return S.areas; }
   const areaLabel = (a, n) => {
@@ -464,6 +492,11 @@
     const sub = p[1] || "";
     if (!["requests", "new", "search", "case"].includes(sub)) return go(roleHome());
     renderChrome("staff", { requests: "requests", new: "new", search: "ssearch", case: "requests" }[sub] || "");
+    if (S.casesError && sub === "requests") {
+      view().innerHTML = `<section class="panel empty" role="alert"><h1>${esc(t("rq.loadError"))}</h1><p>${esc(S.casesError)}</p><button class="btn-primary" id="retryCases" type="button">${esc(t("retry"))}</button></section>`;
+      $("#retryCases").addEventListener("click", () => route());
+      return;
+    }
     if (sub === "requests") return viewRequests();
     if (sub === "new") return viewNew();
     if (sub === "search") return params.get("q") ? viewSearch(params, "staff") : viewStaffSearchHome();
@@ -704,11 +737,23 @@
     view().innerHTML = `<div class="page-h"><div><h1>${esc(t("rq.title"))}</h1><p>${esc(t("rq.lead"))}</p></div>
         <a class="btn-primary btn-brand" href="#/staff/new">${ICON.plus}${esc(t("nav.new"))}</a></div>
       <div class="kpis">${kpi(by("todo").length, "kpi.open")}${kpi(by("ready").length, "kpi.ready")}${kpi(by("done").length, "kpi.invited")}</div>
-      ${S.cases.length ? `<div class="board">${cols.map(([l, st]) => { const xs = by(st);
-        return `<section class="col" aria-label="${esc(t(l))}"><div class="col-h"><span>${esc(t(l))}</span><i class="count">${xs.length || ""}</i></div>
-          ${xs.map(card).join("") || `<div class="col-empty">${esc(t("col.empty"))}</div>`}</section>`; }).join("")}</div>`
+      ${S.cases.length ? `<div class="request-tools"><label class="field" for="requestFilter">${esc(t("rq.filter"))}</label><input type="search" id="requestFilter" placeholder="${esc(t("rq.filterHint"))}" aria-controls="requestBoard"><p class="muted" id="requestCount" role="status"></p></div><div class="board" id="requestBoard"></div>`
       : `<div class="panel empty"><div class="empty-ico">${ICON.inbox}</div><h3>${esc(t("rq.empty"))}</h3><p>${esc(t("rq.emptyD"))}</p>
           <p style="margin-top:14px"><a class="btn-primary btn-brand" href="#/staff/new">${ICON.plus}${esc(t("nav.new"))}</a></p></div>`}`;
+    const filter = $("#requestFilter");
+    if (filter) {
+      const draw = () => {
+        const q = filter.value.trim().toLocaleLowerCase(LANG);
+        const filtered = S.cases.filter((c) => [companyOf(c), c.summary, placeOf(c), areaLabel(c.area, c.niche)].join(" ").toLocaleLowerCase(LANG).includes(q));
+        $("#requestCount").textContent = t("rq.count", { n: filtered.length, total: S.cases.length });
+        $("#requestBoard").innerHTML = cols.map(([l, st]) => {
+          const xs = filtered.filter((c) => stage(c) === st);
+          return `<section class="col" aria-label="${esc(t(l))}"><div class="col-h"><span>${esc(t(l))}</span><i class="count">${xs.length}</i></div>${xs.map(card).join("") || `<div class="col-empty">${esc(t(q ? "rq.noMatch" : "col.empty"))}</div>`}</section>`;
+        }).join("");
+      };
+      filter.addEventListener("input", draw);
+      draw();
+    }
   }
 
   /* ======================= STAFF/officer: new request (company link or info first) ======================= */
@@ -921,7 +966,7 @@
     const c = CASE, step = stepOf(c), cls = (n) => (n < step ? "done" : n === step ? "now" : "");
     view().innerHTML = `<a class="back" href="#/staff/requests">${ICON.back}${esc(t("cs.back"))}</a>
       <div class="case-h"><div><h1>${esc(companyOf(c))}</h1><div class="sub">${placeOf(c) ? `<span>${esc(placeOf(c))}</span>` : ""}${c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}<span>${esc(t("cs.received"))} ${esc(fmtDate(c.created_at))}</span></div></div>${pill(c.status)}</div>
-      <ol class="stepper three">${[1, 2, 3].map((n) => `<li class="${cls(n)}"><span class="dotn">${n < step ? "✓" : n}</span>${esc(t("step." + n))}</li>`).join("")}</ol>
+      <ol class="stepper three" aria-label="${esc(t("rq.workflow"))}">${[1, 2, 3].map((n) => `<li class="${cls(n)}" ${n === step ? 'aria-current="step"' : ""}><span class="dotn" aria-hidden="true">${n < step ? "✓" : n}</span>${esc(t("step." + n))}</li>`).join("")}</ol>
       <div class="case-grid"><div>${panelUnderstand(c.analysis)}${officerPartners(c, step)}${officerPitch(c, step)}</div>${sidePanels(c)}</div>`;
     bindOfficerCase();
   }
@@ -1030,8 +1075,13 @@
     }));
     $("#rematch")?.addEventListener("submit", async (ev) => {
       ev.preventDefault(); const q = ev.target.q.value.trim(); if (q.length < 2) return;
-      ev.target.querySelector("button").disabled = true;
-      CASE = await api(`/cases/${c.id}/rematch`, { method: "POST", body: asStaff({ query: q }) }); rerender();
+      const button = ev.target.querySelector("button");
+      button.disabled = true;
+      ev.target.setAttribute("aria-busy", "true");
+      try {
+        CASE = await api(`/cases/${c.id}/rematch`, { method: "POST", body: asStaff({ query: q }) }); rerender();
+      } catch (e) { toast(e.message, 6000); }
+      finally { button.disabled = false; ev.target.removeAttribute("aria-busy"); }
     });
     $("#moreSearch")?.addEventListener("click", () => {
       S.ctx = { id: c.id, company: c.company }; store.set("nav-ctx", S.ctx);
@@ -1045,11 +1095,19 @@
     });
     $("#prepBrief")?.addEventListener("click", async (ev) => {
       ev.currentTarget.disabled = true;
-      $("#pitchBox").innerHTML = spinner();
+      $("#pitchBox").setAttribute("aria-busy", "true");
+      $("#pitchBox").innerHTML = spinner(t("i.working"));
       try {
         await api(`/cases/${c.id}/brief`, { method: "POST", body: asStaff({ lang: $("#pitchLang").value, email: staff.email || "", team: staff.team || "" }) });
         CASE = await api(`/cases/${c.id}`); rerender();
-      } catch (e) { toast(e.message); rerender(); }
+      } catch (e) {
+        rerender();
+        const error = document.createElement("p");
+        error.className = "callout warn";
+        error.setAttribute("role", "alert");
+        error.textContent = `${t("i.failed")} ${e.message}`;
+        $("#pitchBox").prepend(error);
+      }
     });
     $("#copyBrief")?.addEventListener("click", () => { navigator.clipboard?.writeText(briefUrl(c.outreach.brief.token)); toast(t("i.copied")); });
     const slotLabels = () => $$(".slot").map((i) => i.value).filter(Boolean).map((v) => fmtDate(v, true, c.outreach?.brief?.lang || LANG));
