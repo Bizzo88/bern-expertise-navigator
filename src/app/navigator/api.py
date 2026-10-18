@@ -11,14 +11,15 @@ from pathlib import Path
 
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse, Response
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import cases, crawl, index, llm, plain, search as search_mod, showcase
 from .config import DATA_DIR, load_sources, settings
 from .schema import EntityDetail, RelatedRef, SearchResponse
+from .storage import StorageError
 
 STATIC = Path(__file__).parent / "static"
 
@@ -40,6 +41,13 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Research & Expertise Navigator", version="0.3.0", lifespan=lifespan)
+
+
+@app.exception_handler(StorageError)
+def _storage_error(_req: Request, e: StorageError):
+    """Storage down / schema outdated: structured 503 instead of an opaque 500."""
+    return JSONResponse(status_code=503, content={"error": e.code, "detail": e.detail, "backend": e.backend})
+
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -70,7 +78,7 @@ def entity(eid: str):
     e = ents.get(eid)
     if not e:
         raise HTTPException(404, "unknown entity")
-    nb = [ents[i] for i in search_mod.graph().get(eid, []) if i in ents]
+    nb = [ents[i] for i in search_mod.neighbors([eid]).get(eid, []) if i in ents]
     nb.sort(key=lambda x: (x.entity_type != "person", -search_mod.seniority(x), x.name))
     return EntityDetail(entity=e, related=[RelatedRef(id=x.id, name=x.name, entity_type=x.entity_type, role=x.role)
                                            for x in nb[:40]])

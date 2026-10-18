@@ -116,6 +116,25 @@ GROUP BY e.id, e.name, e.role ORDER BY best_sim DESC;
 
 Planner note: with few rows and a weakly selective filter, Postgres may prefer a bitmap scan on the `source` index followed by an exact sort. This is correct, because at that scale it is faster. The HNSW index comes into play when the table grows or when the query has no filter. After a bulk load run `ANALYZE nav.passage;`: `bern_app` has the MAINTAIN privilege.
 
+## Migrations
+
+`initdb/` runs only on an empty volume. Later schema changes are versioned SQL files in `migrations/`
+(`0002_*.sql`, ...), each one wrapped in a transaction and recording itself in `nav.schema_migrations`.
+
+- Fresh volume: the image copies `migrations/` to `/migrations` and `initdb/06-migrations.sh` applies them in order.
+- Existing database: apply each new file once, as the owner:
+
+  ```bash
+  docker compose exec -T db psql -U postgres -d bern -v ON_ERROR_STOP=1 < migrations/0002_index_order_and_match_ref.sql
+  ```
+
+The app (`navigator/pgstore.py`) checks `nav.schema_migrations` at connect time and refuses to start
+with a `schema_outdated` error if a migration it needs is missing.
+
+| Version | What |
+|---|---|
+| `0002_index_order_and_match_ref` | `nav.entity.load_order` (input order, for identical tie-breaks with the file backend); `nav.case_match.entity_ref` (match id survives a reindex that drops the entity) |
+
 ## Backup and restore
 
 ```bash

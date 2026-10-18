@@ -78,6 +78,17 @@ public websites ─► 1 crawl ─► 2 classify ─► 3 extract ────�
 | Requests | `plain.py`, `cases.py` | Plain-language summary of a company request plus explanations of terms the glossary lacks (labelled *AI explanation – check*). Emails are a deterministic template: no generated claims |
 | Showcase | `showcase.py` | none: live counts from the index, and proof points re-verified against the saved pages at startup |
 
+## Storage backends
+
+`navigator/storage.py` picks the backend from `DATABASE_URL` (capability matrix in its docstring):
+
+- empty (default): files in `data/` (entities.jsonl, BM25 pickle, NumPy or Qdrant, SQLite cases), as before;
+- set: Postgres from `db/` (`nav` tables, pgvector, FTS, AGE graph `expertise_graph`). `index --source X`
+  then replaces only source X, in one transaction. Requires the migrations in `db/migrations/`.
+
+Postgres tests: `TEST_DATABASE_URL=postgresql://bern_app:<pw>@127.0.0.1:<port>/bern pytest -q tests/test_pg_backend.py`
+(wipes that database; use a throwaway container).
+
 ## How we meet the success criteria
 
 | # | Criterion | Mechanism | Check |
