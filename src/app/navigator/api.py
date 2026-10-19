@@ -357,6 +357,11 @@ def prepare_brief(cid: str, body: BriefReq, request: Request, user=Depends(requi
         raise HTTPException(400, "Add the company name before preparing the pitch")
     out = brief.build(c, body.lang, {"name": body.actor, "email": body.email, "team": body.team})
     knowledge_workflow.enrich(out, c, approved)
+    from . import commercial_pitch
+    out["brief"]["commercial"] = commercial_pitch.build(out["brief"])
+    out["brief"]["headline"] = out["brief"]["commercial"]["headline"]
+    out["brief"]["kicker"] = out["brief"]["commercial"]["kicker"]
+    out["brief"]["hook"] = out["brief"]["commercial"]["lead"] + " " + out["brief"]["commercial"]["body"]
     from .pitch_branding import validate_logo
     previous = ((c.outreach.get("brief") or {}).get("data") or {}).get("branding", {})
     branding = dict(previous)
@@ -391,11 +396,13 @@ def get_brief(token: str):
     from . import published_pitch
     snapshot = published_pitch.get(token)
     if snapshot:
-        return snapshot
+        from .commercial_pitch import present
+        return present(snapshot)
     for c in cases.list_cases():
         b = (c.outreach or {}).get("brief")
         if b and secrets.compare_digest(b["token"], token):
-            return {**b["data"], "prepared_at": b["at"]}
+            from .commercial_pitch import present
+            return present({**b["data"], "prepared_at": b["at"]})
     raise HTTPException(404, "unknown brief")
 
 

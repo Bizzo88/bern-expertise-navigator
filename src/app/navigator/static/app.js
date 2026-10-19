@@ -1278,47 +1278,44 @@
     let b;
     try { b = await api(`/briefs/${encodeURIComponent(token)}`); }
     catch { view().innerHTML = `<div class="panel empty"><h3>${esc(t("bf.missing"))}</h3></div>`; return; }
-    const lb = b.labels, sup = (n) => `<sup class="ref"><a href="#src-${n}" data-ref="${n}">[${n}]</a></sup>`;
+    const lb = b.labels, pitch = b.commercial;
+    if (!pitch) { view().innerHTML = `<div class="panel empty"><h3>${esc(t("err"))}</h3></div>`; return; }
+    const items = b.items || [], sources = b.sources || [];
     document.title = `${b.company} × Bern`;
-    const nClaims = b.items.reduce((n, i) => n + (i.quote ? 1 : 0) + i.technical.length, 0) + b.proof.length;
-    const nPubs = b.items.reduce((n, i) => n + i.publications.length, 0);
-    view().innerHTML = `<article class="brief" lang="${esc(b.lang)}">
-      <header class="b-hero"><div class="kick">${esc(b.kicker)}</div>
+    const email = b.contact?.email || '';
+    const mailto = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(`${b.company} — Let’s connect in Bern`)}`;
+    view().innerHTML = `<article class="brief recipient-pitch" lang="${esc(b.lang)}">
+      <section class="recipient-story" aria-labelledby="pitchHeadline">
+        <p class="recipient-kicker">${esc(pitch.kicker)}</p>
         ${/^data:image\/png;base64,/.test(b.branding?.company_logo || '') ? `<img class="recipient-logo" src="${esc(b.branding.company_logo)}" alt="${esc(b.company)}">` : ''}
-        <h1>${esc(b.headline || b.company + ' × Bern')}</h1><p>${esc(b.hook)}</p>
-        <div class="stat-chips"><span><b>${b.items.length}</b> ${esc(lb.teams)}</span><span>${ICON.check}<b>${nClaims}</b> ${esc(lb.stmt)}</span>${nPubs ? `<span><b>${nPubs}</b> ${esc(lb.pubs_n)} (DOI)</span>` : ""}</div></header>
-
-      ${b.opportunities?.length ? `<section class="b-sec pitch-commercial"><p>${esc(b.objective || '')}</p>${b.opportunities.slice(0, 3).map((o) => `<section><h3><a href="${esc(safeUrl(o.url))}" target="_blank" rel="noopener">${esc(o.name)}</a></h3><p>${esc(o.benefit)}</p>${o.evidence?.ref ? sup(o.evidence.ref) : ''}</section>`).join('')}</section>` : ''}
-      <section class="b-sec"><h2>${esc(lb.why)}</h2><div class="b-cards">${b.items.map((it, k) => `<article class="b-card">
-        <div class="hd">${avatar(it.name, it.type)}<div><h3>${esc(it.name)}</h3><div class="meta">${[it.role, it.unit, it.institution].filter(Boolean).map(esc).join(" · ")} ${sup(it.page_ref)}</div></div></div>
-        ${it.topics.length ? `<div class="tags">${it.topics.map((x) => `<span class="topic" title="${esc(x.plain)}">${esc(x.term)}</span>`).join("")}</div>
-          <p class="plain-topic">${esc(it.topics[0].plain)}</p>` : ""}
-        ${it.quote ? `<blockquote>“${esc(it.quote.text)}” ${sup(it.quote.ref)}${it.quote.via ? `<span class="via">— ${esc(it.quote.via)}</span>` : ""}</blockquote>` : ""}
-        <button class="tech-btn" type="button" aria-expanded="false" aria-controls="tech-${k}">${esc(lb.tech)} <span class="chev">▾</span></button>
-        <div class="tech" id="tech-${k}"><ul>${it.technical.map((x) => `<li><span class="f">${esc(x.field)}</span>${esc(x.text)} ${sup(x.ref)}</li>`).join("")}</ul>
-          ${it.publications.length ? `<h4>${esc(lb.pubs)}</h4><ul>${it.publications.map((p) => `<li class="pub">${esc(p.citation)} — <a href="https://doi.org/${esc(p.doi)}" target="_blank" rel="noopener">doi:${esc(p.doi)}</a> ${sup(p.page_ref)}</li>`).join("")}</ul>` : ""}</div>
-      </article>`).join("")}</div></section>
-
-      ${b.proof.length ? `<section class="b-sec"><h2>${esc(lb.proof)}</h2><div class="b-proof">${b.proof.map((h) => `<div><div class="fig">${esc(h.figure)}</div><div class="lbl">${esc(h.label)}</div>
-        <q>${esc(h.quote)}</q> ${sup(h.ref)}</div>`).join("")}</div></section>` : ""}
-
-      <section class="b-sec"><h2>${esc(lb.visit)}</h2><div class="b-visit">
-        <ol class="agenda">${b.agenda.map((a) => `<li>${esc(a)}</li>`).join("")}</ol>
-        <div class="cta-box">${b.contact.email ? `<a class="btn-primary" href="mailto:${esc(b.contact.email)}?subject=${encodeURIComponent(`${b.company} — Bern`)}">${ICON.cal}${esc(lb.cta)}</a>` : ""}
-          <button class="btn" type="button" id="bPrint">${ICON.printer}${esc(lb.pdf)}</button>
-          <small>${esc(b.from)}${b.contact.email ? ` · ${esc(b.contact.email)}` : ""}</small></div></div></section>
-
-      <div class="honest">${ICON.shield}<span>${esc(b.honest)}</span></div>
-      <section class="b-sources"><h2 style="font-size:15px;margin:0">${esc(lb.sources)}</h2><ol>${b.sources.map((s, i) =>
-        `<li id="src-${i + 1}"><a href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(s.kind === "doi" ? s.label : hostPath(s.url))}</a>${s.kind === "doi" ? ` <span class="muted">${esc(s.url)}</span>` : ""}</li>`).join("")}</ol></section>
+        <h1 id="pitchHeadline">${esc(pitch.headline)}</h1>
+        <p class="recipient-lead">${esc(pitch.lead)}</p>
+        <p class="recipient-body">${esc(pitch.body)}</p>
+        ${pitch.rationale ? `<p class="recipient-body">${esc(pitch.rationale)}</p>` : ''}
+        <p class="recipient-invitation">${esc(pitch.invitation)}</p>
+        <div class="recipient-actions">${email ? `<a class="btn-primary" href="${esc(mailto)}">${esc(pitch.cta)} ${ICON.ext}</a>` : `<p class="muted">${esc(pitch.missing_contact)}</p>`}
+          <button class="btn" type="button" id="checkInformation" aria-expanded="false" aria-controls="pitchEvidence">${esc(pitch.evidence)} ${ICON.link}</button>
+          <button class="link-btn" type="button" id="bPrint">${esc(pitch.pdf)}</button></div>
+      </section>
+      <details class="recipient-evidence" id="pitchEvidence"><summary>${esc(pitch.evidence)}</summary>
+        <p>${esc(pitch.evidence_intro)}</p>
+        <ul class="recipient-source-links">${pitch.links.map(link=>`<li><a href="${esc(safeUrl(link.url))}" target="_blank" rel="noopener noreferrer">${esc(link.label)} ${ICON.ext}</a></li>`).join('')}</ul>
+        <details class="recipient-dossier"><summary>${esc(pitch.details)}</summary>
+          ${items.map(it=>`<section class="recipient-evidence-item"><h3>${esc(it.name)}</h3>
+          <p class="muted">${esc([it.unit,it.institution].filter(Boolean).join(' · '))}</p>
+          ${it.quote ? `<blockquote>${esc(it.quote.text)}</blockquote>` : ''}
+          <a href="${esc(safeUrl(it.page))}" target="_blank" rel="noopener noreferrer">${esc(pitch.evidence)}</a>
+          ${(it.technical || []).length ? `<ul>${it.technical.map(x=>`<li>${esc(x.text)}</li>`).join('')}</ul>` : ''}
+          ${(it.publications || []).length ? `<ul>${it.publications.map(p=>`<li><a href="https://doi.org/${esc(p.doi)}" target="_blank" rel="noopener noreferrer">${esc(p.citation)}</a></li>`).join('')}</ul>` : ''}</section>`).join('')}
+          <ol class="recipient-all-sources">${sources.map(s=>`<li><a href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener noreferrer">${esc(s.label || hostPath(s.url))}</a></li>`).join('')}</ol>
+        </details>
+      </details>
     </article>`;
     window.PitchVisual?.mount(view().querySelector('.brief'), b, { skipIntro: params.get('print') === '1' });
-    $$(".tech-btn").forEach((btn) => btn.addEventListener("click", () => {
-      const box = $("#" + btn.getAttribute("aria-controls")), open = !box.classList.contains("open");
-      box.classList.toggle("open", open); btn.setAttribute("aria-expanded", open);
-    }));
-    $$("sup.ref a").forEach((a) => a.addEventListener("click", (ev) => { ev.preventDefault(); const el = $("#src-" + a.dataset.ref); el?.scrollIntoView({ behavior: "smooth", block: "center" }); el?.animate?.([{ background: "var(--mark)" }, { background: "transparent" }], { duration: 1600 }); }));
-    $("#bPrint").addEventListener("click", () => { location.href = `/briefs/${encodeURIComponent(token)}/pdf`; });
+    const evidence = $('#pitchEvidence'), trigger = $('#checkInformation');
+    trigger.onclick = () => { evidence.open = !evidence.open; if (evidence.open) evidence.scrollIntoView?.({behavior:'smooth',block:'start'}); };
+    evidence.addEventListener('toggle',()=>trigger.setAttribute('aria-expanded',String(evidence.open)));
+    $('#bPrint').onclick = () => { location.href = `/briefs/${encodeURIComponent(token)}/pdf`; };
     if (params.get("print") === "1") setTimeout(() => window.print(), 400);
   }
 

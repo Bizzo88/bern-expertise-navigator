@@ -265,3 +265,23 @@ button.analytics-bar { cursor: pointer; }
   :root[data-theme="dark"] .canton-logo { content: url('./logo-be.svg'); }
   :root[data-theme] { --bg: #fff; --surface: #fff; --surface-2: #faf1e3; --ink: #000; --ink-2: #333; --muted: #4e4e4e; --brand: #dc0018; --border: #dedede; color-scheme: light; }
 }
+
+/* Recipient-first commercial pitch: evidence is a secondary reading path. */
+.recipient-pitch { max-width: 1100px; margin-inline: auto; }
+.recipient-story { background: var(--surface-2); color: var(--ink); border-top: 5px solid var(--brand); padding: clamp(24px,5vw,64px); margin-top: 24px; }
+.recipient-kicker { color: var(--brand); font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin: 0 0 20px; }
+.recipient-story h1 { color: var(--ink); font-size: clamp(32px,4.2vw,54px); line-height: 1.12; max-width: 20ch; margin: 0 0 24px; letter-spacing: -.025em; }
+.recipient-lead { color: var(--ink); font-size: clamp(21px,2.3vw,27px); line-height: 1.4; font-weight: 500; margin: 0 0 18px; max-width: 42ch; }
+.recipient-body,.recipient-invitation { color: var(--ink-2); font-size: 18px; line-height: 1.65; max-width: 65ch; margin: 0 0 18px; }
+.recipient-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 30px; }
+.recipient-actions .btn-primary,.recipient-actions .btn { min-height: 48px; padding: 12px 20px; }
+.recipient-actions svg,.recipient-source-links svg { width: 18px; height: 18px; }
+.recipient-evidence { background: var(--surface); color: var(--ink); border: 1px solid var(--border); padding: 20px 24px; margin-top: 24px; }
+.recipient-evidence summary { cursor: pointer; font-weight: 500; padding-block: 8px; }
+.recipient-source-links { display: flex; flex-wrap: wrap; gap: 14px 24px; padding: 8px 0; list-style: none; }
+.recipient-source-links a { display: inline-flex; align-items: center; gap: 8px; color: var(--brand); }
+.recipient-dossier { border-top: 1px solid var(--border); margin-top: 20px; padding-top: 12px; }
+.recipient-evidence-item { padding-block: 20px; border-bottom: 1px solid var(--border); }
+.recipient-evidence-item blockquote { margin: 12px 0; border-left: 3px solid var(--brand); padding: 8px 16px; color: var(--ink-2); }
+.recipient-evidence-item li,.recipient-all-sources li { margin-block: 8px; overflow-wrap: anywhere; }
+@media(max-width:600px){ .recipient-actions { align-items: stretch; flex-direction: column; } .recipient-actions a,.recipient-actions button { justify-content: center; } .recipient-body,.recipient-invitation { font-size: 17px; } }

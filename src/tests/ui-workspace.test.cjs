@@ -331,3 +331,23 @@ test('saved KB-only pitch stays visible after reload and restores approvals for 
   assert.deepEqual(payload.knowledge_sources,refs);
   await until(()=>w.document.querySelector("#prepBrief") && !w.document.querySelector("#prepBrief").disabled);
 });
+
+
+test('recipient sees a crisp pitch after the map; dossier requires explicit evidence disclosure', async t=>{
+  const b={lang:'en',company:'Example XR',labels:{},contact:{email:'bern@example.org'},
+    hook:'Legacy: save 6–12 months',proof:[{figure:'CHF 6M+'}],
+    items:[{id:'p',name:'Dr Technical Example',institution:'Research Institute',page:'https://example.org/research',topics:[],quote:{text:'Source evidence'},technical:[],publications:[]}],
+    sources:[{label:'Original research',url:'https://example.org/research'}],
+    commercial:{kicker:'A personal invitation to Bern',headline:'Your next move. Connected in Bern.',lead:'Example XR, let’s explore your next move.',body:'Complementary expertise in applied AI.',invitation:'Start with a short conversation.',cta:'Let’s talk',evidence:'Check the information',evidence_intro:'Explore the sources.',details:'Explore supporting expertise',pdf:'Download the pitch',links:[{label:'Research source',url:'https://example.org/research'}]}};
+  const w=app(t,{hash:'/b/token',fetcher:async u=>u==='/briefs/token'?{ok:true,json:async()=>b}:undefined});
+  await until(()=>w.document.querySelector('#checkInformation'));
+  const d=w.document,story=d.querySelector('.recipient-story');
+  assert.match(story.textContent,/Start with a short conversation/);
+  assert.doesNotMatch(story.textContent,/Dr Technical|6–12|CHF|sourced statements/);
+  assert.equal(d.querySelector('#pitchEvidence').open,false);
+  assert.match(d.querySelector('.recipient-actions a').href,/mailto:bern%40example.org/);
+  d.querySelector('#checkInformation').click();
+  assert.equal(d.querySelector('#pitchEvidence').open,true);
+  assert.match(d.querySelector('#pitchEvidence').textContent,/Dr Technical Example/);
+  assert.equal(d.querySelector('.recipient-dossier').open,false);
+});

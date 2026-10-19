@@ -99,3 +99,24 @@ opportunities, not commitments, funding offers or guarantees.
 
 Local technical checks cover these boundaries. Full demo rehearsal and real device
 visual/accessibility QA are deferred and must be completed before release.
+
+
+## Recipient commercial reading path
+
+The recipient page now opens with the ecosystem animation, followed by a short
+commercial invitation and a clear conversation CTA. It does not expose a directory
+of doctors, technical cards, proof counters or estimated savings in its main flow.
+“Check the information” opens a secondary evidence panel with up to three selected
+links; a nested disclosure retains source excerpts, publications and the full list
+of references. This presentation also applies to legacy snapshots without changing
+their stored source evidence. Legacy claims and metrics are not reused as commercial
+copy. No meeting, funding, timeline or performance benefit is promised.
+
+The narrative is derived from selected, documented topics; private objectives and
+notes are not copied wholesale into public copy. A missing contact email produces
+an honest contact instruction rather than a fabricated booking link. The PDF opens
+with the same short invitation and moves evidence into an appendix. Recipient
+headings use theme-aware ink on the actual surface, with the existing Canton Bern
+font and red accent.
+
+The recipient narrative contains an ambition-led opening, a paragraph grounded in the selected source topics and resource types, an explanation of possible collaborative value, and a focused call/visit invitation. It is approximately 150 words in the English demo. Known ambition categories are taken from the public pitch objective; raw private notes and unsupported quantified benefits are not copied into the text.
