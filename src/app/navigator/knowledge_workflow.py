@@ -2,7 +2,7 @@
 import json
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
-from . import cases, knowledge, complementarity, private_pitch, knowledge_access
+from . import cases, knowledge, complementarity, private_pitch, knowledge_access, brief as pitch_builder
 
 router = APIRouter()
 
@@ -44,7 +44,14 @@ def enrich(output, case, sources):
                      'fr': f"Pour {case.company}, explorez des compétences complémentaires à Berne grâce aux connexions documentées ci-dessous."}[brief['lang']]
     output['stats']['claims'] += len(sources)
     output['stats']['sources'] = len(brief['sources'])
-    output['summary']['connections'] += [{'name': e['company'], 'reason': e['evidence'][:150], 'source': e['source_url']} for e in sources]
+    connections = [{'name': item['name'], 'reason': item['quote']['text'][:150], 'source': item['page']} for item in brief['items'] if item['type'] == 'company']
+    output['summary']['connections'] += connections
+    lang = brief['lang']
+    text = pitch_builder.COMMERCIAL[lang]['summary'].format(company=case.company, n=len(brief['items']))
+    output['summary']['text'] = text
+    output['explainer'][0]['lines'] = [{'text': text}]
+    output['explainer'][1]['lines'] += [{'text': item['name'] + ': ' + item['reason']} for item in connections]
+    output['explainer'][2]['lines'] = [{'text': pitch_builder.T[lang]['x.check1'].format(c=output['stats']['claims'], p=output['stats']['publications'])}]
 
 
 @router.get('/kb/leads/{lead_id}/sources')

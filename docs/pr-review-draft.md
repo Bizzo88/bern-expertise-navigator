@@ -23,3 +23,10 @@ Review and merge remain Prachi’s responsibility. This is prepared text only; n
 ## Known bugs found in pre-push review
 
 The user explicitly authorized pushing this review state with three open bugs: a KB-only pitch panel becomes hidden after reload; regeneration can drop approved KB sources; and the operator summary/explainer can retain pre-enrichment counts. Reproduction and impact are documented in `docs/bugs-review-2026-10-19.md`. These issues must be addressed before merge/release.
+
+
+## Aggiornamento dopo la verifica dei materiali locali
+
+BUG-01, BUG-02 e BUG-03 sono stati corretti. Il pannello mostra i pitch salvati dopo ricarica. Le approvazioni KB sono conservate nel lead privato e ripristinate nell’interfaccia; la rigenerazione risolve nuovamente ID e revisione. Omettere la selezione conserva le approvazioni precedenti, mentre una lista esplicitamente vuota le rimuove. Fonti modificate richiedono nuova revisione. I riferimenti privati non sono aggiunti alla pagina pubblica. Riepilogo ed explainer sono aggiornati dopo l’arricchimento KB in tutte e tre le lingue.
+
+Verifica finale locale: 110 test Python e 22 test DOM superati; 8 test PostgreSQL saltati senza database di test. Test della pipeline completa, fonti, PDF, email simulata e originali inclusi. Tutti gli script JavaScript superano il controllo di sintassi. I servizi esterni non configurati sono dipendenze di deployment, non errori della verifica locale.

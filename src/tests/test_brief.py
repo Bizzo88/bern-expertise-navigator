@@ -126,3 +126,36 @@ def test_local_company_only_pitch_and_email(client, monkeypatch):
     assert email.status_code == 200 and "Example Materials" in email.json()["body"]
     record["revision"] = "v2"
     assert client.post(f"/cases/{cid}/brief", json={**OFF, "knowledge_sources": [{key: source[key] for key in ("id", "source_id", "revision")}] }).status_code == 422
+
+
+@pytest.mark.parametrize('lang', ['en', 'de', 'fr'])
+@pytest.mark.parametrize('mixed', [False, True])
+def test_kb_approvals_survive_regeneration_and_summary_matches(client, monkeypatch, lang, mixed):
+    from navigator import knowledge, complementarity
+    record = {'id':'local','revision':'v1','name':'Example Materials','canton':'Bern','status':'ready',
+              'sources':[{'url':'https://example.org/materials','text':'Biocompatibility testing and microfabrication for medical devices.'}]}
+    monkeypatch.setattr(knowledge,'get',lambda key:record if key=='local' else None)
+    cid=client.post('/cases',json=REQ).json()['id']
+    if mixed:
+        client.post(f'/cases/{cid}/selection',json={**OFF,'selected':['p1']})
+    source=next(complementarity.passages(record))
+    refs=[{key:source[key] for key in ('id','revision','source_id')}]
+    first=client.post(f'/cases/{cid}/brief',json={**OFF,'lang':lang,'knowledge_sources':refs}).json()
+    expected=brief.COMMERCIAL[lang]['summary'].format(company=REQ['company'],n=2 if mixed else 1)
+    assert first['summary']['text']==expected
+    assert first['explainer'][0]['lines'][0]['text']==expected
+    assert any('Example Materials' in line['text'] for line in first['explainer'][1]['lines'])
+    assert first['explainer'][2]['lines'][0]['text']==brief.T[lang]['x.check1'].format(c=first['stats']['claims'],p=first['stats']['publications'])
+    stored=client.get(f'/cases/{cid}').json()['outreach']['brief']
+    assert stored['knowledge_sources']==refs
+    assert 'knowledge_sources' not in client.get('/briefs/'+first['token']).json()
+    regenerated=client.post(f'/cases/{cid}/brief',json={**OFF,'lang':lang})
+    assert regenerated.status_code==200
+    assert 'Example Materials' in [i['name'] for i in regenerated.json()['brief']['items']]
+    assert regenerated.json()['token']!=first['token']
+    record['revision']='v2'
+    assert client.post(f'/cases/{cid}/brief',json=OFF).status_code==422
+    cleared=client.post(f'/cases/{cid}/brief',json={**OFF,'knowledge_sources':[]})
+    assert cleared.status_code==(200 if mixed else 400)
+    if mixed:
+        assert 'Example Materials' not in [i['name'] for i in cleared.json()['brief']['items']]

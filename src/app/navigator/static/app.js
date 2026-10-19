@@ -998,12 +998,15 @@
   /* ======================= STAFF: request page (different per role) ======================= */
   let CASE = null;
   // 2 = choosing partners, 3 = pitch & invite, 4 = invited (all steps done)
-  const stepOf = (c) => (c.status !== "new" ? 4 : c.matches.some((m) => m.selected) || S.kbSelections?.[c.id]?.length ? 3 : 2);
+  const stepOf = (c) => (c.status !== "new" ? 4 : c.outreach?.brief || c.matches.some((m) => m.selected) || S.kbSelections?.[c.id]?.length ? 3 : 2);
   async function viewCase(id) {
     view().innerHTML = spinner();
     await Promise.all([loadGlossary(), areas(), archetypes()]);
     try { CASE = await api(`/cases/${encodeURIComponent(id)}`); }
     catch { view().innerHTML = `<div class="panel empty"><h3>${esc(t("err"))}</h3><p><a href="${roleHome()}">${esc(t("cs.back"))}</a></p></div>`; return; }
+    if (!Object.prototype.hasOwnProperty.call(S.kbSelections || {}, id)) {
+      S.kbSelections = { ...(S.kbSelections || {}), [id]: CASE.outreach?.brief?.knowledge_sources || [] };
+    }
     renderOfficerCase();
   }
 

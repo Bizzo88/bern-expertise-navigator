@@ -92,3 +92,6 @@ Changes remain local pending review; no new push or merge has been performed.
 - [ ] Real device/browser/keyboard and PDF visual QA: blocked by unavailable browser bridge.
 - [ ] Validate configured external services and load the currently empty public research index.
 - [ ] Obtain user confirmation before pushing the prepared changes.
+
+
+- [x] Fix and regress KB-only pitch reload, preservation of approved KB sources and post-enrichment summary/explainer in EN/DE/FR. Final local suite: 110 Python + 22 DOM tests passed.

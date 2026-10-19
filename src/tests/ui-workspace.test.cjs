@@ -311,3 +311,23 @@ for (const [lang, enter, title] of [['en','How does it work?','How the platform 
     assert.equal(d.querySelector('#platformGuide'),null);
   });
 }
+
+
+test('saved KB-only pitch stays visible after reload and restores approvals for regeneration', async t=>{
+  const c=companyCase();c.matches=[];
+  const refs=[{id:'local',source_id:'abc',revision:'v1'}];
+  c.outreach.brief.knowledge_sources=refs;
+  let payload;
+  const w=app(t,{hash:'/staff/case/a',fetcher:async(url,options)=>{
+    if(url==='/cases/a')return {ok:true,json:async()=>c};
+    if(url==='/cases/a/brief'){payload=JSON.parse(options.body);return {ok:true,json:async()=>({})};}
+    return undefined;
+  }});
+  await until(()=>w.document.querySelector('#prepBrief'));
+  assert.match(w.document.querySelector('#pitchBox').textContent,/Original pitch/);
+  assert.ok(w.document.querySelector('#prepMail'));
+  w.document.querySelector('#prepBrief').click();
+  await until(()=>payload);
+  assert.deepEqual(payload.knowledge_sources,refs);
+  await until(()=>w.document.querySelector("#prepBrief") && !w.document.querySelector("#prepBrief").disabled);
+});

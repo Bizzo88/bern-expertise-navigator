@@ -1,6 +1,8 @@
 # Bug report prima del push — 19 ottobre 2026
 
-Push sospeso. La regressione esistente passa (104 test Python; 8 PostgreSQL saltati), ma la revisione mirata ha riprodotto i seguenti difetti. I test diagnostici sono su dati temporanei e non hanno modificato i dati dell’utente. Nessuna correzione applicata in questa revisione.
+Stato attuale: BUG-01, BUG-02 e BUG-03 corretti e verificati. I paragrafi di riproduzione sotto documentano il comportamento precedente.
+
+Al momento della scoperta, il push era sospeso. La regressione esistente passava (104 test Python; 8 PostgreSQL saltati), ma la revisione mirata ha riprodotto i seguenti difetti. I test diagnostici sono su dati temporanei e non hanno modificato i dati dell’utente. Nessuna correzione applicata in questa revisione.
 
 ## BUG-01 — P1 — Pitch KB esistente nascosto dopo ricarica
 
@@ -46,3 +48,10 @@ I controlli DOM e API non verificano la resa visiva reale. Browser automatico an
 ## Autorizzazione al push
 
 Dopo la segnalazione dei tre bug, l’utente ha richiesto esplicitamente il push dello stato corrente. I difetti restano aperti: questo invio al branch di lavoro è per revisione e non costituisce approvazione al merge o al rilascio.
+
+
+## Aggiornamento dopo la verifica dei materiali locali
+
+BUG-01, BUG-02 e BUG-03 sono stati corretti. Il pannello mostra i pitch salvati dopo ricarica. Le approvazioni KB sono conservate nel lead privato e ripristinate nell’interfaccia; la rigenerazione risolve nuovamente ID e revisione. Omettere la selezione conserva le approvazioni precedenti, mentre una lista esplicitamente vuota le rimuove. Fonti modificate richiedono nuova revisione. I riferimenti privati non sono aggiunti alla pagina pubblica. Riepilogo ed explainer sono aggiornati dopo l’arricchimento KB in tutte e tre le lingue.
+
+Verifica finale locale: 110 test Python e 22 test DOM superati; 8 test PostgreSQL saltati senza database di test. Test della pipeline completa, fonti, PDF, email simulata e originali inclusi. Tutti gli script JavaScript superano il controllo di sintassi. I servizi esterni non configurati sono dipendenze di deployment, non errori della verifica locale.

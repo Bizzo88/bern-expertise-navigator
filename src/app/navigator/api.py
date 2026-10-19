@@ -328,7 +328,7 @@ def draft(cid: str, body: DraftReq, user=Depends(require_representative)):
 
 
 class BriefReq(StaffAction):
-    knowledge_sources: list[dict[str, str]] = Field(default_factory=list, max_length=20)
+    knowledge_sources: list[dict[str, str]] | None = Field(default=None, max_length=20)
     lang: Literal["en", "de", "fr"] = "en"
     email: str = ""
     team: str = ""
@@ -342,10 +342,13 @@ def prepare_brief(cid: str, body: BriefReq, request: Request, user=Depends(requi
     c = _case_or_404(cid)
     from . import knowledge_workflow, knowledge_access
     approved = []
-    if body.knowledge_sources:
+    selections = body.knowledge_sources
+    if selections is None:
+        selections = (c.outreach.get("brief") or {}).get("knowledge_sources", [])
+    if selections:
         knowledge_access.require_member(request)
         try:
-            approved = knowledge_workflow.resolve(c, body.knowledge_sources)
+            approved = knowledge_workflow.resolve(c, selections)
         except ValueError as e:
             raise HTTPException(422, str(e)) from None
     if not any(m.selected for m in c.matches) and not approved:
@@ -367,7 +370,8 @@ def prepare_brief(cid: str, body: BriefReq, request: Request, user=Depends(requi
     out["brief"]["branding"] = branding
     token = secrets.token_urlsafe(18)
     c.outreach = {**c.outreach, "brief": {"token": token, "lang": body.lang, "at": cases._now(), "data": out["brief"],
-                                          "explainer": out["explainer"], "summary": out["summary"], "stats": out["stats"]}}
+                                          "explainer": out["explainer"], "summary": out["summary"], "stats": out["stats"],
+                                          "knowledge_sources": [{key: source[key] for key in ("id", "source_id", "revision")} for source in (selections or [])]}}
     cases.log(c, body.actor, "brief_prepared",
               f"Executive brief prepared ({body.lang.upper()}): {out['stats']['claims']} sourced statements, "
               f"{out['stats']['publications']} publications")

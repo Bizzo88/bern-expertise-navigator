@@ -45,3 +45,10 @@ Le modifiche restano locali. Nessun nuovo push, merge o messaggio esterno effett
 ## Aggiornamento: revisione mirata prima del push
 
 La successiva revisione ha riprodotto tre bug non coperti dalla regressione precedente: pannello pitch KB nascosto dopo ricarica, perdita delle fonti KB alla rigenerazione e riepilogo/explainer incoerenti dopo l’arricchimento KB. Vedere `docs/bugs-review-2026-10-19.md`. Push sospeso; i difetti sono aperti e non sono stati corretti durante questa revisione.
+
+
+## Aggiornamento dopo la verifica dei materiali locali
+
+BUG-01, BUG-02 e BUG-03 sono stati corretti. Il pannello mostra i pitch salvati dopo ricarica. Le approvazioni KB sono conservate nel lead privato e ripristinate nell’interfaccia; la rigenerazione risolve nuovamente ID e revisione. Omettere la selezione conserva le approvazioni precedenti, mentre una lista esplicitamente vuota le rimuove. Fonti modificate richiedono nuova revisione. I riferimenti privati non sono aggiunti alla pagina pubblica. Riepilogo ed explainer sono aggiornati dopo l’arricchimento KB in tutte e tre le lingue.
+
+Verifica finale locale: 110 test Python e 22 test DOM superati; 8 test PostgreSQL saltati senza database di test. Test della pipeline completa, fonti, PDF, email simulata e originali inclusi. Tutti gli script JavaScript superano il controllo di sintassi. I servizi esterni non configurati sono dipendenze di deployment, non errori della verifica locale.
