@@ -61,6 +61,7 @@ class Event(BaseModel):
 
 
 class Case(BaseModel):
+    match_scope: Literal["bern", "north"] = "bern"
     id: str
     created_at: str
     updated_at: str
@@ -99,6 +100,7 @@ class Case(BaseModel):
 
 
 class NewCase(BaseModel):
+    match_scope: Literal["bern", "north"] = "bern"
     """The company's website link, shared documents (already read by POST /documents) and/or pasted
     information, an optional need, optional filters. Contact details can come later."""
     company_url: str = Field("", max_length=500)
@@ -263,7 +265,7 @@ def create(req: NewCase) -> Case:
     matches, msg = find_matches(analysis)
     now = _now()
     swiss = req.country.strip().lower() in ("switzerland", "schweiz", "suisse", "svizzera", "ch")
-    case = Case(id=uuid.uuid4().hex[:10], created_at=now, updated_at=now, company=name,
+    case = Case(id=uuid.uuid4().hex[:10], created_at=now, updated_at=now, company=name, match_scope=req.match_scope,
                 company_url=site.url if site else "", need=req.need.strip(), website=site, documents=req.documents,
                 contact_name=req.contact_name.strip(), contact_email=req.contact_email.strip(),
                 country=req.country.strip(), canton=req.canton.strip() if swiss else "", area=req.area, niche=req.niche,
@@ -338,6 +340,20 @@ def draft_email(case: Case, lang: str, slots: list[str], sender: str, team: str,
     """Deterministic template: only the selected partners and verified proof points, each with its link.
     With a published executive brief the email stays short and points to it."""
     t = _T.get(lang, _T["en"])
+    published = (case.outreach.get("brief") or {}).get("data")
+    if published:
+        # The email summarizes the same approved version as the shared page and PDF.
+        items = published.get("items", [])
+        lines = [t["hello"].format(name=case.contact_name or case.company), "", published.get("hook", ""), ""]
+        for item in items[:3]:
+            lines += ["• " + item["name"], "  " + item.get("benefit", "")]
+            if not link:
+                lines.append("  " + item.get("page", ""))
+        if link:
+            lines += ["", t["brief"], link]
+        lines += ["", t["call"] if slots else t["nocall"], *["  – " + s for s in slots], "", t["bye"], sender or "", team or ""]
+        return {"subject": t["subject"].format(company=case.company), "body": "\n".join(lines).strip() + "\n",
+                "to": case.contact_email, "matches": [item["id"] for item in items]}
     if link:
         approved = [m for m in case.matches if m.selected]
         lines = [t["hello"].format(name=case.contact_name or case.company), "", t["intro"].format(need=""), ""]

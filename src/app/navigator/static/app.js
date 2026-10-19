@@ -309,6 +309,18 @@
   };
   let LANG = store.get("nav-lang", null) || ((navigator.language || "en").startsWith("de") ? "de" : (navigator.language || "").startsWith("fr") ? "fr" : "en");
   Object.assign(I18N.en, {
+    'role.agent': 'Sales agent — leads and knowledge', 'role.representative': 'Representative — pitch and outreach', 'role.title': 'Preview role', 'role.apply': 'Apply role', 'role.noPitch': 'The sales agent enriches the lead and Knowledge Base. The representative creates and sends the pitch.',
+    'kb.share': 'Approve this public passage for the pitch', 'kb.shareHint': 'Only explicitly selected public web passages enter the shared pitch. Private notes/documents remain internal.',
+    'delivery.sent': 'Sent', 'delivery.pending': 'Pending', 'delivery.uncertain': 'Unconfirmed — check before resending',
+    'i.moreWhy': 'Selection details and sources', 'i.deliveryLog': 'Delivery history',
+    'nw.need': 'Ambitions and development objectives (optional)', 'nw.needPh': 'e.g. accelerate clinical research, develop a technology, explore investment partners', 'u.needs': 'Development objectives',
+    'i.send': 'Send email with PDF', 'i.smtpOff': 'Server delivery requires a configured email account and public pitch URL. You can still use your email app.', 'i.sentServer': 'Email and PDF sent.', 'i.uncertain': 'Delivery is pending or unconfirmed. Check the delivery record before attempting another send.', 'i.forYouT': 'Your 20-second overview', 'i.brandColor': 'Company accent color', 'i.brandLogo': 'Company logo (optional PNG/JPEG)',
+    'scope.title': 'Partner search area', 'scope.bern': 'Bern only', 'scope.north': 'Bern and nearby northern Switzerland', 'scope.hint': 'Extended area: Solothurn, Aargau, Basel, Zurich and Lucerne. Only indexed sources with a known location are included.',
+    'kb.noContext': 'No relevant private knowledge sources found for this lead.',
+    'kb.access': 'Access is reserved for explicitly enabled Kanton Bern accounts.', 'kb.signin': 'Canton staff sign in', 'kb.password': 'Password',
+    "theme.dark": "Switch to dark mode", "theme.light": "Switch to light mode",
+    "foot.canton": "Official canton website", "foot.contact": "Contact the canton", "foot.imprint": "Cantonal imprint", "foot.legal": "Cantonal legal & privacy information",
+    "foot.project": "Research & Expertise Navigator · Hack Apertus prototype", "foot.logo": "Logo: © Kanton Bern",
     "loading": "Loading…", "retry": "Try again",
     "rq.loadError": "Company requests could not be loaded",
     "rq.filter": "Find a company request", "rq.filterHint": "Search company, needs, location or specialty",
@@ -317,6 +329,18 @@
     "i.failed": "The pitch could not be prepared. Your previous pitch is preserved. Please try again.",
   });
   Object.assign(I18N.de, {
+    'role.agent': 'Vertriebsagent — Leads und Wissen', 'role.representative': 'Repräsentant — Pitch und Kontakt', 'role.title': 'Vorschaurolle', 'role.apply': 'Rolle anwenden', 'role.noPitch': 'Der Vertriebsagent ergänzt Lead und Wissensbasis. Der Repräsentant erstellt und versendet den Pitch.',
+    'kb.share': 'Diesen öffentlichen Beleg für den Pitch freigeben', 'kb.shareHint': 'Nur ausdrücklich gewählte öffentliche Webbelege erscheinen im geteilten Pitch. Private Notizen/Dokumente bleiben intern.',
+    'delivery.sent': 'Gesendet', 'delivery.pending': 'Ausstehend', 'delivery.uncertain': 'Unbestätigt — vor erneutem Versand prüfen',
+    'i.moreWhy': 'Auswahl und Quellen im Detail', 'i.deliveryLog': 'Versandverlauf',
+    'nw.need': 'Ambitionen und Entwicklungsziele (optional)', 'nw.needPh': 'z. B. klinische Forschung beschleunigen, Technologie entwickeln, Investitionspartner erkunden', 'u.needs': 'Entwicklungsziele',
+    'i.send': 'E-Mail mit PDF senden', 'i.smtpOff': 'Serverversand benötigt ein eingerichtetes E-Mail-Konto und eine öffentliche Pitch-URL. Ihr E-Mail-Programm bleibt verfügbar.', 'i.sentServer': 'E-Mail und PDF versendet.', 'i.uncertain': 'Versand ausstehend oder unbestätigt. Vor einem weiteren Versand den Status prüfen.', 'i.forYouT': 'Ihr 20-Sekunden-Überblick', 'i.brandColor': 'Akzentfarbe der Firma', 'i.brandLogo': 'Firmenlogo (optional PNG/JPEG)',
+    'scope.title': 'Region für die Partnersuche', 'scope.bern': 'Nur Bern', 'scope.north': 'Bern und nahe Regionen der Nordschweiz', 'scope.hint': 'Erweiterung: Solothurn, Aargau, Basel, Zürich und Luzern. Nur erfasste Quellen mit bekanntem Standort werden berücksichtigt.',
+    'kb.noContext': 'Keine passenden privaten Wissensquellen für diesen Lead gefunden.',
+    'kb.access': 'Zugang nur für ausdrücklich freigeschaltete Konten des Kantons Bern.', 'kb.signin': 'Anmeldung für Kantonsmitarbeitende', 'kb.password': 'Passwort',
+    "theme.dark": "Dunklen Modus aktivieren", "theme.light": "Hellen Modus aktivieren",
+    "foot.canton": "Website des Kantons", "foot.contact": "Kontakt zum Kanton", "foot.imprint": "Impressum des Kantons", "foot.legal": "Rechtliches & Datenschutz des Kantons",
+    "foot.project": "Research & Expertise Navigator · Hack-Apertus-Prototyp", "foot.logo": "Logo: © Kanton Bern",
     "loading": "Wird geladen…", "retry": "Erneut versuchen",
     "rq.loadError": "Firmenanfragen konnten nicht geladen werden",
     "rq.filter": "Firmenanfrage finden", "rq.filterHint": "Firma, Bedarf, Standort oder Fachgebiet suchen",
@@ -325,6 +349,18 @@
     "i.failed": "Der Pitch konnte nicht erstellt werden. Ihr bisheriger Pitch bleibt erhalten. Bitte versuchen Sie es erneut.",
   });
   Object.assign(I18N.fr, {
+    'role.agent': 'Agent commercial — prospects et connaissances', 'role.representative': 'Représentant — pitch et contact', 'role.title': 'Rôle de prévisualisation', 'role.apply': 'Appliquer le rôle', 'role.noPitch': 'L’agent commercial enrichit le prospect et la base. Le représentant crée et envoie le pitch.',
+    'kb.share': 'Approuver ce passage public pour le pitch', 'kb.shareHint': 'Seuls les passages web publics explicitement sélectionnés entrent dans le pitch partagé. Notes et documents privés restent internes.',
+    'delivery.sent': 'Envoyé', 'delivery.pending': 'En attente', 'delivery.uncertain': 'Non confirmé — vérifier avant de renvoyer',
+    'i.moreWhy': 'Détails de la sélection et sources', 'i.deliveryLog': 'Historique des envois',
+    'nw.need': 'Ambitions et objectifs de développement (facultatif)', 'nw.needPh': 'p. ex. accélérer la recherche clinique, développer une technologie, explorer des partenaires d’investissement', 'u.needs': 'Objectifs de développement',
+    'i.send': 'Envoyer l’e-mail avec PDF', 'i.smtpOff': 'L’envoi serveur nécessite un compte e-mail et une URL publique configurés. Votre messagerie reste disponible.', 'i.sentServer': 'E-mail et PDF envoyés.', 'i.uncertain': 'Envoi en attente ou non confirmé. Vérifiez le statut avant tout nouvel envoi.', 'i.forYouT': 'Votre aperçu en 20 secondes', 'i.brandColor': 'Couleur de l’entreprise', 'i.brandLogo': 'Logo de l’entreprise (PNG/JPEG facultatif)',
+    'scope.title': 'Zone de recherche des partenaires', 'scope.bern': 'Berne uniquement', 'scope.north': 'Berne et régions proches du nord de la Suisse', 'scope.hint': 'Extension : Soleure, Argovie, Bâle, Zurich et Lucerne. Seules les sources indexées avec un lieu connu sont incluses.',
+    'kb.noContext': 'Aucune source privée pertinente trouvée pour ce prospect.',
+    'kb.access': 'Accès réservé aux comptes explicitement autorisés du Canton de Berne.', 'kb.signin': 'Connexion du personnel cantonal', 'kb.password': 'Mot de passe',
+    "theme.dark": "Activer le mode sombre", "theme.light": "Activer le mode clair",
+    "foot.canton": "Site officiel du canton", "foot.contact": "Contacter le canton", "foot.imprint": "Impressum du canton", "foot.legal": "Informations juridiques et confidentialité du canton",
+    "foot.project": "Research & Expertise Navigator · Prototype Hack Apertus", "foot.logo": "Logo : © Canton de Berne",
     "loading": "Chargement…", "retry": "Réessayer",
     "rq.loadError": "Impossible de charger les demandes d’entreprises",
     "rq.filter": "Trouver une demande", "rq.filterHint": "Rechercher une entreprise, un besoin, un lieu ou une spécialité",
@@ -349,6 +385,7 @@
 
   /* ======================= staff identity ======================= */
   let staff = store.get("nav-staff", null);
+  let cantonMember = null;
   const recent = () => store.get("nav-recent", []);
   function setStaff(p) {
     staff = p; store.set("nav-staff", p);
@@ -433,45 +470,67 @@
 
   /* ======================= chrome per area ======================= */
   const langSel = () => `<select id="lang" class="lang" aria-label="Language">${["en", "de", "fr"].map((l) => `<option value="${l}" ${l === LANG ? "selected" : ""}>${l.toUpperCase()}</option>`).join("")}</select>`;
-  const themeBtn = () => `<button class="icon-btn" id="themeBtn" type="button" aria-label="Dark mode" title="Dark mode">${ICON.moon}</button>`;
+  const themeButton = () => `<button class="icon-btn" id="themeBtn" type="button" aria-label="${esc(t(document.documentElement.dataset.theme === "dark" ? "theme.light" : "theme.dark"))}" aria-pressed="${document.documentElement.dataset.theme === "dark"}">${ICON.moon}</button><button class="icon-btn help-btn" id="helpBtn" type="button" aria-label="${esc(window.PlatformGuide?.title(LANG) || 'Help')}" title="${esc(window.PlatformGuide?.title(LANG) || 'Help')}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg></button>`;
 
   function renderChrome(shell, active) {
     const bar = $("#topbar");
     bar.className = `topbar ${shell === "staff" ? "staff" : ""} ${shell === "brief" ? "brief" : ""}`;
     document.body.classList.toggle("brief-mode", shell === "brief");
-    const brand = (sub, href) => `<a class="brand" href="${href}"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M9 23V9h7.5a4 4 0 0 1 0 8H9m7.5 0a3.5 3.5 0 0 1 0 6H9"/></svg>
+    const brand = (sub, href) => `<a class="brand" href="${href}"><img class="canton-logo" src="/static/brand/logo-be.svg" width="400" height="178" alt="Kanton Bern / Canton de Berne">
       <span class="brand-text"><b>Bern Expertise Navigator</b><small>${esc(sub)}</small></span></a>`;
     const tab = (href, key, label, count = "") => `<a href="${href}" class="${active === key ? "on" : ""}" ${active === key ? 'aria-current="page"' : ""}>${esc(label)}${count ? `<i class="count ${key === "queue" ? "warn" : ""}">${count}</i>` : ""}</a>`;
     if (shell === "brief") {
-      bar.innerHTML = `<div class="topbar-in">${brand(t("brand.briefSub"), location.hash)}<div class="topbar-right">${themeBtn()}</div></div>`;
+      bar.innerHTML = `<div class="topbar-in">${brand(t("brand.briefSub"), location.hash)}<div class="topbar-right">${themeButton()}</div></div>`;
       $("#foot").innerHTML = `<span>${esc(t("foot.brief"))}</span>`;
     } else if (shell === "public") {
       bar.innerHTML = `<div class="topbar-in">${brand(t("brand.sub"), "#/")}
         <nav class="tabs" aria-label="Main">${tab("#/", "search", t("nav.search"))}${tab("#/directory", "dir", t("nav.dir"))}</nav>
-        <div class="topbar-right">${langSel()}${themeBtn()}<a class="staff-link" href="#/staff">${ICON.lock}<span>${esc(t("nav.staff"))}</span></a></div></div>`;
+        <div class="topbar-right">${langSel()}${themeButton()}<a class="staff-link" href="#/staff">${ICON.lock}<span>${esc(t("nav.staff"))}</span></a></div></div>`;
       $("#foot").innerHTML = `<span>${esc(t("foot.public"))}</span>`;
     } else {
       const open = S.cases.filter((c) => c.status === "new" && !c.has_brief).length;   // still to do
-      const nav = !staff ? "" : tab("#/staff/requests", "requests", t("nav.requests"), open || "") + tab("#/staff/new", "new", t("nav.new")) + tab("#/staff/search", "ssearch", t("nav.search"));
+      const nav = !staff ? "" : tab("#/staff/requests", "requests", t("nav.requests"), open || "") + tab("#/staff/new", "new", t("nav.new")) + tab("#/staff/search", "ssearch", t("nav.search")) + (cantonMember?.can_manage_knowledge ? `<a class="kb-nav ${active === 'knowledge' ? 'on' : ''}" href="#/staff/knowledge" ${active === 'knowledge' ? 'aria-current="page"' : ''}>${ICON.doc}<strong>${esc(window.KnowledgeWorkspace.title(LANG))}</strong></a>` + tab('#/staff/analytics', 'analytics', 'Analytics') : '');
       bar.innerHTML = `<div class="topbar-in">${brand(t("brand.staffSub"), staff ? roleHome() : "#/staff")}<span class="staff-tag">${esc(t("staff.tag"))}</span>
         ${nav ? `<nav class="tabs" aria-label="Workspace">${nav}</nav>` : ""}
-        <div class="topbar-right">${langSel()}${themeBtn()}
+        <div class="topbar-right">${langSel()}${themeButton()}
           ${staff ? `<div class="whoami"><span class="av officer">${esc(initialsOf(staff.name))}</span>
             <span class="txt"><b>${esc(staff.name)}</b>${staff.team ? `<small>${esc(staff.team)}</small>` : ""}</span>
             <button type="button" id="switchUser">${esc(t("who.switch"))}</button></div>` : ""}
           <a class="staff-link" href="#/">${ICON.ext}<span>${esc(t("nav.public"))}</span></a></div></div>`;
       $("#foot").innerHTML = `<span>${esc(t("foot.staff"))}</span>`;
-      $("#switchUser")?.addEventListener("click", () => go("#/staff/who"));
+      $("#switchUser")?.addEventListener("click", async () => {
+        if (cantonMember?.can_manage_knowledge) {
+          try { await api('/staff/session', { method: 'DELETE' }); }
+          catch (e) { toast(e.message); return; }
+          cantonMember = null;
+        }
+        go("#/staff/who");
+      });
     }
+    const footerCopy = $("#foot").textContent;
+    $("#foot").innerHTML = `<div class="footer-main"><a href="https://www.be.ch/de/start.html" target="_blank" rel="noopener"><img class="canton-logo" src="/static/brand/logo-be.svg" width="400" height="178" alt="Kanton Bern / Canton de Berne"></a>
+      <div><p class="footer-title">${esc(t("foot.project"))}</p><p>${esc(footerCopy)}</p></div></div>
+      <nav class="footer-links" aria-label="${esc(t("foot.canton"))}"><a href="https://www.be.ch/de/start.html" target="_blank" rel="noopener">${esc(t("foot.canton"))}</a>
+        <a href="https://www.be.ch/de/start/ueber-uns/kontaktformular.html" target="_blank" rel="noopener">${esc(t("foot.contact"))}</a>
+        <a href="https://www.be.ch/de/tools/impressum.html" target="_blank" rel="noopener">${esc(t("foot.imprint"))}</a>
+        <a href="https://www.be.ch/de/tools/rechtliches.html" target="_blank" rel="noopener">${esc(t("foot.legal"))}</a></nav><small>${esc(t("foot.logo"))}</small>`;
     $("#lang")?.addEventListener("change", (ev) => { LANG = ev.target.value; store.set("nav-lang", LANG); route(); });
-    $("#themeBtn").addEventListener("click", () => {
-      const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      const nx = cur === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = nx; store.set("nav-theme", nx);
+    $('#helpBtn').addEventListener('click', () => window.PlatformGuide?.open(LANG));
+    bar.querySelector('.tabs [aria-current="page"]')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    $("#themeBtn").addEventListener("click", (ev) => {
+      const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = theme;
+      store.set("nav-theme", theme);
+      ev.currentTarget.setAttribute("aria-pressed", String(theme === "dark"));
+      ev.currentTarget.setAttribute("aria-label", t(theme === "dark" ? "theme.light" : "theme.dark"));
     });
   }
 
   /* ======================= router ======================= */
   async function route() {
+    window.KnowledgeWorkspace?.unmount();
+    window.PlatformAnalytics?.unmount();
+    window.CompanyDiscovery?.unmount();
     const h = location.hash.replace(/^#/, "") || "/";
     const [path, qs] = h.split("?");
     const p = path.split("/").filter(Boolean);
@@ -487,7 +546,16 @@
       if (p[0] === "search" && params.get("q")) return viewSearch(params, "public");
       return viewHome();
     }
+    try { cantonMember = await api('/staff/session'); } catch { cantonMember = null; }
+    if (p[1] === 'access') { renderChrome('staff', ''); return viewCantonAccess(); }
     if (p[1] === "who" || !staff) { renderChrome("staff", ""); return viewIdentity(); }
+    if (p[1] === 'knowledge' || p[1] === 'analytics' || p[1] === 'discovery') {
+      renderChrome('staff', p[1]);
+      if (!cantonMember?.can_manage_knowledge) { view().innerHTML = `<section class="panel empty"><h1>Kanton Bern / Canton de Berne</h1><p>${esc(t('kb.access'))}</p><a class="btn-primary" href="#/staff/access">${esc(t('kb.signin'))}</a></section>`; return; }
+      if (p[1] === 'analytics') return window.PlatformAnalytics.mount({ api, lang: LANG, esc, toast });
+      if (p[1] === 'discovery') return window.CompanyDiscovery.mount({ api, lang: LANG, esc, toast, leadId: params.get('lead') });
+      return window.KnowledgeWorkspace.mount({ api, lang: LANG, esc, accept: DOC_ACCEPT, toast, selectedId: params.get('company'), candidateId: params.get('candidate') });
+    }
     await refreshCases();
     const sub = p[1] || "";
     if (!["requests", "new", "search", "case"].includes(sub)) return go(roleHome());
@@ -712,15 +780,30 @@
         <div class="sel-bar"><span></span><button class="btn-primary btn-brand" type="submit">${esc(t("id.enter"))}</button></div>
         ${rec.length ? `<div class="recent"><span class="muted">${esc(t("id.recent"))}:</span>${rec.map((p, i) => `<button type="button" data-rec="${i}">
           <span class="av officer">${esc(initialsOf(p.name))}</span>${esc(p.name)}</button>`).join("")}</div>` : ""}
-      </form></div>`;
-    $("#idForm").name.focus();
+      </form>${cantonMember?.preview ? `<div class="panel kb-form"><label class="field">${esc(t('role.title'))}<select class="input" id="previewRole">${['agent','representative'].map(role => `<option value="${role}" ${cantonMember.role === role ? 'selected' : ''}>${esc(t('role.' + role))}</option>`).join('')}</select></label><button class="btn" type="button" id="applyRole">${esc(t('role.apply'))}</button></div>` : ''}<p><a class="btn" href="#/staff/access">${esc(t('kb.signin'))}</a></p></div>`;
+    $("#idForm").elements.namedItem('name').focus();
+    $('#applyRole')?.addEventListener('click', async () => { try { await api('/staff/preview-role', {method:'PATCH',body:{role:$('#previewRole').value}}); go(roleHome()); } catch(e) {toast(e.message);} });
     $$("[data-rec]").forEach((b) => b.addEventListener("click", () => { setStaff(rec[+b.dataset.rec]); go(roleHome()); }));
     $("#idForm").addEventListener("submit", (ev) => {
       ev.preventDefault();
       const f = ev.target;
-      setStaff({ name: f.name.value.trim(), email: f.email.value.trim(), team: f.team.value.trim() });
+      setStaff({ name: f.elements.namedItem('name').value.trim(), email: f.elements.namedItem('email').value.trim(), team: f.elements.namedItem('team').value.trim() });
       go(roleHome());
     });
+  }
+
+  function viewCantonAccess() {
+    view().innerHTML = `<div class="ident"><h1>Kanton Bern / Canton de Berne</h1><p>${esc(t('kb.access'))}</p><form class="panel kb-form" id="cantonLogin"><label class="field">Email<input type="email" name="email" required autocomplete="username" maxlength="200"></label><label class="field">${esc(t('kb.password'))}<input type="password" name="password" required autocomplete="current-password" maxlength="200"></label><p id="cantonError" role="alert"></p><button class="btn-primary" type="submit">${esc(t('kb.signin'))}</button></form></div>`;
+    $('#cantonLogin').onsubmit = async (event) => {
+      event.preventDefault(); const form = event.target, button = form.querySelector('button'); button.disabled = true;
+      try {
+        await api('/staff/session', { method: 'POST', body: { email: form.elements.namedItem('email').value, password: form.elements.namedItem('password').value } });
+        const member = await api('/staff/session');
+        if (!member.can_manage_knowledge) throw new Error(t('kb.access'));
+        setStaff({ name: member.name, email: member.email, team: 'Kanton Bern / Canton de Berne' });
+        go('#/staff/knowledge');
+      } catch (e) { $('#cantonError').textContent = e.message; button.disabled = false; }
+    };
   }
 
   /* ======================= STAFF/officer: requests board ======================= */
@@ -772,6 +855,7 @@
       <button type="button" role="tab" data-mode="broad" aria-selected="${mode === "broad"}" class="${mode === "broad" ? "on" : ""}">${ICON.search.replace("<svg", '<svg class="i"')}${esc(t("bs.tab"))}</button>
       <button type="button" role="tab" data-mode="details" aria-selected="${mode === "details"}" class="${mode === "details" ? "on" : ""}">${esc(t("bs.tab2"))}</button></div></div>`;
   const bindNewTabs = () => $$("[data-mode]").forEach((b) => b.addEventListener("click", () => viewNew({ mode: b.dataset.mode })));
+  const matchScopeField = (value = 'bern') => `<label class="field nr-wide">${esc(t('scope.title'))}<select name="match_scope" id="matchScope" class="input"><option value="bern" ${value === 'bern' ? 'selected' : ''}>${esc(t('scope.bern'))}</option><option value="north" ${value === 'north' ? 'selected' : ''}>${esc(t('scope.north'))}</option></select><small>${esc(t('scope.hint'))}</small></label>`;
 
   async function viewNewBroad(prev = {}) {
     await areas();
@@ -782,7 +866,7 @@
         <h1>${esc(t("bs.title"))}</h1>
         <div class="nr-box">${ICON.search}<input id="bsQ" maxlength="500" autocomplete="off" spellcheck="false" placeholder="${esc(t("bs.ph"))}" value="${esc(prev.q || "")}">
           <button class="btn-primary btn-brand" type="submit">${esc(t("nw.find"))}</button></div>
-        <div class="bs-understood" id="bsU" aria-live="polite"></div>
+        ${matchScopeField(prev.match_scope)}<div class="bs-understood" id="bsU" aria-live="polite"></div>
         <div class="chips nr-try"><span class="muted">${esc(t("nw.try"))}:</span>${examples.map((x) => `<button type="button" class="chip" data-q="${esc(x)}">${esc(x)}</button>`).join("")}</div>
         <p class="muted bs-langs">${esc(t("bs.langs"))}</p>
       </form>`;
@@ -809,9 +893,10 @@
       ev.preventDefault();
       const v = q.value.trim();
       if (v.length < 3) { q.focus(); return; }
+      const scope = $('#matchScope').value;
       $("#broadForm").innerHTML = spinner(t("nw.working"));
-      try { const c = await api("/cases", { method: "POST", body: asStaff({ request_text: v, broad: true, lang: LANG }) }); go(`#/staff/case/${c.id}`); }
-      catch (e) { toast(`${t("err")}: ${e.message}`, 9000); viewNewBroad({ q: v }); }
+      try { const c = await api("/cases", { method: "POST", body: asStaff({ request_text: v, broad: true, lang: LANG, match_scope: scope }) }); go(`#/staff/case/${c.id}`); }
+      catch (e) { toast(`${t("err")}: ${e.message}`, 9000); viewNewBroad({ q: v, match_scope: scope }); }
     });
   }
 
@@ -833,7 +918,7 @@
         <label class="nr-f nr-wide"><span>${esc(t("nw.need"))}</span>
           <input name="need" maxlength="500" autocomplete="off" placeholder="${esc(t("nw.needPh"))}"></label>
         ${S.examples.length ? `<div class="chips nr-try"><span class="muted">${esc(t("nw.try"))}:</span>${S.examples.map((x, i) => `<button type="button" class="chip" data-ex="${i}">${esc(L(x.label) || x.company)}</button>`).join("")}</div>` : ""}
-        <div class="nr-filters">
+        ${matchScopeField(prev.match_scope)}<div class="nr-filters">
           <label class="nr-f"><span>${esc(t("nw.company2"))}</span><input name="company" maxlength="200" autocomplete="off"></label>
           <label class="nr-f"><span>${esc(t("nw.countryAny"))}</span><input name="country" list="countryList" maxlength="100" autocomplete="off">
             <datalist id="countryList">${COUNTRIES.map((c) => `<option value="${esc(c)}">`).join("")}</datalist></label>
@@ -863,7 +948,7 @@
       await Promise.all(files.map(async (file) => {
         try {
           if (file.size > DOC_MAX_MB * 1e6) throw new Error(t("nw.tooBig", { n: DOC_MAX_MB }));
-          const r = await fetch(`/documents?name=${encodeURIComponent(file.name)}`, { method: "POST", body: file,
+          const r = await fetch(`/kb/documents?name=${encodeURIComponent(file.name)}`, { method: "POST", body: file,
             headers: { "Content-Type": "application/octet-stream" } });
           const j = await r.json().catch(() => ({}));
           if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : `${r.status}`);
@@ -902,7 +987,7 @@
       if (f.pending) return;
       const body = asStaff({ company_url: url.value.trim(), documents: f.docs, request_text: txt.value.trim(), need: form.need.value.trim(),
         company: form.company.value.trim(), country: form.country.value.trim(), canton: form.canton.value,
-        area: f.area, niche: f.niche, lang: LANG, contact_name: ex?.contact_name || "", contact_email: ex?.contact_email || "" });
+        area: f.area, niche: f.niche, lang: LANG, match_scope: $('#matchScope').value, contact_name: ex?.contact_name || "", contact_email: ex?.contact_email || "" });
       if (!body.company_url && !body.documents.length && body.request_text.length < 3) { toast(t("nw.missing")); url.focus(); return; }
       form.innerHTML = spinner(t(body.company_url ? "nw.reading" : body.documents.length ? "nw.readingDocs" : "nw.working"));
       try { const c = await api("/cases", { method: "POST", body }); go(`#/staff/case/${c.id}`); }
@@ -913,7 +998,7 @@
   /* ======================= STAFF: request page (different per role) ======================= */
   let CASE = null;
   // 2 = choosing partners, 3 = pitch & invite, 4 = invited (all steps done)
-  const stepOf = (c) => (c.status !== "new" ? 4 : c.matches.some((m) => m.selected) ? 3 : 2);
+  const stepOf = (c) => (c.status !== "new" ? 4 : c.matches.some((m) => m.selected) || S.kbSelections?.[c.id]?.length ? 3 : 2);
   async function viewCase(id) {
     view().innerHTML = spinner();
     await Promise.all([loadGlossary(), areas(), archetypes()]);
@@ -924,6 +1009,7 @@
 
   function sidePanels(c) {
     return `<aside class="side">
+      ${cantonMember?.can_manage_knowledge ? '<div class="panel" id="privateKnowledge"></div>' : ''}
       <div class="panel contact-box"><div class="panel-h"><h2>${esc(t("cs.contact"))}</h2></div>
         <dl><dt>${esc(t("nw.company"))}</dt><dd>${esc(c.company || "—")}</dd>
           ${c.contact_name ? `<dt>${esc(t("nw.contact"))}</dt><dd>${esc(c.contact_name)}</dd>` : ""}
@@ -966,9 +1052,26 @@
     const c = CASE, step = stepOf(c), cls = (n) => (n < step ? "done" : n === step ? "now" : "");
     view().innerHTML = `<a class="back" href="#/staff/requests">${ICON.back}${esc(t("cs.back"))}</a>
       <div class="case-h"><div><h1>${esc(companyOf(c))}</h1><div class="sub">${placeOf(c) ? `<span>${esc(placeOf(c))}</span>` : ""}${c.area ? `<span class="tag">${esc(areaLabel(c.area, c.niche))}</span>` : ""}<span>${esc(t("cs.received"))} ${esc(fmtDate(c.created_at))}</span></div></div>${pill(c.status)}</div>
+      ${cantonMember?.can_manage_knowledge ? `<p><a class="btn" href="#/staff/discovery?lead=${esc(c.id)}">${esc(window.CompanyDiscovery?.title(LANG) || 'Explore complementary companies')}</a></p>` : ''}
       <ol class="stepper three" aria-label="${esc(t("rq.workflow"))}">${[1, 2, 3].map((n) => `<li class="${cls(n)}" ${n === step ? 'aria-current="step"' : ""}><span class="dotn" aria-hidden="true">${n < step ? "✓" : n}</span>${esc(t("step." + n))}</li>`).join("")}</ol>
       <div class="case-grid"><div>${panelUnderstand(c.analysis)}${officerPartners(c, step)}${officerPitch(c, step)}</div>${sidePanels(c)}</div>`;
     bindOfficerCase();
+    if (cantonMember?.can_manage_knowledge) {
+      const target = $('#privateKnowledge');
+      target.innerHTML = `<h2>${esc(window.KnowledgeWorkspace.title(LANG))}</h2>${spinner()}`;
+      api('/kb/search?scope=' + encodeURIComponent(c.match_scope || 'bern') + '&q=' + encodeURIComponent((c.analysis.search_query || c.analysis.summary || c.company).slice(0, 500))).then((hits) => {
+        if (!target.isConnected) return;
+        const selected = S.kbSelections?.[c.id] || [];
+        target.innerHTML = `<div class="panel-h"><h2>${esc(window.KnowledgeWorkspace.title(LANG))}</h2></div><p class="muted">${esc(t(c.match_scope === 'north' ? 'scope.north' : 'scope.bern'))}</p><p class="muted">${esc(t('kb.shareHint'))}</p>` + (hits.length ? hits.map((hit, i) => `<details><summary>${esc(hit.company)} · ${esc(hit.canton)} · ${esc(hit.source)}</summary><p>${esc(hit.snippet)}</p><p class="muted">${esc(hit.method || '')} · ${esc(hit.explanation || '')}</p>${hit.kind === 'web' ? `<label class="kb-check"><input type="checkbox" data-kb-source="${i}" ${selected.some((s) => s.source_id === hit.source_id) ? 'checked' : ''}>${esc(t('kb.share'))}</label>` : ''}<a href="#/staff/knowledge?company=${esc(hit.id)}">${esc(window.KnowledgeWorkspace.title(LANG))}</a></details>`).join('') : `<p class="muted">${esc(t('kb.noContext'))}</p>`);
+        target.querySelectorAll('[data-kb-source]').forEach((checkbox) => checkbox.onchange = () => {
+          const chosen = hits[+checkbox.dataset.kbSource];
+          const refs = (S.kbSelections?.[c.id] || []).filter((s) => s.source_id !== chosen.source_id);
+          if (checkbox.checked) refs.push({ id: chosen.id, source_id: chosen.source_id, revision: chosen.revision });
+          S.kbSelections = { ...(S.kbSelections || {}), [c.id]: refs };
+          const y = window.scrollY; renderOfficerCase(); window.scrollTo(0, y);
+        });
+      }).catch((e) => { if (target.isConnected) target.textContent = e.message; });
+    }
   }
 
   function matchRow(m, editable) {
@@ -1021,17 +1124,21 @@
     const s = b.stats || {};
     return `<div class="pitch-grid">
       <div class="explain"><h3><span class="tag1">${esc(t("i.forYou"))}</span>${esc(t("i.forYouT"))}</h3>
-        ${(b.explainer || []).map((sec) => `<section><h4>${esc(sec.title)}</h4>${sec.lines.map((l) => `<p>${jargon(l.text)}</p>${l.plain ? `<p class="mean">${esc(l.plain)}</p>` : ""}`).join("")}</section>`).join("")}</div>
-      <div class="preview"><div class="pv-top"><small>${esc(t("i.forCeo"))} · ${esc(t("i.forCeoT"))}</small><h3>${esc(c.company)} × Bern</h3><p>${esc(b.data.hook)}</p></div>
+        ${b.summary?.text ? `<p>${esc(b.summary.text)}</p>` : ''}
+        <div id="operatorEcosystem"></div>
+        <details><summary>${esc(t('i.moreWhy'))}</summary>${(b.explainer || []).map((sec) => `<section><h4>${esc(sec.title)}</h4>${sec.lines.map((l) => `<p>${jargon(l.text)}</p>${l.plain ? `<p class="mean">${esc(l.plain)}</p>` : ""}`).join("")}</section>`).join("")}</details></div>
+      <div class="preview"><div class="pv-top"><small>${esc(t("i.forCeo"))} · ${esc(t("i.forCeoT"))}</small><h3>${esc(b.data.headline || c.company + ' × Bern')}</h3><p>${esc(b.data.hook)}</p></div>
+        <div class="pitch-commercial">${b.data.objective ? `<p>${esc(b.data.objective)}</p>` : ''}${(b.data.opportunities || []).slice(0, 3).map((o) => `<section><h4><a href="${esc(safeUrl(o.url))}" target="_blank" rel="noopener">${esc(o.name)}</a></h4><p>${esc(o.benefit)}</p></section>`).join('')}</div>
         <div class="pv-body"><div class="stat-chips"><span><b>${b.data.items.length}</b> ${esc(t("i.teams"))}</span><span><b>${s.claims ?? "–"}</b> ${esc(t("i.stmt"))}</span>
           <span><b>${s.publications ?? 0}</b> ${esc(t("i.pubs"))}</span><span><b>${s.sources ?? b.data.sources.length}</b> ${esc(t("i.srcs"))}</span></div>
           <div class="actions"><a class="btn-primary btn-brand btn-sm" href="#/b/${esc(b.token)}" target="_blank" rel="noopener">${ICON.doc}${esc(t("i.open"))}</a>
-            <a class="btn btn-sm" href="#/b/${esc(b.token)}?print=1" target="_blank" rel="noopener">${ICON.printer}${esc(t("i.pdf"))}</a>
+            <a class="btn btn-sm" href="/briefs/${esc(b.token)}/pdf" target="_blank" rel="noopener">${ICON.printer}${esc(t("i.pdf"))}</a>
             <button class="btn btn-sm" type="button" id="copyBrief">${ICON.link}${esc(t("i.copyLink"))}</button></div>
           <p class="muted" style="margin:0">${esc(t("bf.prepared", { d: fmtDate(b.at) }))} · ${esc(b.lang.toUpperCase())}</p></div></div></div>`;
   }
 
   function officerPitch(c, step) {
+    if (cantonMember?.role === 'agent') return `<section class="panel"><p>${esc(t('role.noPitch'))}</p></section>`;
     if (step < 3) return `<section class="panel locked"><div class="panel-h"><h2><span class="num">3</span>${esc(t("i.title"))}</h2><span class="muted">${ICON.lock}</span></div>
       <p class="muted" style="margin:0">${esc(t("i.locked"))}</p></section>`;
     const done = ["contacted", "call_scheduled", "closed"].includes(c.status), b = c.outreach?.brief;
@@ -1049,6 +1156,7 @@
       ${c.outreach?.call ? `<div class="callout ok" style="margin-bottom:12px">${ICON.cal}<span>${esc(t("i.doneCall", { d: c.outreach.call }))}</span></div>` : ""}
       <div class="actions"><label class="field" style="min-width:180px">${esc(t("i.lang"))}<select class="input" id="pitchLang">${["en", "de", "fr"].map((l) => `<option value="${l}" ${l === (b?.lang || LANG) ? "selected" : ""}>${l.toUpperCase()}</option>`).join("")}</select></label>
         <button class="btn-primary btn-brand" id="prepBrief" type="button" style="align-self:flex-end" ${c.company ? "" : "disabled"}>${ICON.sparkle}${esc(t(b ? "i.regen" : "i.prep"))}</button></div>
+      <details class="pitch-branding"><summary>${esc(t('i.brandColor'))} / ${esc(t('i.brandLogo'))}</summary><div class="grid-form"><label class="field">${esc(t('i.brandColor'))}<input type="color" id="pitchColor" value="${esc(/^#[\da-f]{6}$/i.test(b?.data?.branding?.primary_color || '') ? b.data.branding.primary_color : '#dc0018')}"></label><label class="field">${esc(t('i.brandLogo'))}<input type="file" id="pitchLogo" accept="image/png,image/jpeg"></label></div></details>
       <div id="pitchBox">${pitchOutputs(c)}</div>
       ${b ? `<div class="sub-h">${ICON.mail}${esc(t("i.mail"))}</div>
         <div class="grid-form"><div class="field full">${esc(t("i.slots"))}<div class="slots">${nextSlots().map((s) => `<input type="datetime-local" class="slot" value="${s}" aria-label="${esc(t("i.slots"))}">`).join("")}</div></div>
@@ -1060,6 +1168,7 @@
 
   function bindOfficerCase() {
     const c = CASE;
+    if (c.outreach?.brief) window.PitchVisual?.mount($('#operatorEcosystem'), c.outreach.brief.data, { compact: true });
     const rerender = (keep = true) => { const y = window.scrollY; renderOfficerCase(); if (keep) window.scrollTo(0, y); };
     $$("[data-atab]").forEach((b) => b.addEventListener("click", () => { S.atab[c.id] = b.dataset.atab; rerender(); }));
     $("#delCase")?.addEventListener("click", async () => { if (!confirm(t("cs.confirmDelete"))) return; await api(`/cases/${c.id}`, { method: "DELETE" }); go("#/staff/requests"); });
@@ -1098,7 +1207,13 @@
       $("#pitchBox").setAttribute("aria-busy", "true");
       $("#pitchBox").innerHTML = spinner(t("i.working"));
       try {
-        await api(`/cases/${c.id}/brief`, { method: "POST", body: asStaff({ lang: $("#pitchLang").value, email: staff.email || "", team: staff.team || "" }) });
+        let company_logo;
+        const logo = $('#pitchLogo')?.files?.[0];
+        if (logo) {
+          if (logo.size > 250000) throw new Error('Logo: maximum 250 KB.');
+          company_logo = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('Logo could not be read')); reader.readAsDataURL(logo); });
+        }
+        await api(`/cases/${c.id}/brief`, { method: "POST", body: asStaff({ lang: $("#pitchLang").value, email: staff.email || "", team: staff.team || "", knowledge_sources: S.kbSelections?.[c.id] || [], primary_color: $('#pitchColor')?.value, ...(company_logo ? { company_logo } : {}) }) });
         CASE = await api(`/cases/${c.id}`); rerender();
       } catch (e) {
         rerender();
@@ -1113,11 +1228,24 @@
     const slotLabels = () => $$(".slot").map((i) => i.value).filter(Boolean).map((v) => fmtDate(v, true, c.outreach?.brief?.lang || LANG));
     $("#prepMail")?.addEventListener("click", async () => {
       const lang = c.outreach.brief.lang;
-      const d = await api(`/cases/${c.id}/draft`, { method: "POST", body: asStaff({ lang, slots: slotLabels(), sender: staff.name, team: staff.team || "", link: briefUrl(c.outreach.brief.token) }) });
+      let delivery = { configured: false };
+      try { delivery = await api(`/cases/${c.id}/delivery`); } catch {}
+      const d = await api(`/cases/${c.id}/draft`, { method: "POST", body: asStaff({ lang, slots: slotLabels(), sender: staff.name, team: staff.team || "", link: delivery.public_link || briefUrl(c.outreach.brief.token) }) });
       $("#mailBox").innerHTML = `<div class="email-box"><label class="field">${esc(t("i.subj"))}<input id="mSubj" value="${esc(d.subject)}"></label>
         <label class="field">${esc(t("i.body"))}<textarea id="mBody">${esc(d.body)}</textarea></label>
         <div class="actions"><a class="btn-primary" id="mOpen" href="#">${ICON.mail}${esc(t("i.openMail"))}</a>
-          <button class="btn" id="mCopy" type="button">${ICON.copy}${esc(t("i.copy"))}</button><button class="btn" id="mSent" type="button">${ICON.check}${esc(t("i.sent"))}</button></div></div>`;
+          <button class="btn" id="mCopy" type="button">${ICON.copy}${esc(t("i.copy"))}</button><button class="btn" id="mSent" type="button">${ICON.check}${esc(t("i.sent"))}</button><button class="btn-primary" id="mSendServer" type="button" ${delivery.configured && c.contact_email ? '' : 'disabled'}>${ICON.mail}${esc(t('i.send'))}</button></div><p class="muted" role="status" id="deliveryStatus">${delivery.configured ? '' : esc(t('i.smtpOff'))}</p></div>`;
+      if (delivery.history?.length) $('#deliveryStatus').insertAdjacentHTML('afterend', `<details><summary>${esc(t('i.deliveryLog'))}</summary><ul>${delivery.history.map((h) => `<li>${esc(fmtDate(h.at))} · ${esc(t('delivery.' + h.status))}</li>`).join('')}</ul></details>`);
+      $('#mSendServer').addEventListener('click', async (event) => {
+        const button = event.currentTarget; button.disabled = true;
+        try {
+          const subject = $('#mSubj').value, body = $('#mBody').value;
+          const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([c.id, c.contact_email, c.outreach.brief.at, subject, body])));
+          const idempotency_key = [...new Uint8Array(digest)].map((v) => v.toString(16).padStart(2, '0')).join('');
+          const result = await api(`/cases/${c.id}/delivery`, { method: 'POST', body: { subject, body, idempotency_key } });
+          $('#deliveryStatus').textContent = t(result.status === 'sent' ? 'i.sentServer' : 'i.uncertain');
+        } catch (error) { $('#deliveryStatus').textContent = error.message; button.disabled = false; }
+      });
       $("#mOpen").addEventListener("click", (ev) => { ev.preventDefault();
         location.href = `mailto:${encodeURIComponent(c.contact_email || "")}?subject=${encodeURIComponent($("#mSubj").value)}&body=${encodeURIComponent($("#mBody").value)}`; });
       $("#mCopy").addEventListener("click", () => { navigator.clipboard?.writeText(`${$("#mSubj").value}\n\n${$("#mBody").value}`); toast("✓"); });
@@ -1153,9 +1281,11 @@
     const nPubs = b.items.reduce((n, i) => n + i.publications.length, 0);
     view().innerHTML = `<article class="brief" lang="${esc(b.lang)}">
       <header class="b-hero"><div class="kick">${esc(b.kicker)}</div>
-        <h1>${esc(b.company)} <span>×</span> Bern</h1><p>${esc(b.hook)}</p>
+        ${/^data:image\/png;base64,/.test(b.branding?.company_logo || '') ? `<img class="recipient-logo" src="${esc(b.branding.company_logo)}" alt="${esc(b.company)}">` : ''}
+        <h1>${esc(b.headline || b.company + ' × Bern')}</h1><p>${esc(b.hook)}</p>
         <div class="stat-chips"><span><b>${b.items.length}</b> ${esc(lb.teams)}</span><span>${ICON.check}<b>${nClaims}</b> ${esc(lb.stmt)}</span>${nPubs ? `<span><b>${nPubs}</b> ${esc(lb.pubs_n)} (DOI)</span>` : ""}</div></header>
 
+      ${b.opportunities?.length ? `<section class="b-sec pitch-commercial"><p>${esc(b.objective || '')}</p>${b.opportunities.slice(0, 3).map((o) => `<section><h3><a href="${esc(safeUrl(o.url))}" target="_blank" rel="noopener">${esc(o.name)}</a></h3><p>${esc(o.benefit)}</p>${o.evidence?.ref ? sup(o.evidence.ref) : ''}</section>`).join('')}</section>` : ''}
       <section class="b-sec"><h2>${esc(lb.why)}</h2><div class="b-cards">${b.items.map((it, k) => `<article class="b-card">
         <div class="hd">${avatar(it.name, it.type)}<div><h3>${esc(it.name)}</h3><div class="meta">${[it.role, it.unit, it.institution].filter(Boolean).map(esc).join(" · ")} ${sup(it.page_ref)}</div></div></div>
         ${it.topics.length ? `<div class="tags">${it.topics.map((x) => `<span class="topic" title="${esc(x.plain)}">${esc(x.term)}</span>`).join("")}</div>
@@ -1179,19 +1309,19 @@
       <section class="b-sources"><h2 style="font-size:15px;margin:0">${esc(lb.sources)}</h2><ol>${b.sources.map((s, i) =>
         `<li id="src-${i + 1}"><a href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(s.kind === "doi" ? s.label : hostPath(s.url))}</a>${s.kind === "doi" ? ` <span class="muted">${esc(s.url)}</span>` : ""}</li>`).join("")}</ol></section>
     </article>`;
+    window.PitchVisual?.mount(view().querySelector('.brief'), b, { skipIntro: params.get('print') === '1' });
     $$(".tech-btn").forEach((btn) => btn.addEventListener("click", () => {
       const box = $("#" + btn.getAttribute("aria-controls")), open = !box.classList.contains("open");
       box.classList.toggle("open", open); btn.setAttribute("aria-expanded", open);
     }));
     $$("sup.ref a").forEach((a) => a.addEventListener("click", (ev) => { ev.preventDefault(); const el = $("#src-" + a.dataset.ref); el?.scrollIntoView({ behavior: "smooth", block: "center" }); el?.animate?.([{ background: "var(--mark)" }, { background: "transparent" }], { duration: 1600 }); }));
-    $("#bPrint").addEventListener("click", () => window.print());
+    $("#bPrint").addEventListener("click", () => { location.href = `/briefs/${encodeURIComponent(token)}/pdf`; });
     if (params.get("print") === "1") setTimeout(() => window.print(), 400);
   }
 
   /* ======================= boot ======================= */
   function boot() {
-    const theme = store.get("nav-theme", null);
-    if (theme) document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.theme = store.get("nav-theme", "light") === "dark" ? "dark" : "light";
     document.addEventListener("keydown", (ev) => {
       if (ev.key === "Escape" && document.body.classList.contains("sheet-open")) { $("#detail")?.classList.remove("open"); document.body.classList.remove("sheet-open"); }
       if (ev.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName) && $("#sQ")) { ev.preventDefault(); $("#sQ").focus(); }

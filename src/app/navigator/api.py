@@ -12,7 +12,8 @@ from pathlib import Path
 
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Depends
+from .knowledge_access import require_representative
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -29,7 +30,8 @@ STATIC = Path(__file__).parent / "static"
 def _warm_up():
     """Load the embedding model and the index before the first user query (cold start ~15 s on CPU)."""
     try:
-        index.load_entities()
+        if not index.load_entities():
+            return
         index.embed(["warm up"], query=True)
         showcase.build()
     except Exception as e:  # noqa: BLE001 - warm-up must never crash the server
@@ -43,6 +45,29 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Research & Expertise Navigator", version="0.3.0", lifespan=lifespan)
+from .knowledge_api import router as knowledge_router
+app.include_router(knowledge_router)
+from .delivery_api import router as delivery_router
+app.include_router(delivery_router)
+from .speech import router as speech_router
+app.include_router(speech_router)
+from .discovery_api import router as discovery_router
+from .vault_api import router as vault_router
+app.include_router(discovery_router)
+app.include_router(vault_router)
+from .knowledge_workflow import router as knowledge_workflow_router
+app.include_router(knowledge_workflow_router)
+
+
+@app.middleware('http')
+async def staff_workspace_boundary(request: Request, call_next):
+    if request.url.path == '/cases' or request.url.path.startswith('/cases/'):
+        from .knowledge_access import require_member
+        try:
+            require_member(request)
+        except HTTPException as error:
+            return JSONResponse({'detail': error.detail}, status_code=error.status_code)
+    return await call_next(request)
 
 
 @app.exception_handler(StorageError)
@@ -202,9 +227,13 @@ def document_types():
 
 @app.post("/cases", response_model=cases.Case)
 def create_case(req: cases.NewCase):
+    from . import vault
     try:
+        vault.validate_references(req.documents)
         return cases.create(req)
     except cases.company_web.FetchError as e:
+        raise HTTPException(422, str(e)) from None
+    except vault.VaultError as e:
         raise HTTPException(422, str(e)) from None
 
 
@@ -217,6 +246,8 @@ def get_case(cid: str):
 def delete_case(cid: str):
     _case_or_404(cid)
     cases.delete(cid)
+    from . import published_pitch
+    published_pitch.withdraw(cid)
     return {"ok": True}
 
 
@@ -289,41 +320,74 @@ class DraftReq(StaffAction):
 
 
 @app.post("/cases/{cid}/draft")
-def draft(cid: str, body: DraftReq):
+def draft(cid: str, body: DraftReq, user=Depends(require_representative)):
     c = _case_or_404(cid)
-    if not any(m.selected for m in c.matches):
+    if not any(m.selected for m in c.matches) and not c.outreach.get("brief"):
         raise HTTPException(400, "Choose at least one partner first")
     return cases.draft_email(c, body.lang, body.slots, body.sender, body.team, body.link)
 
 
 class BriefReq(StaffAction):
+    knowledge_sources: list[dict[str, str]] = Field(default_factory=list, max_length=20)
     lang: Literal["en", "de", "fr"] = "en"
     email: str = ""
     team: str = ""
+    primary_color: str | None = Field(None, pattern=r"^#[0-9a-fA-F]{6}$")
+    company_logo: str | None = Field(None, max_length=400000)
 
 
 @app.post("/cases/{cid}/brief")
-def prepare_brief(cid: str, body: BriefReq):
+def prepare_brief(cid: str, body: BriefReq, request: Request, user=Depends(require_representative)):
     """Output 1 (plain explanation for the officer) + Output 2 (executive brief, published under a private link)."""
     c = _case_or_404(cid)
-    if not any(m.selected for m in c.matches):
-        raise HTTPException(400, "Choose at least one partner first")
+    from . import knowledge_workflow, knowledge_access
+    approved = []
+    if body.knowledge_sources:
+        knowledge_access.require_member(request)
+        try:
+            approved = knowledge_workflow.resolve(c, body.knowledge_sources)
+        except ValueError as e:
+            raise HTTPException(422, str(e)) from None
+    if not any(m.selected for m in c.matches) and not approved:
+        raise HTTPException(400, "Choose at least one supported research or company source first")
     if not c.company:
         raise HTTPException(400, "Add the company name before preparing the pitch")
     out = brief.build(c, body.lang, {"name": body.actor, "email": body.email, "team": body.team})
-    token = (c.outreach.get("brief") or {}).get("token") or secrets.token_urlsafe(12)
+    knowledge_workflow.enrich(out, c, approved)
+    from .pitch_branding import validate_logo
+    previous = ((c.outreach.get("brief") or {}).get("data") or {}).get("branding", {})
+    branding = dict(previous)
+    if body.primary_color is not None:
+        branding["primary_color"] = body.primary_color.lower()
+    if body.company_logo is not None:
+        try:
+            branding["company_logo"] = validate_logo(body.company_logo)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+    out["brief"]["branding"] = branding
+    token = secrets.token_urlsafe(18)
     c.outreach = {**c.outreach, "brief": {"token": token, "lang": body.lang, "at": cases._now(), "data": out["brief"],
-                                          "explainer": out["explainer"], "stats": out["stats"]}}
+                                          "explainer": out["explainer"], "summary": out["summary"], "stats": out["stats"]}}
     cases.log(c, body.actor, "brief_prepared",
               f"Executive brief prepared ({body.lang.upper()}): {out['stats']['claims']} sourced statements, "
               f"{out['stats']['publications']} publications")
     cases.save(c)
+    from . import published_pitch
+    published_pitch.save(token, c.id, out['brief'], c.outreach['brief']['at'])
+    from . import discovery
+    for source in approved:
+        if source.get('candidate_id'):
+            discovery.mark_used(source['candidate_id'])
     return {"token": token, **out}
 
 
 @app.get("/briefs/{token}")
 def get_brief(token: str):
     """Public, read-only executive brief (the private link is the only key)."""
+    from . import published_pitch
+    snapshot = published_pitch.get(token)
+    if snapshot:
+        return snapshot
     for c in cases.list_cases():
         b = (c.outreach or {}).get("brief")
         if b and secrets.compare_digest(b["token"], token):
@@ -339,13 +403,13 @@ class Outcome(StaffAction):
 
 
 @app.post("/cases/{cid}/outcome", response_model=cases.Case)
-def outcome(cid: str, body: Outcome):
+def outcome(cid: str, body: Outcome, user=Depends(require_representative)):
     c = _case_or_404(cid)
-    if not any(m.selected for m in c.matches):
+    if not any(m.selected for m in c.matches) and not c.outreach.get("brief"):
         raise HTTPException(409, "Choose at least one partner first")
     if body.kind == "email":
         c.status = "contacted"
-        c.outreach = {"subject": body.subject, "body": body.body, "sent_at": cases._now()}
+        c.outreach = {**c.outreach, "subject": body.subject, "body": body.body, "sent_at": cases._now()}
         cases.log(c, body.actor, "emailed", f"Invitation email to {c.contact_email or c.company}")
     elif body.kind == "call":
         c.status = "call_scheduled"
@@ -358,7 +422,7 @@ def outcome(cid: str, body: Outcome):
 
 
 @app.get("/cases/{cid}/invite.ics")
-def invite(cid: str, start: str, minutes: int = Query(30, ge=10, le=240), organizer: str = "", organizer_email: str = ""):
+def invite(cid: str, start: str, minutes: int = Query(30, ge=10, le=240), organizer: str = "", organizer_email: str = "", user=Depends(require_representative)):
     c = _case_or_404(cid)
     try:
         body = cases.ics(c, start, minutes, organizer, organizer_email)

@@ -38,6 +38,9 @@ OFF = {"actor": "Maria"}
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(cases, "DB", tmp_path / "cases.db")
+    from navigator import knowledge_access, published_pitch
+    monkeypatch.setattr(knowledge_access, "member", lambda request: {"email": "officer@example.test", "role": "representative"})
+    monkeypatch.setattr(published_pitch, "DB", tmp_path / "published.db")
     monkeypatch.setattr(llm, "available", lambda *a, **k: False)
     monkeypatch.setattr(brief.index, "load_entities", lambda: ENTS)
     monkeypatch.setattr(search, "neighbors", lambda ids: {})
@@ -58,6 +61,20 @@ def _chosen_case(client):
     return cid
 
 
+def test_pdf_download_and_disabled_server_delivery(client, monkeypatch):
+    from navigator import knowledge_access
+    monkeypatch.setattr(knowledge_access, 'member', lambda request: {'email': 'officer@example.test', 'role': 'representative'})
+    monkeypatch.delenv('SMTP_HOST', raising=False)
+    cid = _chosen_case(client)
+    prepared = client.post(f'/cases/{cid}/brief', json=OFF).json()
+    pdf = client.get('/briefs/' + prepared['token'] + '/pdf')
+    assert pdf.status_code == 200 and pdf.content.startswith(b'%PDF')
+    assert pdf.content == client.get('/briefs/' + prepared['token'] + '/pdf').content
+    assert client.get(f'/cases/{cid}/delivery').json()['configured'] is False
+    response = client.post(f'/cases/{cid}/delivery', json={'subject': 'Pitch', 'body': 'Reviewed message', 'idempotency_key': 'test-delivery-key-1234'})
+    assert response.status_code == 503
+
+
 def test_brief_only_chosen_partners_and_everything_sourced(client):
     cid = _chosen_case(client)
     r = client.post(f"/cases/{cid}/brief", json={"lang": "en", "email": "maria@x.ch", **OFF}).json()
@@ -74,13 +91,14 @@ def test_brief_only_chosen_partners_and_everything_sourced(client):
     assert any(s["kind"] == "doi" and s["url"] == "https://doi.org/10.1234/dc25-0001" for s in b["sources"])
     assert "agreed" not in b["hook"].lower() and "money" not in b["hook"].lower()
     titles = [s["title"] for s in r["explainer"]]
-    assert titles[0] == "Summary of the pitch" and "What we deliberately do not say" in titles
+    assert titles[0] == "Summary of the pitch" and "Why these connections" in titles
     assert any("A small sensor worn on the skin" in ln.get("plain", "") for s in r["explainer"] for ln in s["lines"])
     # public link: works, read-only, stable across updates
     pub = client.get(f"/briefs/{r['token']}").json()
     assert pub["company"] == REQ["company"] and client.get("/briefs/wrong-token").status_code == 404
     r2 = client.post(f"/cases/{cid}/brief", json={"lang": "de", **OFF}).json()
-    assert r2["token"] == r["token"] and "Bern" in r2["brief"]["hook"]
+    assert r2["token"] != r["token"] and "Bern" in r2["brief"]["hook"]
+    assert client.get(f"/briefs/{r['token']}").json() == pub
 
 
 def test_brief_needs_chosen_partners_and_email_links_it(client):
@@ -90,3 +108,21 @@ def test_brief_needs_chosen_partners_and_email_links_it(client):
     tok = client.post(f"/cases/{cid}/brief", json={"lang": "en", **OFF}).json()["token"]
     d = client.post(f"/cases/{cid}/draft", json={"lang": "en", "link": f"http://h/#/b/{tok}", **OFF}).json()
     assert f"#/b/{tok}" in d["body"] and "Prof. Jane Example" in d["body"] and "Dr. Not Approved" not in d["body"]
+
+
+def test_local_company_only_pitch_and_email(client, monkeypatch):
+    from navigator import knowledge, complementarity
+    record = {"id": "local", "revision": "v1", "name": "Example Materials", "canton": "Bern", "status": "ready",
+              "sources": [{"url": "https://example.org/materials", "text": "Biocompatibility testing and microfabrication for medical devices."}]}
+    monkeypatch.setattr(knowledge, "get", lambda key: record if key == "local" else None)
+    cid = client.post("/cases", json=REQ).json()["id"]
+    source = next(complementarity.passages(record))
+    result = client.post(f"/cases/{cid}/brief", json={**OFF, "knowledge_sources": [{key: source[key] for key in ("id", "source_id", "revision")}]})
+    assert result.status_code == 200
+    data = result.json()
+    assert data["brief"]["items"][0]["name"] == "Example Materials"
+    assert data["brief"]["items"][0]["quote"]["text"] == record["sources"][0]["text"]
+    email = client.post(f"/cases/{cid}/draft", json={**OFF, "link": "https://example.test/#/b/" + data["token"]})
+    assert email.status_code == 200 and "Example Materials" in email.json()["body"]
+    record["revision"] = "v2"
+    assert client.post(f"/cases/{cid}/brief", json={**OFF, "knowledge_sources": [{key: source[key] for key in ("id", "source_id", "revision")}] }).status_code == 422

@@ -31,6 +31,14 @@ function app(t, { lang = 'en', hash = '/staff/requests', fetcher } = {}) {
     if (result !== undefined) return result;
     return { ok: true, json: async () => url === '/cases' ? requests : [] };
   };
+  w.eval(readFileSync(require('node:path').join(__dirname, '../app/navigator/static/knowledge.js'), 'utf8'));
+  w.eval(readFileSync(require('node:path').join(__dirname, '../app/navigator/static/analytics.js'), 'utf8'));
+  w.eval(readFileSync(require('node:path').join(__dirname, '../app/navigator/static/technical-guide.js'), 'utf8'));
+  w.eval(readFileSync(require('node:path').join(__dirname, '../app/navigator/static/guide.js'), 'utf8'));
+  w.eval(readFileSync(require('node:path').join(__dirname, '../app/navigator/static/pitch-visual.js'), 'utf8'));
+  w.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  w.HTMLDialogElement.prototype.close = function () { this.open = false; this.dispatchEvent(new w.Event('close')); };
+  w.eval(readFileSync(require('node:path').join(__dirname, '../app/navigator/static/discovery.js'), 'utf8'));
   w.eval(source);
   return w;
 }
@@ -52,6 +60,119 @@ test('lead search filters by company, need and location; clearing restores cards
   assert.equal(d.querySelectorAll('.case-card').length, 2);
   assert.equal(d.querySelector('.case-card h3').textContent, 'Alpha <Sensors>');
   assert.equal(d.querySelector('.case-card h3').children.length, 0);
+});
+
+test('Knowledge Base follows Search only for server-approved canton sessions', async (t) => {
+  const w = app(t, { fetcher: async (url) => url === '/staff/session' ? { ok: true, json: async () => ({ can_manage_knowledge: true }) } : undefined });
+  await until(() => w.document.querySelector('.kb-nav'));
+  const nav = w.document.querySelector('.kb-nav');
+  assert.equal(nav.previousElementSibling.getAttribute('href'), '#/staff/search');
+  assert.equal(nav.querySelector('strong').textContent, 'Knowledge Base');
+});
+test('private workspace adds link inputs progressively and saves company knowledge', async (t) => {
+  let saved;
+  const w = app(t, { hash: '/staff/knowledge', fetcher: async (url, opts) => {
+    if (url === '/staff/session') return { ok: true, json: async () => ({ can_manage_knowledge: true }) };
+    if (url === '/kb/companies') {
+      if (opts?.method === 'POST') saved = JSON.parse(opts.body);
+      return { ok: true, json: async () => opts?.method === 'POST' ? { id: 'saved' } : [] };
+    }
+  } });
+  const d = w.document;
+  await until(() => d.querySelector('#kbAdd'));
+  d.querySelector('#kbAdd').click();
+  assert.equal(d.querySelectorAll('#kbLinks input').length, 1);
+  d.querySelector('#kbForm input[name="name"]').value = 'Test company';
+  const input = d.querySelector('#kbLinks input');
+  input.value = 'https://example.org'; input.dispatchEvent(new w.Event('input'));
+  assert.equal(d.querySelectorAll('#kbLinks input').length, 2);
+  d.querySelector('#kbForm textarea').value = 'Glucose sensor research';
+  assert.equal(d.querySelector('#kbForm input[name="match"]'), null);
+  d.querySelector('#kbForm select[name="canton"]').value = 'Bern';
+  d.querySelector('#kbForm').dispatchEvent(new w.Event('submit', { cancelable: true }));
+  await until(() => saved);
+  assert.deepEqual(saved.links, ['https://example.org']);
+  assert.equal(saved.name, 'Test company');
+  assert.equal(saved.canton, 'Bern');
+  assert.equal(saved.match, undefined);
+});
+test('manual team information does not reveal the private navigation or route', async (t) => {
+  const w = app(t, { hash: '/staff/knowledge' });
+  await until(() => w.document.querySelector('a[href="#/staff/access"]'));
+  assert.equal(w.document.querySelector('.kb-nav'), null);
+  assert.equal(w.document.querySelector('#kbAdd'), null);
+});
+
+test('lead creation offers Bern or northern scope and submits the selected scope', async (t) => {
+  let submitted;
+  const w = app(t, { hash: '/staff/new', fetcher: async (url, opts) => {
+    if (url === '/cases' && opts?.method === 'POST') {
+      submitted = JSON.parse(opts.body);
+      return { ok: false, status: 503, json: async () => ({ detail: 'Test save unavailable' }) };
+    }
+  } });
+  const d = w.document;
+  await until(() => d.querySelector('#matchScope'));
+  const scope = d.querySelector('#matchScope');
+  assert.equal(scope.value, 'bern');
+  assert.deepEqual([...scope.options].map((o) => o.value), ['bern', 'north']);
+  scope.value = 'north';
+  d.querySelector('#bsQ').value = 'glucose sensor lead';
+  d.querySelector('#broadForm').dispatchEvent(new w.Event('submit', { cancelable: true }));
+  await until(() => submitted);
+  assert.equal(submitted.match_scope, 'north');
+  await until(() => d.querySelector('#matchScope'));
+  assert.equal(d.querySelector('#matchScope').value, 'north');
+});
+
+for (const [lang, title] of [['en', 'Discover the platform'], ['de', 'Plattform entdecken'], ['fr', 'Découvrir la plateforme']]) {
+  test(`help guide follows the selected ${lang} language and supports steps and close`, async (t) => {
+    const w = app(t, { lang }), d = w.document;
+    await until(() => d.querySelector('#requestFilter'));
+    d.querySelector('#helpBtn').click();
+    assert.equal(d.querySelector('#guideTitle').textContent, title);
+    assert.equal(d.querySelector('#guideCount').textContent, '01 / 7');
+    assert.equal(d.querySelector('#guideBack').disabled, true);
+    d.querySelector('#guideNext').click();
+    assert.equal(d.querySelector('#guideCount').textContent, '02 / 7');
+    d.querySelector('#guideBack').click();
+    assert.equal(d.querySelector('#guideCount').textContent, '01 / 7');
+    d.querySelector('#guideClose').click();
+    assert.equal(d.querySelector('#platformGuide'), null);
+  });
+}
+
+test('analytics renders source metrics, sector filters and pitch actions', async (t) => {
+  const data = { counts: {knowledge_companies: 1, lead_companies: 0, contacted: 0, opportunities: 0, collaboration: 0, established: 0}, sectors: {tech: 1}, topics: {sensors: 1}, suggested_topics: {}, leads: [], companies: [{id: 'x', name: 'Sensors AG', canton: 'Bern', sector: 'tech', topics: ['sensors'], summary: 'Sensor research', source_count: 2}] };
+  const w = app(t, { hash: '/staff/analytics', fetcher: async (url) => {
+    if (url === '/staff/session') return { ok: true, json: async () => ({can_manage_knowledge: true}) };
+    if (url === '/kb/analytics') return { ok: true, json: async () => data };
+  } }), d = w.document;
+  await until(() => d.querySelector('#analyticsDirectory'));
+  assert.equal(d.querySelectorAll('.analytics-kpis .kpi').length, 6);
+  assert.match(d.querySelector('#analyticsDirectory').textContent, /Sensors AG/);
+  d.querySelector('[data-sector="tech"]').click();
+  assert.equal(d.querySelector('[data-sector="tech"]').getAttribute('aria-pressed'), 'true');
+  d.querySelector('#analyticsQuery').value = 'other';
+  d.querySelector('#analyticsQuery').dispatchEvent(new w.Event('input'));
+  assert.equal(d.querySelector('#analyticsDirectory tbody'), null);
+});
+
+test('ecosystem map uses curated sourced partners, client branding and can skip animation', async (t) => {
+  const w = app(t), d = w.document;
+  await until(() => d.querySelector('#requestFilter'));
+  const container = d.createElement('div'); d.body.append(container);
+  const visual = w.PitchVisual.mount(container, { company: 'Client <AG>', lang: 'en', branding: {primary_color: '#123456'}, ecosystem: {nodes: [{id: 'good'}]}, items: [
+    {id: 'good', name: 'Complementary lab', page: 'https://example.org/lab', topics: [{term: 'Sensors'}]},
+    {id: 'excluded', name: 'Not featured', page: 'https://example.org/other'},
+    {id: 'bad', name: 'Unsafe', page: 'javascript:alert(1)'},
+  ] });
+  assert.equal(visual.querySelectorAll('.pv-node').length, 1);
+  assert.equal(visual.style.getPropertyValue('--pv-accent'), '#123456');
+  assert.equal(visual.querySelector('.pv-center strong').textContent, 'Client <AG>');
+  assert.equal(visual.querySelector('details').open, true);
+  visual.querySelector('.pv-skip').click();
+  assert.equal(visual.querySelector('details').open, false);
 });
 for (const [lang, label] of [['en', 'Find a company request'], ['de', 'Firmenanfrage finden'], ['fr', 'Trouver une demande']]) {
   test(`request filter is localized in ${lang}`, async (t) => {
@@ -82,6 +203,28 @@ function companyCase() {
     outreach: { brief: { token: 'existing', at: '2026-10-18', lang: 'en', explainer: [], data: { hook: 'Original pitch', items: [], sources: [] } } },
   };
 }
+test('canton branding replaces the placeholder mark and provides institutional footer links', async (t) => {
+  const w = app(t), d = w.document;
+  await until(() => d.querySelector('#requestFilter'));
+  assert.equal(d.documentElement.dataset.theme, 'light');
+  assert.equal(d.querySelector('.brand img').getAttribute('src'), '/static/brand/logo-be.svg');
+  assert.equal(d.querySelector('.brand svg'), null);
+  const theme = d.querySelector('#themeBtn');
+  assert.equal(theme.getAttribute('aria-pressed'), 'false');
+  theme.click();
+  assert.equal(d.documentElement.dataset.theme, 'dark');
+  assert.equal(theme.getAttribute('aria-pressed'), 'true');
+  assert.equal(JSON.parse(w.localStorage.getItem('nav-theme')), 'dark');
+  theme.click();
+  assert.equal(d.documentElement.dataset.theme, 'light');
+  assert.equal(d.querySelector('#foot img').getAttribute('src'), '/static/brand/logo-be.svg');
+  const links = [...d.querySelectorAll('.footer-links a')];
+  assert.equal(links.length, 4);
+  assert.ok(links.every((a) => a.href.startsWith('https://www.be.ch/')));
+  assert.ok(links.some((a) => a.href.endsWith('/impressum.html')));
+  assert.ok(links.some((a) => a.href.endsWith('/rechtliches.html')));
+  assert.match(d.querySelector('#foot').textContent, /Hack Apertus prototype/);
+});
 test('pitch generation announces progress, preserves previous output on failure, and allows retry', async (t) => {
   const c = companyCase();
   let rejectPitch;
@@ -123,3 +266,48 @@ test('failed partner search keeps the query and restores the submit button', asy
   assert.equal(form.hasAttribute('aria-busy'), false);
   assert.equal(d.querySelector('#toast').textContent, 'Search unavailable');
 });
+
+
+test('discovery keeps uncertain values red and approves without registering a company', async (t) => {
+  const calls = [];
+  const candidate = {id:'candidate', decision:'draft', source_url:'https://example.org', fields: Object.fromEntries(['name','site','canton','sector','topics','description','contribution'].map(k=>[k,{value:k==='name'?'Example Company':'',status:'review_required',evidence:[],reason:'Check source'}]))};
+  const w = app(t, {hash:'/staff/discovery', fetcher:async (url, opts) => {
+    calls.push([url, opts]);
+    const result = url==='/staff/session' ? {can_manage_knowledge:true,role:'representative'} : url==='/cases' ? requests : url.startsWith('/discovery/runs?') || url==='/discovery/runs' && opts?.method==='GET' ? [{id:'run',status:'completed',created_at:'2026'}] : url==='/discovery/runs/run' ? {status:'completed',candidates:[candidate]} : url.startsWith('/discovery/candidates/') ? {} : undefined;
+    return result === undefined ? undefined : {ok:true,json:async()=>result};
+  }});
+  await until(()=>w.document.querySelector('[data-run]'));
+  w.document.querySelector('[data-run]').click();
+  await until(()=>w.document.querySelector('[data-candidate]'));
+  assert.equal(w.document.querySelectorAll('.needs-review').length,7);
+  assert.match(w.document.querySelector('.needs-review').textContent,/Review required/);
+  const form=w.document.querySelector('[data-candidate]');
+  form.querySelector('[data-confirm="name"]').checked=true;
+  form.requestSubmit(form.querySelector('[data-decision="approved"]'));
+  await until(()=>calls.some(([u])=>u.startsWith('/discovery/candidates/')));
+  const patch=calls.find(([u])=>u.startsWith('/discovery/candidates/'));
+  assert.equal(JSON.parse(patch[1].body).fields.name,'Example Company');
+  assert.equal(calls.some(([u,o])=>u==='/kb/companies' && o?.method==='POST'),false);
+});
+
+
+for (const [lang, enter, title] of [['en','How does it work?','How the platform works'],['de','Wie funktioniert das?','So funktioniert die Plattform'],['fr','Comment cela fonctionne ?','Comment fonctionne la plateforme']]) {
+  test(`technical presentation follows the introduction in ${lang} and returns to it`, async t => {
+    const w=app(t,{lang}), d=w.document;
+    await until(()=>d.querySelector('#helpBtn'));
+    d.querySelector('#helpBtn').click();
+    for(let i=0;i<6;i++) d.querySelector('#guideNext').click();
+    assert.equal(d.querySelector('#guideNext').textContent,enter);
+    d.querySelector('#guideNext').click();
+    assert.equal(d.querySelector('#guideTitle').textContent,title);
+    assert.equal(d.querySelector('#guideCount').textContent,'01 / 7');
+    assert.match(d.querySelector('#guideText').textContent,/FastAPI/);
+    d.querySelector('#guideBack').click();
+    assert.equal(d.querySelector('#guideCount').textContent,'07 / 7');
+    d.querySelector('#guideNext').click();
+    for(let i=0;i<6;i++) d.querySelector('#guideNext').click();
+    assert.match(d.querySelector('#guideText').textContent,/Piper/);
+    d.querySelector('#guideNext').click();
+    assert.equal(d.querySelector('#platformGuide'),null);
+  });
+}
